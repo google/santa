@@ -71,10 +71,11 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
 | BlockUSBMount                     | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
 | RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
-| FileAccessPolicyPlist             | String      | (BETA) Path to a file access configuration plist. |
-| FileAccessPolicyUpdateIntervalSec | Integer     | (BETA) Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
-| SyncClientContentEncoding | String | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none" (Defaults to deflate.)  |
-| SyncExtraHeaders | Dictionary | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
+| FileAccessPolicyPlist             | String      | Path to a file access configuration plist. This is ignored if `FileAccessPolicy` is also set. |
+| FileAccessPolicy                  | Dictionary  | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
+| FileAccessPolicyUpdateIntervalSec | Integer     | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
+| SyncClientContentEncoding         | String      | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none" (Defaults to deflate.)  |
+| SyncExtraHeaders                  | Dictionary  | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current

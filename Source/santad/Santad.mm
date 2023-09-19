@@ -146,10 +146,12 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
     watch_items->RegisterClient(access_authorizer_client);
 
     access_authorizer_client.fileAccessBlockCallback =
-      ^(SNTFileAccessEvent *event, NSString *customMsg) {
+      ^(SNTFileAccessEvent *event, NSString *customMsg, NSString *customURL, NSString *customText) {
         [[notifier_queue.notifierConnection remoteObjectProxy]
           postFileAccessBlockNotification:event
-                        withCustomMessage:customMsg];
+                            customMessage:customMsg
+                                customURL:customURL
+                               customText:customText];
       };
   }
 

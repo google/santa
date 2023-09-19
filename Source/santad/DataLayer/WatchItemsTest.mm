@@ -831,7 +831,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
     *policies[0].get(),
     WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType,
                     kWatchItemPolicyDefaultAllowReadAccess, kWatchItemPolicyDefaultAuditOnly,
-                    kWatchItemPolicyDefaultInvertProcessExceptions, {}));
+                    kWatchItemPolicyDefaultInvertProcessExceptions));
 
   // Test multiple paths, options, and processes
   policies.clear();
@@ -859,10 +859,12 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
                                            policies, &err));
 
   XCTAssertEqual(policies.size(), 2);
-  XCTAssertEqual(*policies[0].get(), WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType,
-                                                     true, false, true, true, false, "", procs));
-  XCTAssertEqual(*policies[1].get(), WatchItemPolicy("rule", "b", WatchItemPathType::kPrefix, true,
-                                                     false, true, true, false, "", procs));
+  XCTAssertEqual(*policies[0].get(),
+                 WatchItemPolicy("rule", "a", kWatchItemPolicyDefaultPathType, true, false, true,
+                                 true, false, "", nil, nil, procs));
+  XCTAssertEqual(*policies[1].get(),
+                 WatchItemPolicy("rule", "b", WatchItemPathType::kPrefix, true, false, true, true,
+                                 false, "", nil, nil, procs));
 }
 
 - (void)testState {

@@ -710,8 +710,11 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
       event.parentName = StringToNSString(msg.ParentProcessName());
       event.signingChain = cd.certChain;
 
+      std::pair<NSString *, NSString *> linkInfo = self->_watchItems->EventDetailLinkInfo(policy);
+
       if (!policy->silent && self.fileAccessBlockCallback) {
-        self.fileAccessBlockCallback(event, OptionalStringToNSString(policy->custom_message));
+        self.fileAccessBlockCallback(event, OptionalStringToNSString(policy->custom_message),
+                                     linkInfo.first, linkInfo.second);
       }
 
       if (ShouldMessageTTY(policy, msg, self->_ttyMessageCache)) {
@@ -732,6 +735,12 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
                                @"\033[1mParent:       \033[0m %@\n\n",
                                event.accessedPath, event.ruleVersion, event.ruleName,
                                event.filePath, event.fileSHA256, event.parentName];
+
+        NSURL *detailURL = [SNTBlockMessage eventDetailURLForFileAccessEvent:event
+                                                                   customURL:linkInfo.first];
+        if (detailURL) {
+          [blockMsg appendFormat:@"More info:\n%@\n\n", detailURL.absoluteString];
+        }
 
         self->_ttyWriter->Write(msg->process, blockMsg);
       }

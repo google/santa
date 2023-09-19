@@ -49,6 +49,7 @@
 ///  after replacing templates in the URL with values from the event.
 ///
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url;
++ (NSURL *)eventDetailURLForFileAccessEvent:(SNTFileAccessEvent *)event customURL:(NSString *)url;
 
 ///
 ///  Strip HTML from a string, replacing <br /> with newline.

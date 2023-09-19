@@ -28,7 +28,9 @@
                  andCustomURL:(NSString *)url;
 - (void)postUSBBlockNotification:(SNTDeviceEvent *)event withCustomMessage:(NSString *)message;
 - (void)postFileAccessBlockNotification:(SNTFileAccessEvent *)event
-                      withCustomMessage:(NSString *)message API_AVAILABLE(macos(13.0));
+                          customMessage:(NSString *)message
+                              customURL:(NSString *)url
+                             customText:(NSString *)text API_AVAILABLE(macos(13.0));
 - (void)postClientModeNotification:(SNTClientMode)clientmode;
 - (void)postRuleSyncNotificationWithCustomMessage:(NSString *)message;
 - (void)updateCountsForEvent:(SNTStoredEvent *)event

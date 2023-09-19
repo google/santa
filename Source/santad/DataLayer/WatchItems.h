@@ -96,6 +96,9 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
 
   std::optional<WatchItemsState> State();
 
+  std::pair<NSString *, NSString *> EventDetailLinkInfo(
+    const std::shared_ptr<WatchItemPolicy> &watch_item);
+
   friend class santa::santad::data_layer::WatchItemsPeer;
 
  private:
@@ -128,6 +131,8 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   std::string policy_version_ ABSL_GUARDED_BY(lock_);
   std::set<id<SNTEndpointSecurityDynamicEventHandler>> registerd_clients_ ABSL_GUARDED_BY(lock_);
   bool periodic_task_started_ = false;
+  NSString *policy_event_detail_url_ ABSL_GUARDED_BY(lock_);
+  NSString *policy_event_detail_text_ ABSL_GUARDED_BY(lock_);
 };
 
 }  // namespace santa::santad::data_layer

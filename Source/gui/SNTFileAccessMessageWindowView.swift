@@ -12,6 +12,7 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
+import Foundation
 import SecurityInterface
 import SwiftUI
 
@@ -21,11 +22,15 @@ import santa_common_SNTFileAccessEvent
 @objc public class SNTFileAccessMessageWindowViewFactory : NSObject {
   @objc public static func createWith(window: NSWindow,
                                       event: SNTFileAccessEvent,
-                                      customMsg: NSAttributedString?,
+                                      customMessage: NSAttributedString?,
+                                      customURL: NSString?,
+                                      customText: NSString?,
                                       uiStateCallback: ((Bool) -> Void)?) -> NSViewController {
     return NSHostingController(rootView:SNTFileAccessMessageWindowView(window:window,
                                                                        event:event,
-                                                                       customMsg:customMsg,
+                                                                       customMessage:customMessage,
+                                                                       customURL:customURL as String?,
+                                                                       customText:customText as String?,
                                                                        uiStateCallback:uiStateCallback)
       .frame(width:800, height:600))
   }
@@ -106,9 +111,12 @@ struct Event: View {
 struct SNTFileAccessMessageWindowView: View {
   let window: NSWindow?
   let event: SNTFileAccessEvent?
-  let customMsg: NSAttributedString?
+  let customMessage: NSAttributedString?
+  let customURL: String?
+  let customText: String?
   let uiStateCallback: ((Bool) -> Void)?
 
+  @Environment(\.openURL) var openURL
   @State public var checked = false
 
   var body: some View {
@@ -116,7 +124,7 @@ struct SNTFileAccessMessageWindowView: View {
       Spacer()
       Text("Santa").font(Font.custom("HelveticaNeue-UltraLight", size: 34.0))
 
-      if let msg = customMsg {
+      if let msg = customMessage {
         Text(AttributedString(msg)).multilineTextAlignment(.center).padding(15.0)
       } else {
         Text("Access to a protected resource was denied.").multilineTextAlignment(.center).padding(15.0)
@@ -130,9 +138,12 @@ struct SNTFileAccessMessageWindowView: View {
       }
 
       VStack(spacing:15) {
-          Button(action: openButton, label: {
-            Text("Open Event Info...").frame(maxWidth:.infinity)
-          })
+          if customURL != nil {
+            Button(action: openButton, label: {
+
+              Text(customText ?? "Open Event...").frame(maxWidth:.infinity)
+            })
+          }
           Button(action: dismissButton, label: {
             Text("Dismiss").frame(maxWidth:.infinity)
           })
@@ -145,8 +156,17 @@ struct SNTFileAccessMessageWindowView: View {
   }
 
   func openButton() {
-    // TODO(mlw): Will hook up in a separate PR
-    print("opening event info...")
+    guard let urlString = customURL else {
+      print("No URL available")
+      return
+    }
+
+    guard let url = URL(string: urlString) else {
+      print("Failed to create URL")
+      return
+    }
+
+    openURL(url)
   }
 
   func dismissButton() {
@@ -154,7 +174,6 @@ struct SNTFileAccessMessageWindowView: View {
       block(self.checked)
     }
     window?.close()
-    print("close window")
   }
 }
 
@@ -182,6 +201,11 @@ func testFileAccessEvent() -> SNTFileAccessEvent {
 @available(macOS 13, *)
 struct SNTFileAccessMessageWindowView_Previews: PreviewProvider {
   static var previews: some View {
-    SNTFileAccessMessageWindowView(window: nil, event: testFileAccessEvent(), customMsg: nil, uiStateCallback: nil)
+    SNTFileAccessMessageWindowView(window: nil,
+                                    event: testFileAccessEvent(),
+                            customMessage: nil,
+                                customURL: nil,
+                               customText: nil,
+                          uiStateCallback: nil)
   }
 }
