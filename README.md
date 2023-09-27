@@ -136,11 +136,7 @@ protect hosts in whatever other ways you see fit.
 
 # Screenshots
 
-A tool like Santa doesn't really lend itself to screenshots, so here's a video
-instead.
-
-
-<p align="center"> <img src="https://thumbs.gfycat.com/MadFatalAmphiuma-small.gif" alt="Santa Block Video" /> </p>
+A tool like Santa doesn't lend itself well to screenshots.
 
 # Contributing
 Patches to this project are very much welcome. Please see the
