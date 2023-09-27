@@ -89,11 +89,9 @@
         id platformID = [csInfo.signingInformation
           objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
         if (![platformID isKindOfClass:[NSNumber class]] || [platformID intValue] == 0) {
-          signingID = nil;
+          cd.signingID = nil;
         }
       }
-
-      cd.signingID = signingID;
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
