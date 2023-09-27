@@ -140,7 +140,7 @@ A tool like Santa doesn't really lend itself to screenshots, so here's a video
 instead.
 
 
-<p align="center"> <img src="https://thumbs.gfycat.com/MadFatalAmphiuma-small.gif" alt="Santa Block Video" /> </p>
+<p align="center"> <img src="./docs/images/santa-block.gif" alt="Santa Block Video" /> </p>
 
 # Contributing
 Patches to this project are very much welcome. Please see the
