@@ -82,27 +82,24 @@
       cd.teamID = teamID
                     ?: [csInfo.signingInformation
                          objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
-      teamID = cd.teamID;
 
       // Ensure that if no teamID exists that the signing info confirms it is a
       // platform binary. If not, remove the signingID.
-      if (!teamID && signingID) {
+      if (!cd.teamID && cd.signingID) {
         id platformID = [csInfo.signingInformation
           objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
         if (![platformID isKindOfClass:[NSNumber class]] || [platformID intValue] == 0) {
-          signingID = nil;
+          cd.signingID = nil;
         }
       }
-
-      cd.signingID = signingID;
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
-                                            signingID:signingID
+                                            signingID:cd.signingID
                                     certificateSHA256:cd.certSHA256
-                                               teamID:teamID];
+                                               teamID:cd.teamID];
   if (rule) {
     switch (rule.type) {
       case SNTRuleTypeBinary:
