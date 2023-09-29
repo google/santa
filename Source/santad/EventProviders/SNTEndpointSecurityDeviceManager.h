@@ -15,6 +15,7 @@
 #include <DiskArbitration/DiskArbitration.h>
 #import <Foundation/Foundation.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTDeviceEvent.h"
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
@@ -39,11 +40,16 @@ typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
 @property(nonatomic, nullable) SNTDeviceBlockCallback deviceBlockCallback;
 
 - (instancetype)
-    initWithESAPI:
-      (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-          metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-           logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-  authResultCache:(std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
+       initWithESAPI:
+         (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)
+           esApi
+             metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+              logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
+     authResultCache:
+       (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+       blockUSBMount:(BOOL)blockUSBMount
+      remountUSBMode:(NSArray<NSString *> *)remountUSBMode
+  startupPreferences:(SNTDeviceManagerStartupPreferences)startupPrefs;
 
 @end
 

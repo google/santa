@@ -395,6 +395,7 @@ objc_library(
         ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTLogging",
     ],
