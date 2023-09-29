@@ -26,6 +26,7 @@
 #include <memory>
 #include <set>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeviceEvent.h"
 #include "Source/common/TestUtils.h"
@@ -112,7 +113,10 @@ class MockAuthResultCache : public AuthResultCache {
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
                                                     metrics:nullptr
                                                      logger:nullptr
-                                            authResultCache:nullptr];
+                                            authResultCache:nullptr
+                                              blockUSBMount:false
+                                             remountUSBMode:nil
+                                         startupPreferences:SNTDeviceManagerStartupPreferencesNone];
 
   setupDMCallback(deviceManager);
 
@@ -324,7 +328,10 @@ class MockAuthResultCache : public AuthResultCache {
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
                                                     metrics:nullptr
                                                      logger:nullptr
-                                            authResultCache:mockAuthCache];
+                                            authResultCache:mockAuthCache
+                                              blockUSBMount:YES
+                                             remountUSBMode:nil
+                                         startupPreferences:SNTDeviceManagerStartupPreferencesNone];
 
   deviceManager.blockUSBMount = YES;
 

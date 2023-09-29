@@ -48,7 +48,7 @@ typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
      authResultCache:
        (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
        blockUSBMount:(BOOL)blockUSBMount
-      remountUSBMode:(NSArray<NSString *> *)remountUSBMode
+      remountUSBMode:(nullable NSArray<NSString *> *)remountUSBMode
   startupPreferences:(SNTDeviceManagerStartupPreferences)startupPrefs;
 
 @end

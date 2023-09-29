@@ -160,7 +160,7 @@ NS_ASSUME_NONNULL_BEGIN
                        logger:(std::shared_ptr<Logger>)logger
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
                 blockUSBMount:(BOOL)blockUSBMount
-               remountUSBMode:(NSArray<NSString *> *)remountUSBMode
+               remountUSBMode:(nullable NSArray<NSString *> *)remountUSBMode
            startupPreferences:(SNTDeviceManagerStartupPreferences)startupPrefs {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
