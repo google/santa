@@ -32,7 +32,7 @@ REGISTER_COMMAND_NAME(@"sync")
 #pragma mark SNTCommand protocol methods
 
 + (BOOL)requiresRoot {
-  return YES;
+  return NO;
 }
 
 + (BOOL)requiresDaemonConn {
