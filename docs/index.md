@@ -5,7 +5,7 @@ nav_order: 1
 
 # Welcome to the Santa documentation
 
-Santa is a binary authorization system for macOS. It consists of a system extension that allows or denies attempted executions using a set of rules stored in a local database, a GUI agent that notifies the user in case of a block decision, a sync daemon responsible for syncing the database and a server, and a command-line utility for managing the system.
+Santa is a binary and file authorization system for macOS. It consists of a system extension that allows or denies attempted executions using a set of rules stored in a local database, a GUI agent that notifies the user in case of a block decision, a sync daemon responsible for syncing the database and a server, and a command-line utility for managing the system.
 
 It is named Santa because it keeps track of binaries that are naughty or nice.
 
@@ -15,7 +15,7 @@ The project and the latest release is available on [**GitHub**](https://github.c
 
 * [**Multiple modes:**](concepts/mode.md) In the default `MONITOR` mode, all binaries except those marked as blocked will be allowed to run, whilst being logged and recorded in the events database. In `LOCKDOWN` mode, only listed binaries are allowed to run.
 * [**Event logging:**](concepts/events.md) All binary launches are logged. When in either mode, all unknown or denied binaries are stored in the database to enable later aggregation.
-* [**Certificate-based rules, with override levels:**](concepts/rules.md) Instead of relying on a binary's hash (or 'fingerprint'), executables can be allowed/blocked by their signing certificate. You can therefore allow/block all binaries by a given publisher that were signed with that cert across version updates. A binary can only be allowed by its certificate if its signature validates correctly but a rule for a binary's fingerprint will override a decision for a certificate; i.e. you can allowlist a certificate while blocking a binary signed with that certificate, or vice-versa.
+* [**Several supported rule types:**](concepts/rules.md) Executions can be allowed or denied by specifying rules based on several attributes. The supported rule types, in order of highest to lowest precedence are: binary hash, Signing ID, certificate hash, or Team ID. Since multiple rules can apply to a given binary, Santa will apply the rule with the highest precedence (i.e. you could use a Team ID rule to allow all binaries from some organization, but also add a Signing ID rule to deny a specific binary). Rules based on code signature properties (Signing ID, certificate hash, and Team ID) only apply if a bianry's signature validates correctly.
 * **Path-based rules (via NSRegularExpression/ICU):** Binaries can be allowed/blocked based on the path they are launched from by matching against a configurable regex.
 * [**Failsafe cert rules:**](concepts/rules.md#built-in-rules) You cannot put in a deny rule that would block the certificate used to sign launchd, a.k.a. pid 1, and therefore all components used in macOS. The binaries in every OS update (and in some cases entire new versions) are therefore automatically allowed. This does not affect binaries from Apple's App Store, which use various certs that change regularly for common apps. Likewise, you cannot block Santa itself.
 * [**Components validate each other:**](binaries/index.md) Each of the components (the daemons, the GUI agent, and the command-line utility) communicate with each other using XPC and check that their signing certificates are identical before any communication is accepted.
