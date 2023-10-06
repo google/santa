@@ -39,6 +39,6 @@ jobs:
         run: ./Testing/integration/test_config_changes.sh
       - name: Test sync server changes
         run: ./Testing/integration/test_sync_changes.sh
-      - name: Poweroff
-        if: ${{ always() }}
-        run: sudo shutdown -h +1
+      # - name: Poweroff
+      #   if: ${{ always() }}
+      #   run: sudo shutdown -h +1
