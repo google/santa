@@ -61,6 +61,8 @@ class Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedRename &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated &) = 0;
 
   virtual std::vector<uint8_t> SerializeFileAccess(
     const std::string &policy_version, const std::string &policy_name,
@@ -95,6 +97,8 @@ class Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedRename &);
   std::vector<uint8_t> SerializeMessageTemplate(
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &);
+  std::vector<uint8_t> SerializeMessageTemplate(
+    const santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated &);
 
   bool enabled_machine_id_ = false;
   std::string machine_id_;

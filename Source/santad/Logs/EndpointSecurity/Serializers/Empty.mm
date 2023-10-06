@@ -23,6 +23,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa::santad::logs::endpoint_security::serializers {
@@ -64,6 +65,12 @@ std::vector<uint8_t> Empty::SerializeMessage(const EnrichedRename &msg) {
 std::vector<uint8_t> Empty::SerializeMessage(const EnrichedUnlink &msg) {
   return {};
 }
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedCSInvalidated &msg) {
+  return {};
+}
+
+
 
 std::vector<uint8_t> Empty::SerializeFileAccess(const std::string &policy_version,
                                                 const std::string &policy_name, const Message &msg,

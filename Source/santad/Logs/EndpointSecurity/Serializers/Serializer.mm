@@ -74,5 +74,9 @@ std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedRena
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedUnlink &msg) {
   return SerializeMessage(msg);
 }
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedCSInvalidated &msg) {
+  return SerializeMessage(msg);
+}
+
 
 };  // namespace santa::santad::logs::endpoint_security::serializers

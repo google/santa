@@ -43,6 +43,8 @@ namespace es = santa::santad::event_providers::endpoint_security;
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedLink *)&fake).size(), 0);
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedRename *)&fake).size(), 0);
   XCTAssertEqual(e->SerializeMessage(*(es::EnrichedUnlink *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedCSInvalidated *)&fake).size(), 0);
+
 
   XCTAssertEqual(e->SerializeAllowlist(*(es::Message *)&fake, "").size(), 0);
   XCTAssertEqual(e->SerializeBundleHashingEvent(nil).size(), 0);

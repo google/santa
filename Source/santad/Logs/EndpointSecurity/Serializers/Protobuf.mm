@@ -56,6 +56,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveUser;
@@ -599,6 +600,18 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
 
   return FinalizeProto(santa_msg);
 }
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  ::pbv1::CodesigningInvalidated *pb_cs_invalidated = santa_msg->mutable_codesigning_invalidated();
+  EncodeProcessInfoLight(pb_cs_invalidated->mutable_instigator(), msg.es_msg().version,
+                         msg.es_msg().process, msg.instigator());
+
+  return FinalizeProto(santa_msg);
+}
+
 
 std::vector<uint8_t> Protobuf::SerializeFileAccess(const std::string &policy_version,
                                                    const std::string &policy_name,

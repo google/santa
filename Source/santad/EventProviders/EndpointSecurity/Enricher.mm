@@ -74,6 +74,8 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
     case ES_EVENT_TYPE_NOTIFY_UNLINK:
       return std::make_unique<EnrichedMessage>(EnrichedUnlink(
         std::move(es_msg), Enrich(*es_msg->process), Enrich(*es_msg->event.unlink.target)));
+    case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED:
+      return std::make_unique<EnrichedMessage>(EnrichedCSInvalidated(std::move(es_msg), Enrich(*es_msg->process)));
     default:
       // This is a programming error
       LOGE(@"Attempting to enrich an unhandled event type: %d", es_msg->event_type);

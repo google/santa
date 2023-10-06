@@ -110,6 +110,7 @@ NSString *EventTypeToFilename(es_event_type_t eventType) {
     case ES_EVENT_TYPE_NOTIFY_LINK: return @"link.json";
     case ES_EVENT_TYPE_NOTIFY_RENAME: return @"rename.json";
     case ES_EVENT_TYPE_NOTIFY_UNLINK: return @"unlink.json";
+    case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED: return @"cs_invalidated.json";
     default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
   }
 }
@@ -145,6 +146,7 @@ const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &s
     case ::pbv1::SantaMessage::kBundle: return santaMsg.bundle();
     case ::pbv1::SantaMessage::kAllowlist: return santaMsg.allowlist();
     case ::pbv1::SantaMessage::kFileAccess: return santaMsg.file_access();
+    case ::pbv1::SantaMessage::kCodesigningInvalidated: return santaMsg.codesigning_invalidated();
     case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
@@ -664,6 +666,14 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.unlink.target = &fileTarget;
                     esMsg->event.unlink.parent_dir = &fileTargetParent;
+                  }
+                          json:NO];
+}
+
+- (void)testSerializeMessageCodesigningInvalidated {
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
                   }
                           json:NO];
 }
