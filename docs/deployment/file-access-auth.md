@@ -31,7 +31,7 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa confi
 | `AuditOnly`               | `Options`    | Boolean    | No       | v2023.1+      | If true, operations violating the rule will only be logged. If false, operations violating the rule will be denied and logged. (Default = `true`) |
 | `InvertProcessExceptions` | `Options`    | Boolean    | No       | v2023.5+      | If true, logic is inverted for the list of processes defined by the `Processes` key such that the list becomes the set of processes that will be denied or allowed but audited. (Default = `false`) |
 | `EnableSilentMode`        | `Options`    | String     | No       | v2023.7+      | If true, Santa will not display a GUI dialog when this rule is violated. |
-| `EnableSilentTTYMode`     | `Options`    | String     | No       | v2023.7+      | If true, Santa will not post a message to the contorlling TTY when this rule is violated. |
+| `EnableSilentTTYMode`     | `Options`    | String     | No       | v2023.7+      | If true, Santa will not post a message to the controlling TTY when this rule is violated. |
 | `EventDetailURL`          | `Options`    | String     | No       | v2023.8+      | Rule-specific URL that overrides the top-level `EventDetailURL`. |
 | `EventDetailText`         | `Options`    | String     | No       | v2023.8+      | Rule-specific button text that overrides the top-level `EventDetailText`. |
 | `Processes`               | `<Name>`     | Array      | No       | v2023.1+      | A list of dictionaries defining processes that are allowed to access paths matching the globs defined with the `Paths` key. For a process performing the operation to be considered a match, it must match all defined attributes of at least one entry in the list. |

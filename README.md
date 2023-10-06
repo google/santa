@@ -7,10 +7,10 @@
 [![downloads](https://img.shields.io/github/downloads/google/santa/latest/total)](https://github.com/google/santa/releases/latest)
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/google/santa/main/Source/gui/Resources/Images.xcassets/AppIcon.appiconset/santa-hat-icon-128.png" alt="Santa Icon" />
+    <img src="./docs/images/santa-sleigh-256.png" height="128" alt="Santa Icon" />
 </p>
 
-Santa is a binary authorization system for macOS. It consists of a system
+Santa is a binary and file access authorization system for macOS. It consists of a system
 extension that monitors for executions, a daemon that makes execution decisions
 based on the contents of a local database, a GUI agent that notifies the user in
 case of a block decision and a command-line utility for managing the system and
