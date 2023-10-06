@@ -3,5 +3,5 @@
 # through applescript.
 # It's run as part of the template VM creation process.
 
-osascript -e 'tell application "System Preferences" to activate'
-osascript -e 'tell application "System Events" to tell process "System Preferences" to click menu item "Profiles" of menu 1 of menu bar item "View" of menu bar 1'
+osascript -e 'tell application "System Settings" to activate'
+osascript -e 'tell application "System Events" to tell process "System Settings" to click menu item "Profiles" of menu 1 of menu bar item "View" of menu bar 1'
