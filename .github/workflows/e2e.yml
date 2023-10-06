@@ -19,10 +19,10 @@ jobs:
       VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
-      - name: Install configuration profile
-        run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
       - name: Add homebrew to PATH
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
+      - name: Install configuration profile
+        run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
       - name: Build, install, and start moroz
         run: |
           bazel build @com_github_groob_moroz//cmd/moroz:moroz
