@@ -4,15 +4,16 @@ parent: Binaries
 
 # santactl
 
-This may be the most complex part of Santa. It does two types of work:
+`santactl` is a command line utility for interacting with Santa. It provides the
+following functionality:
 
-1.  It contains all of the code and functionality for syncing with a
-    sync-server.
-2.  It can be used to view the state and configuration of Santa as a whole. It
-    can also inspect individual files. When running without a sync server it
-    also a supported method of managing the rules database.
+* Viewing Santa status and configuration
+* Inspect individual files and see how Santa would apply policy
+* Trigger an immediate sync operation
+* View version information
+* If a sync server isn't configured, can be used to manually manage rules
+* Printing protobuf logs as JSON
 
-The details of santactl's syncing functionality are covered in [Syncing Overview](../introduction/syncing-overview.md).
 This document will cover the status work that santactl performs.
 
 ##### status

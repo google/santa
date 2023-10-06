@@ -16,6 +16,10 @@ macOS systems. This document explains the syncing process.
 
 #### Flow of a full sync
 
+NOTE: Synchronization is now performed by its own agent, the `santasyncservice`.
+The phases of synchronization described below still apply, but references to how
+the process starts is outdated. This will be updated soon.
+
 This is a high level overview of the syncing process. For a more a more detailed
 account of each part, see the respective documentation. The santaclt binary can
 be run in one of two modes, daemon and non-daemon. The non-daemon mode does one
