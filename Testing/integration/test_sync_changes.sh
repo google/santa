@@ -25,6 +25,8 @@ if [[ "$(sudo santactl status --json | jq .daemon.block_usb)" != "false" ]]; the
   exit 1
 fi
 
+bazel run //Testing/integration:dismiss_santa_popup
+
 # Now change moroz to use the changed config, enabling USB blocking and removing the badbinary block rule
 killall moroz
 /tmp/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_changed/global.toml" -use-tls=false &
