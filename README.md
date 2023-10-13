@@ -48,9 +48,9 @@ disclosure reporting.
   the events database. In LOCKDOWN mode, only listed binaries are allowed to
   run.
 
-* Event logging: When the kext is loaded, all binary launches are logged.  When
-  in either mode, all unknown or denied binaries are stored in the database to
-  enable later aggregation.
+* Event logging: When the system extension is loaded, all binary launches are 
+  logged. When in either mode, all unknown or denied binaries are stored in the 
+  database to enable later aggregation.
 
 * Certificate-based rules, with override levels: Instead of relying on a
   binary's hash (or 'fingerprint'), executables can be allowed/blocked by their
