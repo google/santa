@@ -224,9 +224,9 @@ ways to install configuration profiles:
 | allowed\_path\_regex                | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
 | blocked\_path\_regex                | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
 | full\_sync\_interval\*              | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
-| fcm\_token\*                        | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
-| fcm\_full\_sync\_interval\*         | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
-| fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
+| fcm\_token\*†                       | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
+| fcm\_full\_sync\_interval\*†        | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
+| fcm\_global\_rule\_sync\_deadline\*†| Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
@@ -238,6 +238,7 @@ ways to install configuration profiles:
 
 **Performed once per preflight run (if set).
 
+†The Firebase Cloud Messaging (FCM) based Push Notification system is only available on the internal Google deployment of Santa at this time
 
 ## MDM-Specific Client Configuration
 
