@@ -54,8 +54,8 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --compiler: allow and mark as a compiler\n"
           @"    --remove: remove existing rule\n"
           @"    --check: check for an existing rule\n"
-          @"    --import: import rules from a JSON file\n"
-          @"    --export: export rules to a JSON file\n"
+          @"    --import {path}: import rules from a JSON file\n"
+          @"    --export {path}: export rules to a JSON file\n"
           @"\n"
           @"  One of:\n"
           @"    --path {path}: path of binary/bundle to add/remove.\n"
@@ -64,7 +64,6 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   the rule state of a file.\n"
           @"    --identifier {sha256|teamID|signingID}: identifier to add/remove/check\n"
           @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
-          @"    --json {path}: path to a JSON file containing a list of rules to add/remove\n"
           @"\n"
           @"  Optionally:\n"
           @"    --teamid: add or check a team ID rule instead of binary\n"
@@ -174,11 +173,6 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if ([arg caseInsensitiveCompare:@"--force"] == NSOrderedSame) {
       // Don't do anything special.
 #endif
-    } else if ([arg caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
-      if (++i > arguments.count - 1) {
-        [self printErrorUsageAndExit:@"--json requires an argument"];
-      }
-      jsonFilePath = arguments[i];
     } else if ([arg caseInsensitiveCompare:@"--import"] == NSOrderedSame) {
       if (exportRules) {
         [self printErrorUsageAndExit:@"--import and --export are mutually exclusive"];
@@ -204,6 +198,21 @@ REGISTER_COMMAND_NAME(@"rule")
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
     }
+  }
+
+  if (jsonFilePath.length > 0) {
+    if (importRules) {
+      if (newRule.identifier != nil || path != nil || check) {
+        [self printErrorUsageAndExit:@"--import can only be used by itself"];
+      }
+      [self importJSONFile:jsonFilePath];
+    } else if (exportRules) {
+      if (newRule.identifier != nil || path != nil || check) {
+        [self printErrorUsageAndExit:@"--export can only be used by itself"];
+      }
+      [self exportJSONFile:jsonFilePath];
+    }
+    return;
   }
 
   if (path) {
@@ -234,16 +243,6 @@ REGISTER_COMMAND_NAME(@"rule")
   if (check) {
     if (!newRule.identifier) return [self printErrorUsageAndExit:@"--check requires --identifier"];
     return [self printStateOfRule:newRule daemonConnection:self.daemonConn];
-  }
-
-  // Note this block needs to come after the check block above.
-  if (jsonFilePath.length > 0) {
-    if (importRules) {
-      [self importJSONFile:jsonFilePath];
-    } else if (exportRules) {
-      [self exportJSONFile:jsonFilePath];
-    }
-    return;
   }
 
   if (newRule.state == SNTRuleStateUnknown) {
