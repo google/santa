@@ -64,7 +64,6 @@ REGISTER_COMMAND_NAME(@"rule")
           @"                   the rule state of a file.\n"
           @"    --identifier {sha256|teamID|signingID}: identifier to add/remove/check\n"
           @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
-          @"    --json {path}: path to a JSON file containing a list of rules to add/remove\n"
           @"\n"
           @"  Optionally:\n"
           @"    --teamid: add or check a team ID rule instead of binary\n"
