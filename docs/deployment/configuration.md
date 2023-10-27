@@ -69,13 +69,14 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
 | EnableAllEventUpload              | Bool       | If YES, the client will upload all execution events to the sync server, including those that were explicitly allowed. |
 | DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
-| BlockUSBMount                     | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
-| RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
+| BlockUSBMount                     | Bool       | If YES, blocking USB Mass storage feature is enabled. Defaults to NO. |
+| RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j") when forcibly remounting devices. No default. |
 | FileAccessPolicyPlist             | String      | Path to a file access configuration plist. This is ignored if `FileAccessPolicy` is also set. |
 | FileAccessPolicy                  | Dictionary  | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
 | FileAccessPolicyUpdateIntervalSec | Integer     | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
 | SyncClientContentEncoding         | String      | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none" (Defaults to deflate.)  |
 | SyncExtraHeaders                  | Dictionary  | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
+| EnableDebugLogging                | Bool  | If YES, the client will log additional debug messages to the Apple Unified Log.  For example, transitive rule creation logs can be viewed with `log stream --predicate 'sender=="com.google.santa.daemon"'`.  Defaults to NO. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current
@@ -223,9 +224,9 @@ ways to install configuration profiles:
 | allowed\_path\_regex                | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
 | blocked\_path\_regex                | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
 | full\_sync\_interval\*              | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
-| fcm\_token\*                        | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
-| fcm\_full\_sync\_interval\*         | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
-| fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
+| fcm\_token\*†                       | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
+| fcm\_full\_sync\_interval\*†        | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
+| fcm\_global\_rule\_sync\_deadline\*†| Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
@@ -237,6 +238,7 @@ ways to install configuration profiles:
 
 **Performed once per preflight run (if set).
 
+†The Firebase Cloud Messaging (FCM) based Push Notification system is only available on the internal Google deployment of Santa at this time
 
 ## MDM-Specific Client Configuration
 
