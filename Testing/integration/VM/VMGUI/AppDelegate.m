@@ -47,28 +47,37 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
 #ifdef __arm64__
   dispatch_async(dispatch_get_main_queue(), ^{
-    NSArray *args = [[NSProcessInfo processInfo] arguments];
+    NSMutableArray *args = [NSMutableArray arrayWithArray:[[NSProcessInfo processInfo] arguments]];
 
     VZMacOSVirtualMachineStartOptions *options = [VZMacOSVirtualMachineStartOptions new];
     NSString *bundleDir;
     NSString *roDisk;
+    NSString *usbDisk;
 
-    if (args.count < 2) {
-      abortWithErrorMessage(@"Usage: VMGUI [-recovery] bundle_path [ro_disk]");
+    [args removeObjectAtIndex:0];
+
+    if (args.count == 0) {
+      abortWithErrorMessage(@"Usage: VMGUI [-recovery] bundle_path [ro_disk] [usb_disk]");
     }
 
-    int bundleArg = 1;
-    if ([args[1] isEqualToString:@"-recovery"]) {
+    if ([args[0] isEqualToString:@"-recovery"]) {
       options.startUpFromMacOSRecovery = YES;
-      if (args.count < 3) {
-        abortWithErrorMessage(@"Usage: VMGUI [-recovery] bundle_path [ro_disk]");
+      [args removeObjectAtIndex:0];
+      if (args.count == 0) {
+        abortWithErrorMessage(@"Usage: VMGUI [-recovery] bundle_path [ro_disk] [usb_disk]");
       }
-      bundleArg = 2;
     }
 
-    bundleDir = args[bundleArg];
-    if (args.count > bundleArg + 1) {
-      roDisk = args[bundleArg + 1];
+    bundleDir = args[0];
+    [args removeObjectAtIndex:0];
+    if (args.count) {
+      roDisk = args[0];
+      [args removeObjectAtIndex:0];
+    }
+
+    if (args.count) {
+      usbDisk = args[0];
+      [args removeObjectAtIndex:0];
     }
 
     if (![bundleDir hasSuffix:@"/"]) {
@@ -77,7 +86,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     VZVirtualMachine *vm =
       [MacOSVirtualMachineConfigurationHelper createVirtualMachineWithBundleDir:bundleDir
-                                                                         roDisk:roDisk];
+                                                                         roDisk:roDisk
+                                                                        usbDisk:usbDisk];
     self->_virtualMachine = vm;
 
     self->_delegate = [MacOSVirtualMachineDelegate new];

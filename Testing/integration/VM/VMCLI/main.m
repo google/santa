@@ -40,8 +40,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @end
 
 int main(int argc, const char *argv[]) {
-  if (argc != 2) {
-    fprintf(stderr, "Usage: %s bundle_path", argv[0]);
+  if (argc < 2) {
+    fprintf(stderr, "Usage: %s bundle_path [usb_disk]", argv[0]);
     exit(-1);
   }
 
@@ -50,8 +50,13 @@ int main(int argc, const char *argv[]) {
     bundleDir = [bundleDir stringByAppendingString:@"/"];
   }
 
+  NSString *usbDisk;
+  if (argc > 2) {
+    usbDisk = @(argv[2]);
+  }
+
   VZVirtualMachine *vm =
-    [MacOSVirtualMachineConfigurationHelper createVirtualMachineWithBundleDir:bundleDir];
+    [MacOSVirtualMachineConfigurationHelper createVirtualMachineWithBundleDir:bundleDir roDisk:nil usbDisk:usbDisk];
 
   MacOSVirtualMachineDelegate *delegate = [MacOSVirtualMachineDelegate new];
   vm.delegate = delegate;

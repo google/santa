@@ -44,7 +44,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   (NSString *)bundleDir;
 + (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir;
 + (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir
-                                                 roDisk:(NSString *)roDisk;
+                                                 roDisk:(NSString *)roDisk
+                                                usbDisk:(NSString *)usbDisk;
 
 @end
 
