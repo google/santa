@@ -9,7 +9,7 @@ jobs:
   start_vm:
     runs-on: e2e-host
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
       - name: Start VM
         run: python3 Testing/integration/actions/start_vm.py macOS_14.bundle.tar.gz
 
@@ -18,7 +18,7 @@ jobs:
     env:
       VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
       - name: Add homebrew to PATH
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: Install configuration profile
