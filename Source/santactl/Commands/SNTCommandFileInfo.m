@@ -22,6 +22,8 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTStoredEvent.h"
+#import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
@@ -55,6 +57,13 @@ static NSString *const kValidUntil = @"Valid Until";
 static NSString *const kSHA256 = @"SHA-256";
 static NSString *const kSHA1 = @"SHA-1";
 
+// bundle info keys
+static NSString *const kBundleInfo = @"Bundle Info";
+static NSString *const kBundlePath = @"Main Bundle Path";
+static NSString *const kBundleID = @"Main Bundle ID";
+static NSString *const kBundleHash = @"Bundle Hash";
+static NSString *const kBundleHashes = @"Bundle Hashes";
+
 // Message displayed when daemon communication fails
 static NSString *const kCommunicationErrorMsg = @"Could not communicate with daemon";
 
@@ -72,6 +81,7 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 // Properties set from commandline flags
 @property(nonatomic) BOOL recursive;
 @property(nonatomic) BOOL jsonOutput;
+@property(nonatomic) BOOL bundleInfo;
 @property(nonatomic) NSNumber *certIndex;
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
 @property(nonatomic, copy) NSDictionary<NSString *, NSRegularExpression *> *outputFilters;
@@ -156,6 +166,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                 @"\n"
                 @"Usage: santactl fileinfo [options] [file-paths]\n"
                 @"    --recursive (-r): Search directories recursively.\n"
+                @"                      Incompatible with --bundleinfo.\n"
                 @"    --json: Output in JSON format.\n"
                 @"    --key: Search and return this one piece of information.\n"
                 @"           You may specify multiple keys by repeating this flag.\n"
@@ -167,12 +178,16 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                 @"                  signing chain to show info only for that certificate.\n"
                 @"                     0 up to n for the leaf certificate up to the root\n"
                 @"                    -1 down to -n-1 for the root certificate down to the leaf\n"
+                @"                  Incompatible with --bundleinfo."
                 @"\n"
                 @"    --filter: Use predicates of the form 'key=regex' to filter out which files\n"
                 @"              are displayed. Valid keys are the same as for --key. Value is a\n"
                 @"              case-insensitive regular expression which must match anywhere in\n"
                 @"              the keyed property value for the file's info to be displayed.\n"
                 @"              You may specify multiple filters by repeating this flag.\n"
+                @"    --bundleinfo: If the file is part of a bundle, will also display bundle\n"
+                @"                  hash information and hashes of all bundle executables.\n"
+                @"                  Incompatible with --recursive and --cert-index.\n"
                 @"\n"
                 @"Examples: santactl fileinfo --cert-index 1 --key SHA-256 --json /usr/bin/yes\n"
                 @"          santactl fileinfo --key SHA-256 --json /usr/bin/yes\n"
@@ -682,6 +697,46 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       if (outputDict[key]) continue;  // ignore keys that we've already set due to a filter
       outputDict[key] = self.propertyMap[key](self, fileInfo);
     }
+
+    if (self.bundleInfo) {
+      SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
+      se.fileBundlePath = fileInfo.bundlePath;
+
+      MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
+      [bc resume];
+
+      __block NSMutableDictionary *bundleInfo = [[NSMutableDictionary alloc] init];
+
+      bundleInfo[kBundlePath] = fileInfo.bundle.bundlePath;
+      bundleInfo[kBundleID] = fileInfo.bundle.bundleIdentifier;
+
+      dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+      [[bc remoteObjectProxy]
+        hashBundleBinariesForEvent:se
+                             reply:^(NSString *hash, NSArray<SNTStoredEvent *> *events,
+                                     NSNumber *time) {
+                               bundleInfo[kBundleHash] = hash;
+
+                               NSMutableArray *bundleHashes = [[NSMutableArray alloc] init];
+
+                               for (SNTStoredEvent *event in events) {
+                                 [bundleHashes
+                                   addObject:@{kSHA256 : event.fileSHA256, kPath : event.filePath}];
+                               }
+
+                               bundleInfo[kBundleHashes] = bundleHashes;
+                               [[bc remoteObjectProxy] spindown];
+                               dispatch_semaphore_signal(sema);
+                             }];
+
+      int secondsToWait = 30;
+      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, secondsToWait * NSEC_PER_SEC))) {
+        fprintf(stderr, "The bundle service did not finish collecting hashes within %d seconds\n", secondsToWait);
+      }
+
+      outputDict[kBundleInfo] = bundleInfo;
+    }
   }
 
   // If there's nothing in the outputDict, then don't need to print anything.
@@ -710,6 +765,11 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         }
       }
     }
+
+    if (self.bundleInfo) {
+      [output appendString:[self stringForBundleInfo:outputDict[kBundleInfo] key:kBundleInfo]];
+    }
+
     if (!singleKey) [output appendString:@"\n"];
   }
 
@@ -739,6 +799,9 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if ([arg caseInsensitiveCompare:@"--json"] == NSOrderedSame) {
       self.jsonOutput = YES;
     } else if ([arg caseInsensitiveCompare:@"--cert-index"] == NSOrderedSame) {
+      if (self.bundleInfo) {
+        [self printErrorUsageAndExit:@"\n--cert-index is incompatible with --bundleinfo"];
+      }
       i += 1;  // advance to next argument and grab index
       if (i >= nargs || [arguments[i] hasPrefix:@"--"]) {
         [self printErrorUsageAndExit:@"\n--cert-index requires an argument"];
@@ -788,7 +851,17 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       filters[key] = regex;
     } else if ([arg caseInsensitiveCompare:@"--recursive"] == NSOrderedSame ||
                [arg caseInsensitiveCompare:@"-r"] == NSOrderedSame) {
+      if (self.bundleInfo) {
+        [self printErrorUsageAndExit:@"\n--recursive is incompatible with --bundleinfo"];
+      }
       self.recursive = YES;
+    } else if ([arg caseInsensitiveCompare:@"--bundleinfo"] == NSOrderedSame ||
+               [arg caseInsensitiveCompare:@"-b"] == NSOrderedSame) {
+      if (self.recursive || self.certIndex) {
+        [self printErrorUsageAndExit:
+                @"\n--bundleinfo is incompatible with --recursive and --cert-index"];
+      }
+      self.bundleInfo = YES;
     } else {
       [paths addObject:arg];
     }
@@ -866,6 +939,22 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     i += 1;
   }
   return result.copy;
+}
+
+- (NSString *)stringForBundleInfo:(NSDictionary *)bundleInfo key:(NSString *)key {
+  NSMutableString *result = [NSMutableString string];
+
+  [result appendFormat:@"%@:\n", key];
+
+  [result appendFormat:@"       %-20s: %@\n", kBundlePath.UTF8String, bundleInfo[kBundlePath]];
+  [result appendFormat:@"       %-20s: %@\n", kBundleID.UTF8String, bundleInfo[kBundleID]];
+  [result appendFormat:@"       %-20s: %@\n", kBundleHash.UTF8String, bundleInfo[kBundleHash]];
+
+  for (NSDictionary *hashPath in bundleInfo[kBundleHashes]) {
+    [result appendFormat:@"              %@  %@\n", hashPath[kSHA256], hashPath[kPath]];
+  }
+
+  return [result copy];
 }
 
 - (NSString *)stringForCertificate:(NSDictionary *)cert withKeys:(NSArray *)keys index:(int)index {
