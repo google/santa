@@ -2,23 +2,31 @@
 set -xe
 
 bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
-if [[ "$(santactl status --json | jq .daemon.block_usb)" != "false" ]]; then
+sudo diskutil unmount force USB || true
+
+killall moroz
+/tmp/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
+sudo santactl sync --debug
+if [[ "$(sudo santactl status --json | jq .daemon.block_usb)" != "false" ]]; then
   echo "USB blocking enabled with minimal config" >&2
   exit 1
 fi
 
-diskutil mount USB
+sudo diskutil mount USB
 echo test > /Volumes/USB/test
-diskutil unmount USB
+sync
+sudo diskutil unmount force USB
 
-bazel run //Testing/integration:install_profile -- Testing/integration/configs/usb-block.mobileconfig
-if [[ "$(santactl status --json | jq .daemon.block_usb)" != "true" ]]; then
+killall moroz
+/tmp/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_changed/global.toml" -use-tls=false &
+sudo santactl sync --debug
+if [[ "$(sudo santactl status --json | jq .daemon.block_usb)" != "true" ]]; then
   echo "USB blocking config change didnt take effect" >&2
   exit 1
 fi
 
 set +e
-diskutil mount USB
+sudo diskutil mount USB
 blocked=$?
 set -e
 
@@ -33,11 +41,11 @@ sleep 5
 bazel run //Testing/integration:dismiss_usb_popup
 cat /Volumes/USB/test
 
-diskutil unmount USB
+sudo diskutil unmount force USB
 
 # Ensure things can still be normally mounted if mount flags match remount opts.
 set +e
-diskutil mount -mountOptions ro,noexec USB
+sudo diskutil mount -mountOptions ro,noexec USB
 blocked=$?
 set -e
 
