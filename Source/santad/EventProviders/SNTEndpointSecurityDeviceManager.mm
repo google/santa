@@ -260,7 +260,7 @@ NS_ASSUME_NONNULL_BEGIN
       continue;
     }
 
-    if ([self remountUSBModeContainsFlags:sfs->f_flags]) {
+    if (self.remountArgs != nil && [self remountUSBModeContainsFlags:sfs->f_flags]) {
       LOGI(@"Allowing existing mount as flags contain RemountUSBMode. '%s' -> '%s'",
            sfs->f_mntfromname, sfs->f_mntonname);
       continue;
