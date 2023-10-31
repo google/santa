@@ -71,6 +71,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
 | BlockUSBMount                     | Bool       | If YES, blocking USB Mass storage feature is enabled. Defaults to NO. |
 | RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j") when forcibly remounting devices. No default. |
+| OnStartUSBOptions                 | String     | If set, defines the action that should be taken on existing USB mounts when Santa starts up. Supported values are "Unmount" and "ForceUnmount". Existing mounts with mount flags that are a superset of RemountUSBMode are unaffected and left mounted. |
 | FileAccessPolicyPlist             | String      | Path to a file access configuration plist. This is ignored if `FileAccessPolicy` is also set. |
 | FileAccessPolicy                  | Dictionary  | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
 | FileAccessPolicyUpdateIntervalSec | Integer     | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
