@@ -259,7 +259,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=CODESIGNING_INVALIDATED"
                      "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|uid=-2|user=nobody|gid=-1|group=nogroup|machineid=my_id\n";
+                     "|uid=-2|user=nobody|gid=-1|group=nogroup|codesigning_flags=0x00000000|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }

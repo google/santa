@@ -421,6 +421,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedCSInvalidated &
   AppendProcess(str, esm.process);
   AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
                   msg.instigator().real_group());
+  str.append("|codesigning_flags=");
+  str.append([NSString stringWithFormat:@"0x%08x", esm.process->codesigning_flags].UTF8String);
   return FinalizeString(str);
 }
 
