@@ -455,6 +455,20 @@
 @property(nonatomic) NSArray<NSString *> *remountUSBMode;
 
 ///
+/// If set, defines the action that should be taken on existing USB mounts when
+/// Santa starts up.
+///
+/// Supported values are:
+///   * "Unmount": Unmount mass storage devices
+///   * "ForceUnmount": Force unmount mass storage devices
+///
+///
+/// Note: Existing mounts with mount flags that are a superset of RemountUSBMode
+/// are unaffected and left mounted.
+///
+@property(readonly, nonatomic) SNTDeviceManagerStartupPreferences onStartUSBOptions;
+
+///
 /// If set, will override the action taken when a file access rule violation
 /// occurs. This setting will apply across all rules in the file access policy.
 ///
