@@ -731,8 +731,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                              }];
 
       int secondsToWait = 30;
-      if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, secondsToWait * NSEC_PER_SEC))) {
-        fprintf(stderr, "The bundle service did not finish collecting hashes within %d seconds\n", secondsToWait);
+      if (dispatch_semaphore_wait(sema,
+                                  dispatch_time(DISPATCH_TIME_NOW, secondsToWait * NSEC_PER_SEC))) {
+        fprintf(stderr, "The bundle service did not finish collecting hashes within %d seconds\n",
+                secondsToWait);
       }
 
       outputDict[kBundleInfo] = bundleInfo;
