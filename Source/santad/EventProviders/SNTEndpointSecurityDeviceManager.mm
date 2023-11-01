@@ -24,6 +24,8 @@
 #include <errno.h>
 #include <libproc.h>
 #include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/ucred.h>
 
 #import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
@@ -45,6 +47,7 @@ using santa::santad::logs::endpoint_security::Logger;
 
 @property DASessionRef diskArbSession;
 @property(nonatomic, readonly) dispatch_queue_t diskQueue;
+@property dispatch_semaphore_t startupUnmountSema;
 
 @end
 
@@ -91,7 +94,7 @@ void diskDisappearedCallback(DADiskRef disk, void *context) {
   [dm logDiskDisappeared:props];
 }
 
-NSArray<NSString *> *maskToMountArgs(long remountOpts) {
+NSArray<NSString *> *maskToMountArgs(uint32_t remountOpts) {
   NSMutableArray<NSString *> *args = [NSMutableArray array];
   if (remountOpts & MNT_RDONLY) [args addObject:@"rdonly"];
   if (remountOpts & MNT_NOEXEC) [args addObject:@"noexec"];
@@ -104,8 +107,8 @@ NSArray<NSString *> *maskToMountArgs(long remountOpts) {
   return args;
 }
 
-long mountArgsToMask(NSArray<NSString *> *args) {
-  long flags = 0;
+uint32_t mountArgsToMask(NSArray<NSString *> *args) {
+  uint32_t flags = 0;
   for (NSString *i in args) {
     NSString *arg = [i lowercaseString];
     if ([arg isEqualToString:@"rdonly"])
@@ -130,6 +133,21 @@ long mountArgsToMask(NSArray<NSString *> *args) {
   return flags;
 }
 
+void UnmountCallback(DADiskRef disk, DADissenterRef dissenter, void *context) {
+  if (dissenter) {
+    LOGW(@"Unable to unmount device: %@", CFBridgingRelease(DADissenterGetStatusString(dissenter)));
+  } else if (disk) {
+    NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
+    LOGI(@"Unmounted device: Model: %@, Vendor: %@, Path: %@",
+         diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceModelKey],
+         diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceVendorKey],
+         diskInfo[(__bridge NSString *)kDADiskDescriptionVolumePathKey]);
+  }
+
+  dispatch_semaphore_t sema = (__bridge dispatch_semaphore_t)context;
+  dispatch_semaphore_signal(sema);
+}
+
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation SNTEndpointSecurityDeviceManager {
@@ -140,23 +158,132 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                       metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger
-              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
+              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
+                blockUSBMount:(BOOL)blockUSBMount
+               remountUSBMode:(nullable NSArray<NSString *> *)remountUSBMode
+           startupPreferences:(SNTDeviceManagerStartupPreferences)startupPrefs {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
                     processor:santa::santad::Processor::kDeviceManager];
   if (self) {
     _logger = logger;
     _authResultCache = authResultCache;
-    _blockUSBMount = false;
+    _blockUSBMount = blockUSBMount;
+    _remountArgs = remountUSBMode;
 
     _diskQueue = dispatch_queue_create("com.google.santa.daemon.disk_queue", DISPATCH_QUEUE_SERIAL);
 
     _diskArbSession = DASessionCreate(NULL);
     DASessionSetDispatchQueue(_diskArbSession, _diskQueue);
 
+    [self performStartupTasks:startupPrefs];
+
     [self establishClientOrDie];
   }
   return self;
+}
+
+- (BOOL)shouldOperateOnDisk:(DADiskRef)disk {
+  NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
+
+  BOOL isInternal = [diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceInternalKey] boolValue];
+  BOOL isRemovable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaRemovableKey] boolValue];
+  BOOL isEjectable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaEjectableKey] boolValue];
+  NSString *protocol = diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey];
+  BOOL isUSB = [protocol isEqualToString:@"USB"];
+  BOOL isSecureDigital = [protocol isEqualToString:@"Secure Digital"];
+  BOOL isVirtual = [protocol isEqualToString:@"Virtual Interface"];
+
+  NSString *kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
+
+  // TODO: check kind and protocol for banned things (e.g. MTP).
+  LOGD(@"SNTEndpointSecurityDeviceManager: DiskInfo Protocol: %@ Kind: %@ isInternal: %d "
+       @"isRemovable: %d isEjectable: %d",
+       protocol, kind, isInternal, isRemovable, isEjectable);
+
+  // if the device is internal, or virtual *AND* is not an SD Card,
+  // then allow the mount. This is to ensure we block SD cards inserted into
+  // the internal reader of some Macs, whilst also ensuring we don't block
+  // the internal storage device.
+  if ((isInternal || isVirtual) && !isSecureDigital) {
+    return false;
+  }
+
+  // We are okay with operations for devices that are non-removable as long as
+  // they are NOT a USB device, or an SD Card.
+  if (!isRemovable && !isEjectable && !isUSB && !isSecureDigital) {
+    return false;
+  }
+
+  return true;
+}
+
+- (BOOL)remountUSBModeContainsFlags:(uint32_t)flags {
+  uint32_t requiredFlags = mountArgsToMask(self.remountArgs);
+
+  LOGD(@" Got mount flags: 0x%08x | %@", flags, maskToMountArgs(flags));
+  LOGD(@"Want mount flags: 0x%08x | %@", mountArgsToMask(self.remountArgs), self.remountArgs);
+
+  return (flags & requiredFlags) == requiredFlags;
+}
+
+- (void)performStartupTasks:(SNTDeviceManagerStartupPreferences)startupPrefs {
+  if (!self.blockUSBMount || (startupPrefs != SNTDeviceManagerStartupPreferencesUnmount &&
+                              startupPrefs != SNTDeviceManagerStartupPreferencesForceUnmount)) {
+    return;
+  }
+
+  struct statfs *mnts;
+  int numMounts = getmntinfo_r_np(&mnts, MNT_WAIT);
+
+  if (numMounts == 0) {
+    LOGE(@"Failed to get mount info: %d: %s", errno, strerror(errno));
+    return;
+  }
+
+  self.startupUnmountSema = dispatch_semaphore_create(0);
+  int numUnmountAttempts = 0;
+
+  for (int i = 0; i < numMounts; i++) {
+    struct statfs *sfs = &mnts[i];
+
+    DADiskRef disk = DADiskCreateFromBSDName(NULL, self.diskArbSession, sfs->f_mntfromname);
+    if (!disk) {
+      LOGW(@"Unable to create disk reference for device: '%s' -> '%s'", sfs->f_mntfromname,
+           sfs->f_mntonname);
+      continue;
+    }
+
+    CFAutorelease(disk);
+
+    if (![self shouldOperateOnDisk:disk]) {
+      continue;
+    }
+
+    if (self.remountArgs != nil && [self remountUSBModeContainsFlags:sfs->f_flags]) {
+      LOGI(@"Allowing existing mount as flags contain RemountUSBMode. '%s' -> '%s'",
+           sfs->f_mntfromname, sfs->f_mntonname);
+      continue;
+    }
+
+    DADiskUnmountOptions unmountOptions = kDADiskUnmountOptionDefault;
+    if (startupPrefs == SNTDeviceManagerStartupPreferencesForceUnmount) {
+      unmountOptions = kDADiskUnmountOptionForce;
+    }
+
+    LOGI(@"Attempting to unmount device: '%s' mounted on '%s'", sfs->f_mntfromname,
+         sfs->f_mntonname);
+
+    DADiskUnmount(disk, unmountOptions, UnmountCallback, (__bridge void *)self.startupUnmountSema);
+    numUnmountAttempts++;
+  }
+
+  while (numUnmountAttempts-- > 0) {
+    if (dispatch_semaphore_wait(self.startupUnmountSema,
+                                dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+      LOGW(@"An unmount attempt took longer than expected. Device may still be mounted.");
+    }
+  }
 }
 
 - (void)logDiskAppeared:(NSDictionary *)props {
@@ -225,44 +352,16 @@ NS_ASSUME_NONNULL_BEGIN
       exit(EXIT_FAILURE);
   }
 
-  long mountMode = eventStatFS->f_flags;
+  uint32_t mountMode = eventStatFS->f_flags;
   pid_t pid = audit_token_to_pid(m->process->audit_token);
   LOGD(
-    @"SNTEndpointSecurityDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %lu",
+    @"SNTEndpointSecurityDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %u",
     m->process->executable->path.data, pid, mountMode);
 
   DADiskRef disk = DADiskCreateFromBSDName(NULL, self.diskArbSession, eventStatFS->f_mntfromname);
   CFAutorelease(disk);
 
-  // TODO(tnek): Log all of the other attributes available in diskInfo into a structured log format.
-  NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
-  BOOL isInternal = [diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceInternalKey] boolValue];
-  BOOL isRemovable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaRemovableKey] boolValue];
-  BOOL isEjectable = [diskInfo[(__bridge NSString *)kDADiskDescriptionMediaEjectableKey] boolValue];
-  NSString *protocol = diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceProtocolKey];
-  BOOL isUSB = [protocol isEqualToString:@"USB"];
-  BOOL isSecureDigital = [protocol isEqualToString:@"Secure Digital"];
-  BOOL isVirtual = [protocol isEqualToString:@"Virtual Interface"];
-
-  NSString *kind = diskInfo[(__bridge NSString *)kDADiskDescriptionMediaKindKey];
-
-  // TODO: check kind and protocol for banned things (e.g. MTP).
-  LOGD(@"SNTEndpointSecurityDeviceManager: DiskInfo Protocol: %@ Kind: %@ isInternal: %d "
-       @"isRemovable: %d "
-       @"isEjectable: %d",
-       protocol, kind, isInternal, isRemovable, isEjectable);
-
-  // if the device is internal, or virtual *AND* is not an SD Card,
-  // then allow the mount. This is to ensure we block SD cards inserted into
-  // the internal reader of some Macs, whilst also ensuring we don't block
-  // the internal storage device.
-  if ((isInternal || isVirtual) && !isSecureDigital) {
-    return ES_AUTH_RESULT_ALLOW;
-  }
-
-  // We are okay with operations for devices that are non-removable as long as
-  // they are NOT a USB device, or an SD Card.
-  if (!isRemovable && !isEjectable && !isUSB && !isSecureDigital) {
+  if (![self shouldOperateOnDisk:disk]) {
     return ES_AUTH_RESULT_ALLOW;
   }
 
@@ -274,18 +373,17 @@ NS_ASSUME_NONNULL_BEGIN
 
   if (shouldRemount) {
     event.remountArgs = self.remountArgs;
-    long remountOpts = mountArgsToMask(self.remountArgs);
+    uint32_t remountOpts = mountArgsToMask(self.remountArgs);
 
-    LOGD(@"SNTEndpointSecurityDeviceManager: mountMode: %@", maskToMountArgs(mountMode));
-    LOGD(@"SNTEndpointSecurityDeviceManager: remountOpts: %@", maskToMountArgs(remountOpts));
-
-    if ((mountMode & remountOpts) == remountOpts && m->event_type != ES_EVENT_TYPE_AUTH_REMOUNT) {
-      LOGD(@"SNTEndpointSecurityDeviceManager: Allowing as mount as flags match remountOpts");
+    if ([self remountUSBModeContainsFlags:mountMode] &&
+        m->event_type != ES_EVENT_TYPE_AUTH_REMOUNT) {
+      LOGD(@"Allowing mount as flags contain RemountUSBMode. '%s' -> '%s'",
+           eventStatFS->f_mntfromname, eventStatFS->f_mntonname);
       return ES_AUTH_RESULT_ALLOW;
     }
 
-    long newMode = mountMode | remountOpts;
-    LOGI(@"SNTEndpointSecurityDeviceManager: remounting device '%s'->'%s', flags (%lu) -> (%lu)",
+    uint32_t newMode = mountMode | remountOpts;
+    LOGI(@"SNTEndpointSecurityDeviceManager: remounting device '%s'->'%s', flags (%u) -> (%u)",
          eventStatFS->f_mntfromname, eventStatFS->f_mntonname, mountMode, newMode);
     [self remount:disk mountMode:newMode];
   }
@@ -297,7 +395,7 @@ NS_ASSUME_NONNULL_BEGIN
   return ES_AUTH_RESULT_DENY;
 }
 
-- (void)remount:(DADiskRef)disk mountMode:(long)remountMask {
+- (void)remount:(DADiskRef)disk mountMode:(uint32_t)remountMask {
   NSArray<NSString *> *args = maskToMountArgs(remountMask);
   CFStringRef *argv = (CFStringRef *)calloc(args.count + 1, sizeof(CFStringRef));
   CFArrayGetValues((__bridge CFArrayRef)args, CFRangeMake(0, (CFIndex)args.count),
