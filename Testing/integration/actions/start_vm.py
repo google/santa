@@ -105,9 +105,12 @@ if __name__ == "__main__":
     print(f"Snapshot: {snapshot_dir}")
     # COW copy the image to this tempdir
     subprocess.check_output(["cp", "-rc", extracted_path, snapshot_dir])
+    # Create a disk image for USB testing
+    usb_dmg = pathlib.Path(snapshot_dir) / "usb.dmg"
+    subprocess.check_output(["hdiutil", "create", "-size", "100M", "-fs", "ExFAT", "-volname", "USB", usb_dmg])
     try:
       subprocess.check_output(
-          [VMCLI, pathlib.Path(snapshot_dir) / extracted_path.name],
+          [VMCLI, pathlib.Path(snapshot_dir) / extracted_path.name, usb_dmg],
           timeout=TIMEOUT,
       )
     except subprocess.TimeoutExpired:
