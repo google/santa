@@ -39,6 +39,8 @@ jobs:
         run: ./Testing/integration/test_config_changes.sh
       - name: Test sync server changes
         run: ./Testing/integration/test_sync_changes.sh
+      - name: Test USB blocking
+        run: ./Testing/integration/test_usb.sh
       - name: Poweroff
         if: ${{ always() }}
         run: sudo shutdown -h +1
