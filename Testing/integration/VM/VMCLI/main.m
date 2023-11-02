@@ -56,7 +56,9 @@ int main(int argc, const char *argv[]) {
   }
 
   VZVirtualMachine *vm =
-    [MacOSVirtualMachineConfigurationHelper createVirtualMachineWithBundleDir:bundleDir roDisk:nil usbDisk:usbDisk];
+    [MacOSVirtualMachineConfigurationHelper createVirtualMachineWithBundleDir:bundleDir
+                                                                       roDisk:nil
+                                                                      usbDisk:usbDisk];
 
   MacOSVirtualMachineDelegate *delegate = [MacOSVirtualMachineDelegate new];
   vm.delegate = delegate;

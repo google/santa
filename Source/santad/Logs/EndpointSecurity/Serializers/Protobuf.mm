@@ -46,6 +46,7 @@ using google::protobuf::json::MessageToJsonString;
 using santa::common::NSStringToUTF8StringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
@@ -56,7 +57,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
-using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveUser;
@@ -611,7 +611,6 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg
 
   return FinalizeProto(santa_msg);
 }
-
 
 std::vector<uint8_t> Protobuf::SerializeFileAccess(const std::string &policy_version,
                                                    const std::string &policy_name,

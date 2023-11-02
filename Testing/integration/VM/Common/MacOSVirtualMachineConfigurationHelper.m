@@ -76,7 +76,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
 
 + (VZUSBMassStorageDeviceConfiguration *)createUSBDeviceConfigurationForDisk:(NSURL *)diskURL
-                                                                   readOnly:(BOOL)ro {
+                                                                    readOnly:(BOOL)ro {
   NSError *error;
   VZDiskImageStorageDeviceAttachment *diskAttachment =
     [[VZDiskImageStorageDeviceAttachment alloc] initWithURL:diskURL readOnly:ro error:&error];
@@ -205,7 +205,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 + (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir
                                                  roDisk:(NSString *)roDisk
-                                                usbDisk:(NSString*)usbDisk {
+                                                usbDisk:(NSString *)usbDisk {
   VZVirtualMachineConfiguration *configuration =
     [self createBaseVirtualMachineConfigurationWithBundleDir:bundleDir];
   if (roDisk && ![roDisk isEqualToString:@""]) {
@@ -217,8 +217,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   if (usbDisk && ![usbDisk isEqualToString:@""]) {
     configuration.storageDevices = [configuration.storageDevices
       arrayByAddingObject:[self createUSBDeviceConfigurationForDisk:[[NSURL alloc]
-                                                                        initFileURLWithPath:usbDisk]
-                                                             readOnly:NO]];
+                                                                      initFileURLWithPath:usbDisk]
+                                                           readOnly:NO]];
   }
   NSError *error;
   if (![configuration validateWithError:&error]) {

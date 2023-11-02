@@ -78,5 +78,4 @@ std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedCSIn
   return SerializeMessage(msg);
 }
 
-
 };  // namespace santa::santad::logs::endpoint_security::serializers
