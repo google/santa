@@ -193,7 +193,7 @@ NS_ASSUME_NONNULL_BEGIN
     SNTMetricInt64Gauge *startupPrefsMetric = [[SNTMetricSet sharedInstance]
       int64GaugeWithName:@"/santa/device_manager/startup_preference"
               fieldNames:@[]
-                helpText:@"The systems current startup preference value"];
+                helpText:@"The current startup preference value"];
 
     [[SNTMetricSet sharedInstance] registerCallback:^{
       [startupPrefsMetric set:startupPrefs forFieldValues:@[]];
