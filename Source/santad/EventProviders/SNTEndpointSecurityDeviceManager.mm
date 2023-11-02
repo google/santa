@@ -296,7 +296,8 @@ NS_ASSUME_NONNULL_BEGIN
       continue;
     }
 
-    if (startupPrefs == SNTDeviceManagerStartupPreferencesRemount) {
+    if (startupPrefs == SNTDeviceManagerStartupPreferencesRemount ||
+        startupPrefs == SNTDeviceManagerStartupPreferencesForceRemount) {
       uint32_t newMode = sfs->f_flags | mountArgsToMask(self.remountArgs);
       LOGI(@"Attempting to mount device again changing flags: 0x%08x --> 0x%08x", sfs->f_flags,
            newMode);
