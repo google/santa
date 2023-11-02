@@ -45,6 +45,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
 using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
@@ -409,6 +410,19 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
   AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
                   msg.instigator().real_group());
 
+  return FinalizeString(str);
+}
+
+std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedCSInvalidated &msg) {
+  const es_message_t &esm = msg.es_msg();
+  std::string str = CreateDefaultString();
+
+  str.append("action=CODESIGNING_INVALIDATED");
+  AppendProcess(str, esm.process);
+  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
+                  msg.instigator().real_group());
+  str.append("|codesigning_flags=");
+  str.append([NSString stringWithFormat:@"0x%08x", esm.process->codesigning_flags].UTF8String);
   return FinalizeString(str);
 }
 

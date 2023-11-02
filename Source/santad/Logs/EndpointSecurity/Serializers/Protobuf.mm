@@ -46,6 +46,7 @@ using google::protobuf::json::MessageToJsonString;
 using santa::common::NSStringToUTF8StringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
@@ -596,6 +597,17 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
   EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg.es_msg().version,
                          msg.es_msg().process, msg.instigator());
   EncodeFileInfo(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
+
+  return FinalizeProto(santa_msg);
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  ::pbv1::CodesigningInvalidated *pb_cs_invalidated = santa_msg->mutable_codesigning_invalidated();
+  EncodeProcessInfoLight(pb_cs_invalidated->mutable_instigator(), msg.es_msg().version,
+                         msg.es_msg().process, msg.instigator());
 
   return FinalizeProto(santa_msg);
 }
