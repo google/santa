@@ -47,26 +47,31 @@ using santa::santad::logs::endpoint_security::Logger;
 
 @property DASessionRef diskArbSession;
 @property(nonatomic, readonly) dispatch_queue_t diskQueue;
-@property dispatch_semaphore_t startupUnmountSema;
+@property dispatch_semaphore_t diskSema;
 
 @end
 
-void diskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context) {
+void DiskMountedCallback(DADiskRef disk, DADissenterRef dissenter, void *context) {
   if (dissenter) {
     DAReturn status = DADissenterGetStatus(dissenter);
 
-    NSString *statusString = (NSString *)DADissenterGetStatusString(dissenter);
     IOReturn systemCode = err_get_system(status);
     IOReturn subSystemCode = err_get_sub(status);
     IOReturn errorCode = err_get_code(status);
 
     LOGE(@"SNTEndpointSecurityDeviceManager: dissenter status codes: system: %d, subsystem: %d, "
-         @"err: %d; status: %s",
-         systemCode, subSystemCode, errorCode, [statusString UTF8String]);
+         @"err: %d; status: %@",
+         systemCode, subSystemCode, errorCode,
+         CFBridgingRelease(DADissenterGetStatusString(dissenter)));
+  }
+
+  if (context) {
+    dispatch_semaphore_t sema = (__bridge dispatch_semaphore_t)context;
+    dispatch_semaphore_signal(sema);
   }
 }
 
-void diskAppearedCallback(DADiskRef disk, void *context) {
+void DiskAppearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
   SNTEndpointSecurityDeviceManager *dm = (__bridge SNTEndpointSecurityDeviceManager *)context;
@@ -74,7 +79,7 @@ void diskAppearedCallback(DADiskRef disk, void *context) {
   [dm logDiskAppeared:props];
 }
 
-void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
+void DiskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
@@ -85,13 +90,28 @@ void diskDescriptionChangedCallback(DADiskRef disk, CFArrayRef keys, void *conte
   }
 }
 
-void diskDisappearedCallback(DADiskRef disk, void *context) {
+void DiskDisappearedCallback(DADiskRef disk, void *context) {
   NSDictionary *props = CFBridgingRelease(DADiskCopyDescription(disk));
   if (![props[@"DAVolumeMountable"] boolValue]) return;
 
   SNTEndpointSecurityDeviceManager *dm = (__bridge SNTEndpointSecurityDeviceManager *)context;
 
   [dm logDiskDisappeared:props];
+}
+
+void DiskUnmountCallback(DADiskRef disk, DADissenterRef dissenter, void *context) {
+  if (dissenter) {
+    LOGW(@"Unable to unmount device: %@", CFBridgingRelease(DADissenterGetStatusString(dissenter)));
+  } else if (disk) {
+    NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
+    LOGI(@"Unmounted device: Model: %@, Vendor: %@, Path: %@",
+         diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceModelKey],
+         diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceVendorKey],
+         diskInfo[(__bridge NSString *)kDADiskDescriptionVolumePathKey]);
+  }
+
+  dispatch_semaphore_t sema = (__bridge dispatch_semaphore_t)context;
+  dispatch_semaphore_signal(sema);
 }
 
 NSArray<NSString *> *maskToMountArgs(uint32_t remountOpts) {
@@ -111,41 +131,27 @@ uint32_t mountArgsToMask(NSArray<NSString *> *args) {
   uint32_t flags = 0;
   for (NSString *i in args) {
     NSString *arg = [i lowercaseString];
-    if ([arg isEqualToString:@"rdonly"])
+    if ([arg isEqualToString:@"rdonly"]) {
       flags |= MNT_RDONLY;
-    else if ([arg isEqualToString:@"noexec"])
+    } else if ([arg isEqualToString:@"noexec"]) {
       flags |= MNT_NOEXEC;
-    else if ([arg isEqualToString:@"nosuid"])
+    } else if ([arg isEqualToString:@"nosuid"]) {
       flags |= MNT_NOSUID;
-    else if ([arg isEqualToString:@"nobrowse"])
+    } else if ([arg isEqualToString:@"nobrowse"]) {
       flags |= MNT_DONTBROWSE;
-    else if ([arg isEqualToString:@"noowners"])
+    } else if ([arg isEqualToString:@"noowners"]) {
       flags |= MNT_UNKNOWNPERMISSIONS;
-    else if ([arg isEqualToString:@"nodev"])
+    } else if ([arg isEqualToString:@"nodev"]) {
       flags |= MNT_NODEV;
-    else if ([arg isEqualToString:@"-j"])
+    } else if ([arg isEqualToString:@"-j"]) {
       flags |= MNT_JOURNALED;
-    else if ([arg isEqualToString:@"async"])
+    } else if ([arg isEqualToString:@"async"]) {
       flags |= MNT_ASYNC;
-    else
+    } else {
       LOGE(@"SNTEndpointSecurityDeviceManager: unexpected mount arg: %@", arg);
+    }
   }
   return flags;
-}
-
-void UnmountCallback(DADiskRef disk, DADissenterRef dissenter, void *context) {
-  if (dissenter) {
-    LOGW(@"Unable to unmount device: %@", CFBridgingRelease(DADissenterGetStatusString(dissenter)));
-  } else if (disk) {
-    NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
-    LOGI(@"Unmounted device: Model: %@, Vendor: %@, Path: %@",
-         diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceModelKey],
-         diskInfo[(__bridge NSString *)kDADiskDescriptionDeviceVendorKey],
-         diskInfo[(__bridge NSString *)kDADiskDescriptionVolumePathKey]);
-  }
-
-  dispatch_semaphore_t sema = (__bridge dispatch_semaphore_t)context;
-  dispatch_semaphore_signal(sema);
 }
 
 NS_ASSUME_NONNULL_BEGIN
@@ -227,9 +233,15 @@ NS_ASSUME_NONNULL_BEGIN
   return (flags & requiredFlags) == requiredFlags;
 }
 
+// NB: Remount options are implemented as separate "unmount" and "mount"
+// operations instead of using the "update"/MNT_UPDATE flag. This is because
+// filesystems often don't support many transitions (e.g. RW to RO). Performing
+// the two step process has a higher chance of succeeding.
 - (void)performStartupTasks:(SNTDeviceManagerStartupPreferences)startupPrefs {
   if (!self.blockUSBMount || (startupPrefs != SNTDeviceManagerStartupPreferencesUnmount &&
-                              startupPrefs != SNTDeviceManagerStartupPreferencesForceUnmount)) {
+                              startupPrefs != SNTDeviceManagerStartupPreferencesForceUnmount &&
+                              startupPrefs != SNTDeviceManagerStartupPreferencesRemount &&
+                              startupPrefs != SNTDeviceManagerStartupPreferencesForceRemount)) {
     return;
   }
 
@@ -241,8 +253,7 @@ NS_ASSUME_NONNULL_BEGIN
     return;
   }
 
-  self.startupUnmountSema = dispatch_semaphore_create(0);
-  int numUnmountAttempts = 0;
+  self.diskSema = dispatch_semaphore_create(0);
 
   for (int i = 0; i < numMounts; i++) {
     struct statfs *sfs = &mnts[i];
@@ -267,21 +278,36 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     DADiskUnmountOptions unmountOptions = kDADiskUnmountOptionDefault;
-    if (startupPrefs == SNTDeviceManagerStartupPreferencesForceUnmount) {
+    if (startupPrefs == SNTDeviceManagerStartupPreferencesForceUnmount ||
+        startupPrefs == SNTDeviceManagerStartupPreferencesForceRemount) {
       unmountOptions = kDADiskUnmountOptionForce;
     }
 
     LOGI(@"Attempting to unmount device: '%s' mounted on '%s'", sfs->f_mntfromname,
          sfs->f_mntonname);
 
-    DADiskUnmount(disk, unmountOptions, UnmountCallback, (__bridge void *)self.startupUnmountSema);
-    numUnmountAttempts++;
-  }
+    DADiskUnmount(disk, unmountOptions, DiskUnmountCallback, (__bridge void *)self.diskSema);
 
-  while (numUnmountAttempts-- > 0) {
-    if (dispatch_semaphore_wait(self.startupUnmountSema,
+    if (dispatch_semaphore_wait(self.diskSema,
                                 dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-      LOGW(@"An unmount attempt took longer than expected. Device may still be mounted.");
+      LOGW(
+        @"Unmounting '%s' mounted on '%s' took longer than expected. Device may still be mounted.",
+        sfs->f_mntfromname, sfs->f_mntonname);
+      continue;
+    }
+
+    if (startupPrefs == SNTDeviceManagerStartupPreferencesRemount ||
+        startupPrefs == SNTDeviceManagerStartupPreferencesForceRemount) {
+      uint32_t newMode = sfs->f_flags | mountArgsToMask(self.remountArgs);
+      LOGI(@"Attempting to mount device again changing flags: 0x%08x --> 0x%08x", sfs->f_flags,
+           newMode);
+
+      [self remount:disk mountMode:newMode semaphore:self.diskSema];
+
+      if (dispatch_semaphore_wait(self.diskSema,
+                                  dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
+        LOGW(@"Failed to remount device after unmounting: %s", sfs->f_mntfromname);
+      }
     }
   }
 }
@@ -326,11 +352,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)enable {
-  DARegisterDiskAppearedCallback(_diskArbSession, NULL, diskAppearedCallback,
+  DARegisterDiskAppearedCallback(_diskArbSession, NULL, DiskAppearedCallback,
                                  (__bridge void *)self);
   DARegisterDiskDescriptionChangedCallback(_diskArbSession, NULL, NULL,
-                                           diskDescriptionChangedCallback, (__bridge void *)self);
-  DARegisterDiskDisappearedCallback(_diskArbSession, NULL, diskDisappearedCallback,
+                                           DiskDescriptionChangedCallback, (__bridge void *)self);
+  DARegisterDiskDisappearedCallback(_diskArbSession, NULL, DiskDisappearedCallback,
                                     (__bridge void *)self);
 
   [super subscribeAndClearCache:{
@@ -385,7 +411,7 @@ NS_ASSUME_NONNULL_BEGIN
     uint32_t newMode = mountMode | remountOpts;
     LOGI(@"SNTEndpointSecurityDeviceManager: remounting device '%s'->'%s', flags (%u) -> (%u)",
          eventStatFS->f_mntfromname, eventStatFS->f_mntonname, mountMode, newMode);
-    [self remount:disk mountMode:newMode];
+    [self remount:disk mountMode:newMode semaphore:nil];
   }
 
   if (self.deviceBlockCallback) {
@@ -395,14 +421,16 @@ NS_ASSUME_NONNULL_BEGIN
   return ES_AUTH_RESULT_DENY;
 }
 
-- (void)remount:(DADiskRef)disk mountMode:(uint32_t)remountMask {
+- (void)remount:(DADiskRef)disk
+      mountMode:(uint32_t)remountMask
+      semaphore:(nullable dispatch_semaphore_t)sema {
   NSArray<NSString *> *args = maskToMountArgs(remountMask);
   CFStringRef *argv = (CFStringRef *)calloc(args.count + 1, sizeof(CFStringRef));
   CFArrayGetValues((__bridge CFArrayRef)args, CFRangeMake(0, (CFIndex)args.count),
                    (const void **)argv);
 
-  DADiskMountWithArguments(disk, NULL, kDADiskMountOptionDefault, diskMountedCallback,
-                           (__bridge void *)self, (CFStringRef *)argv);
+  DADiskMountWithArguments(disk, NULL, kDADiskMountOptionDefault, DiskMountedCallback,
+                           (__bridge void *)sema, (CFStringRef *)argv);
 
   free(argv);
 }

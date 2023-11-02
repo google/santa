@@ -644,6 +644,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     return SNTDeviceManagerStartupPreferencesUnmount;
   } else if ([action isEqualToString:@"forceunmount"]) {
     return SNTDeviceManagerStartupPreferencesForceUnmount;
+  } else if ([action isEqualToString:@"remount"]) {
+    return SNTDeviceManagerStartupPreferencesRemount;
+  } else if ([action isEqualToString:@"forceremount"]) {
+    return SNTDeviceManagerStartupPreferencesForceRemount;
   } else {
     return SNTDeviceManagerStartupPreferencesNone;
   }
