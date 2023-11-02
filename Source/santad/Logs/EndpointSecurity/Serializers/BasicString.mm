@@ -37,6 +37,7 @@
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
 using santa::santad::event_providers::endpoint_security::EnrichedExit;
@@ -45,7 +46,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedLink;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
-using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
 using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;

@@ -29,6 +29,7 @@
 
 #import "Source/common/SNTDeviceEvent.h"
 #import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
@@ -40,11 +41,18 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 
+static NSString *const kMetricStartupDiskOperationSkip = @"Skipped";
+static NSString *const kMetricStartupDiskOperationAllowed = @"Allowed";
+static NSString *const kMetricStartupDiskOperationUnmountFailed = @"UnmountFailed";
+static NSString *const kMetricStartupDiskOperationRemountFailed = @"RemountFailed";
+static NSString *const kMetricStartupDiskOperationSuccess = @"Success";
+
 @interface SNTEndpointSecurityDeviceManager ()
 
 - (void)logDiskAppeared:(NSDictionary *)props;
 - (void)logDiskDisappeared:(NSDictionary *)props;
 
+@property SNTMetricCounter *startupDiskMetrics;
 @property DASessionRef diskArbSession;
 @property(nonatomic, readonly) dispatch_queue_t diskQueue;
 @property dispatch_semaphore_t diskSema;
@@ -182,6 +190,20 @@ NS_ASSUME_NONNULL_BEGIN
     _diskArbSession = DASessionCreate(NULL);
     DASessionSetDispatchQueue(_diskArbSession, _diskQueue);
 
+    SNTMetricInt64Gauge *startupPrefsMetric = [[SNTMetricSet sharedInstance]
+      int64GaugeWithName:@"/santa/device_manager/startup_preference"
+              fieldNames:@[]
+                helpText:@"Time to process various event types by each processor"];
+
+    [[SNTMetricSet sharedInstance] registerCallback:^{
+      [startupPrefsMetric set:startupPrefs forFieldValues:@[]];
+    }];
+
+    _startupDiskMetrics = [[SNTMetricSet sharedInstance]
+      counterWithName:@"/santa/device_manager/startup_disk_operation"
+           fieldNames:@[ @"operation" ]
+             helpText:@"Count of the number of startup operations (unmount/mount)"];
+
     [self performStartupTasks:startupPrefs];
 
     [self establishClientOrDie];
@@ -233,6 +255,10 @@ NS_ASSUME_NONNULL_BEGIN
   return (flags & requiredFlags) == requiredFlags;
 }
 
+- (void)incrementStartupMetricsOperation:(NSString *)op {
+  [self.startupDiskMetrics incrementForFieldValues:@[ op ]];
+}
+
 // NB: Remount options are implemented as separate "unmount" and "mount"
 // operations instead of using the "update"/MNT_UPDATE flag. This is because
 // filesystems often don't support many transitions (e.g. RW to RO). Performing
@@ -268,12 +294,14 @@ NS_ASSUME_NONNULL_BEGIN
     CFAutorelease(disk);
 
     if (![self shouldOperateOnDisk:disk]) {
+      [self incrementStartupMetricsOperation:kMetricStartupDiskOperationSkip];
       continue;
     }
 
     if (self.remountArgs != nil && [self remountUSBModeContainsFlags:sfs->f_flags]) {
       LOGI(@"Allowing existing mount as flags contain RemountUSBMode. '%s' -> '%s'",
            sfs->f_mntfromname, sfs->f_mntonname);
+      [self incrementStartupMetricsOperation:kMetricStartupDiskOperationAllowed];
       continue;
     }
 
@@ -293,6 +321,7 @@ NS_ASSUME_NONNULL_BEGIN
       LOGW(
         @"Unmounting '%s' mounted on '%s' took longer than expected. Device may still be mounted.",
         sfs->f_mntfromname, sfs->f_mntonname);
+      [self incrementStartupMetricsOperation:kMetricStartupDiskOperationUnmountFailed];
       continue;
     }
 
@@ -307,8 +336,12 @@ NS_ASSUME_NONNULL_BEGIN
       if (dispatch_semaphore_wait(self.diskSema,
                                   dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
         LOGW(@"Failed to remount device after unmounting: %s", sfs->f_mntfromname);
+        [self incrementStartupMetricsOperation:kMetricStartupDiskOperationRemountFailed];
+        continue;
       }
     }
+
+    [self incrementStartupMetricsOperation:kMetricStartupDiskOperationSuccess];
   }
 }
 
