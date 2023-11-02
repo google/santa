@@ -162,6 +162,8 @@ typedef NS_ENUM(NSInteger, SNTDeviceManagerStartupPreferences) {
   SNTDeviceManagerStartupPreferencesNone,
   SNTDeviceManagerStartupPreferencesUnmount,
   SNTDeviceManagerStartupPreferencesForceUnmount,
+  SNTDeviceManagerStartupPreferencesRemount,
+  SNTDeviceManagerStartupPreferencesForceRemount,
 };
 
 #ifdef __cplusplus
