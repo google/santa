@@ -107,7 +107,7 @@ if __name__ == "__main__":
     subprocess.check_output(["cp", "-rc", extracted_path, snapshot_dir])
     # Create a disk image for USB testing
     usb_dmg = pathlib.Path(snapshot_dir) / "usb.dmg"
-    subprocess.check_output(["hdiutil", "create", "-size", "100M", 
+    subprocess.check_output(["hdiutil", "create", "-size", "100M",
                                 "-fs", "ExFAT", "-volname", "USB", usb_dmg])
     try:
       subprocess.check_output(
