@@ -193,7 +193,7 @@ NS_ASSUME_NONNULL_BEGIN
     SNTMetricInt64Gauge *startupPrefsMetric = [[SNTMetricSet sharedInstance]
       int64GaugeWithName:@"/santa/device_manager/startup_preference"
               fieldNames:@[]
-                helpText:@"Time to process various event types by each processor"];
+                helpText:@"The systems current startup preference value"];
 
     [[SNTMetricSet sharedInstance] registerCallback:^{
       [startupPrefsMetric set:startupPrefs forFieldValues:@[]];
@@ -202,7 +202,7 @@ NS_ASSUME_NONNULL_BEGIN
     _startupDiskMetrics = [[SNTMetricSet sharedInstance]
       counterWithName:@"/santa/device_manager/startup_disk_operation"
            fieldNames:@[ @"operation" ]
-             helpText:@"Count of the number of startup operations (unmount/mount)"];
+             helpText:@"Count of the number of USB devices encountered per operation"];
 
     [self performStartupTasks:startupPrefs];
 
