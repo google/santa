@@ -41,10 +41,18 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
 
+// Defined operations for startup metrics:
+// Device shouldn't be operated on (e.g. not a mass storage device)
 static NSString *const kMetricStartupDiskOperationSkip = @"Skipped";
+// Device already had appropriate flags set
 static NSString *const kMetricStartupDiskOperationAllowed = @"Allowed";
+// Device failed to be unmounted
 static NSString *const kMetricStartupDiskOperationUnmountFailed = @"UnmountFailed";
+// Device failed to be remounted
 static NSString *const kMetricStartupDiskOperationRemountFailed = @"RemountFailed";
+// Remounts were requested, but remount args weren't set
+static NSString *const kMetricStartupDiskOperationRemountSkipped = @"RemountSkipped";
+// Operations on device matching the configured startup pref wwere successful
 static NSString *const kMetricStartupDiskOperationSuccess = @"Success";
 
 @interface SNTEndpointSecurityDeviceManager ()
@@ -190,10 +198,10 @@ NS_ASSUME_NONNULL_BEGIN
     _diskArbSession = DASessionCreate(NULL);
     DASessionSetDispatchQueue(_diskArbSession, _diskQueue);
 
-    SNTMetricInt64Gauge *startupPrefsMetric = [[SNTMetricSet sharedInstance]
-      int64GaugeWithName:@"/santa/device_manager/startup_preference"
-              fieldNames:@[]
-                helpText:@"The current startup preference value"];
+    SNTMetricInt64Gauge *startupPrefsMetric =
+      [[SNTMetricSet sharedInstance] int64GaugeWithName:@"/santa/device_manager/startup_preference"
+                                             fieldNames:@[]
+                                               helpText:@"The current startup preference value"];
 
     [[SNTMetricSet sharedInstance] registerCallback:^{
       [startupPrefsMetric set:startupPrefs forFieldValues:@[]];
@@ -211,7 +219,7 @@ NS_ASSUME_NONNULL_BEGIN
   return self;
 }
 
-- (uint32_t)updatedMountFlags:(struct statfs*)sfs {
+- (uint32_t)updatedMountFlags:(struct statfs *)sfs {
   uint32_t mask = sfs->f_flags | mountArgsToMask(self.remountArgs);
 
   // NB: APFS mounts get MNT_JOURNALED implicitly set. However, mount_apfs
@@ -258,7 +266,15 @@ NS_ASSUME_NONNULL_BEGIN
   return true;
 }
 
+- (BOOL)haveRemountArgs {
+  return [self.remountArgs count] > 0;
+}
+
 - (BOOL)remountUSBModeContainsFlags:(uint32_t)flags {
+  if (![self haveRemountArgs]) {
+    return false;
+  }
+
   uint32_t requiredFlags = mountArgsToMask(self.remountArgs);
 
   LOGD(@" Got mount flags: 0x%08x | %@", flags, maskToMountArgs(flags));
@@ -310,7 +326,7 @@ NS_ASSUME_NONNULL_BEGIN
       continue;
     }
 
-    if (self.remountArgs != nil && [self remountUSBModeContainsFlags:sfs->f_flags]) {
+    if ([self remountUSBModeContainsFlags:sfs->f_flags]) {
       LOGI(@"Allowing existing mount as flags contain RemountUSBMode. '%s' -> '%s'",
            sfs->f_mntfromname, sfs->f_mntonname);
       [self incrementStartupMetricsOperation:kMetricStartupDiskOperationAllowed];
@@ -339,6 +355,12 @@ NS_ASSUME_NONNULL_BEGIN
 
     if (startupPrefs == SNTDeviceManagerStartupPreferencesRemount ||
         startupPrefs == SNTDeviceManagerStartupPreferencesForceRemount) {
+      if (![self haveRemountArgs]) {
+        [self incrementStartupMetricsOperation:kMetricStartupDiskOperationRemountSkipped];
+        LOGW(@"Remount requested during startup, but no remount args set. Leaving unmounted.");
+        continue;
+      }
+
       uint32_t newMode = [self updatedMountFlags:sfs];
       LOGI(@"Attempting to mount device again changing flags: 0x%08x --> 0x%08x", sfs->f_flags,
            newMode);
@@ -439,9 +461,7 @@ NS_ASSUME_NONNULL_BEGIN
     initWithOnName:[NSString stringWithUTF8String:eventStatFS->f_mntonname]
           fromName:[NSString stringWithUTF8String:eventStatFS->f_mntfromname]];
 
-  BOOL shouldRemount = self.remountArgs != nil && [self.remountArgs count] > 0;
-
-  if (shouldRemount) {
+  if ([self haveRemountArgs]) {
     event.remountArgs = self.remountArgs;
 
     if ([self remountUSBModeContainsFlags:eventStatFS->f_flags] &&
