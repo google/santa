@@ -55,6 +55,7 @@ class MockAuthResultCache : public AuthResultCache {
 - (void)logDiskAppeared:(NSDictionary *)props;
 - (BOOL)shouldOperateOnDisk:(DADiskRef)disk;
 - (void)performStartupTasks:(SNTDeviceManagerStartupPreferences)startupPrefs;
+- (uint32_t)updatedMountFlags:(struct statfs*)sfs;
 @end
 
 @interface SNTEndpointSecurityDeviceManagerTest : XCTestCase
@@ -453,6 +454,23 @@ class MockAuthResultCache : public AuthResultCache {
     XCTAssertTrue(disk2.wasUnmounted);
     XCTAssertTrue(disk2.wasMounted);
   }
+}
+
+- (void)testUpdatedMountFlags {
+  struct statfs sfs;
+
+  strlcpy(sfs.f_fstypename, "foo", sizeof(sfs.f_fstypename));
+  sfs.f_flags = MNT_JOURNALED | MNT_NOSUID | MNT_NODEV;
+
+  SNTEndpointSecurityDeviceManager *deviceManager = [[SNTEndpointSecurityDeviceManager alloc] init];
+  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
+
+  // For most filesystems, the flags are the union of what is in statfs and the remount args
+  XCTAssertEqual([deviceManager updatedMountFlags:&sfs], sfs.f_flags | MNT_RDONLY | MNT_NOEXEC);
+
+  // For APFS, flags are still unioned, but MNT_JOUNRNALED is cleared
+  strlcpy(sfs.f_fstypename, "apfs", sizeof(sfs.f_fstypename));
+  XCTAssertEqual([deviceManager updatedMountFlags:&sfs], (sfs.f_flags | MNT_RDONLY | MNT_NOEXEC) & ~MNT_JOURNALED);
 }
 
 - (void)testEnable {

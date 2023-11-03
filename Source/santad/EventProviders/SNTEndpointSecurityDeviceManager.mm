@@ -211,6 +211,18 @@ NS_ASSUME_NONNULL_BEGIN
   return self;
 }
 
+- (uint32_t)updatedMountFlags:(struct statfs*)sfs {
+  uint32_t mask = sfs->f_flags | mountArgsToMask(self.remountArgs);
+
+  // NB: APFS mounts get MNT_JOURNALED implicitly set. However, mount_apfs
+  // does not support the `-j` option so this flag needs to be cleared.
+  if (strncmp(sfs->f_fstypename, "apfs", sizeof(sfs->f_fstypename)) == 0) {
+    mask &= ~MNT_JOURNALED;
+  }
+
+  return mask;
+}
+
 - (BOOL)shouldOperateOnDisk:(DADiskRef)disk {
   NSDictionary *diskInfo = CFBridgingRelease(DADiskCopyDescription(disk));
 
@@ -327,7 +339,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     if (startupPrefs == SNTDeviceManagerStartupPreferencesRemount ||
         startupPrefs == SNTDeviceManagerStartupPreferencesForceRemount) {
-      uint32_t newMode = sfs->f_flags | mountArgsToMask(self.remountArgs);
+      uint32_t newMode = [self updatedMountFlags:sfs];
       LOGI(@"Attempting to mount device again changing flags: 0x%08x --> 0x%08x", sfs->f_flags,
            newMode);
 
@@ -411,11 +423,10 @@ NS_ASSUME_NONNULL_BEGIN
       exit(EXIT_FAILURE);
   }
 
-  uint32_t mountMode = eventStatFS->f_flags;
   pid_t pid = audit_token_to_pid(m->process->audit_token);
   LOGD(
     @"SNTEndpointSecurityDeviceManager: mount syscall arriving from path: %s, pid: %d, fflags: %u",
-    m->process->executable->path.data, pid, mountMode);
+    m->process->executable->path.data, pid, eventStatFS->f_flags);
 
   DADiskRef disk = DADiskCreateFromBSDName(NULL, self.diskArbSession, eventStatFS->f_mntfromname);
   CFAutorelease(disk);
@@ -432,18 +443,17 @@ NS_ASSUME_NONNULL_BEGIN
 
   if (shouldRemount) {
     event.remountArgs = self.remountArgs;
-    uint32_t remountOpts = mountArgsToMask(self.remountArgs);
 
-    if ([self remountUSBModeContainsFlags:mountMode] &&
+    if ([self remountUSBModeContainsFlags:eventStatFS->f_flags] &&
         m->event_type != ES_EVENT_TYPE_AUTH_REMOUNT) {
       LOGD(@"Allowing mount as flags contain RemountUSBMode. '%s' -> '%s'",
            eventStatFS->f_mntfromname, eventStatFS->f_mntonname);
       return ES_AUTH_RESULT_ALLOW;
     }
 
-    uint32_t newMode = mountMode | remountOpts;
+    uint32_t newMode = [self updatedMountFlags:eventStatFS];
     LOGI(@"SNTEndpointSecurityDeviceManager: remounting device '%s'->'%s', flags (%u) -> (%u)",
-         eventStatFS->f_mntfromname, eventStatFS->f_mntonname, mountMode, newMode);
+         eventStatFS->f_mntfromname, eventStatFS->f_mntonname, eventStatFS->f_flags, newMode);
     [self remount:disk mountMode:newMode semaphore:nil];
   }
 
