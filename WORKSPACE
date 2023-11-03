@@ -10,6 +10,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # Abseil LTS branch, Aug 2023
 http_archive(
     name = "com_google_absl",
+    sha256 = "59d2976af9d6ecf001a81a35749a6e551a335b949d34918cfade07737b9d93c5",
     strip_prefix = "abseil-cpp-20230802.0",
     urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.0.tar.gz"],
 )
@@ -62,9 +63,9 @@ apple_support_dependencies()
 # https://github.com/hedronvision/bazel-compile-commands-extractor
 git_repository(
     name = "hedron_compile_commands",
-    commit = "92db741ee6dee0c4a83a5c58be7747df7b89ed10",
+    commit = "ac6411f8f347e5525038cb7858db4969db9e74f2",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    shallow_since = "1640416382 -0800",
+    shallow_since = "1696885905 +0000",
 )
 
 load("@hedron_compile_commands//:workspace_setup.bzl", "hedron_compile_commands_setup")
@@ -159,7 +160,7 @@ objc_library(
     patch_args = ["-p1"],
     patches = ["//external_patches/OCMock:503.patch"],
     remote = "https://github.com/erikdoe/ocmock",
-    shallow_since = "1609349457 +0100",
+    shallow_since = "1635703064 +0100",
 )
 
 # Moroz (for testing)
