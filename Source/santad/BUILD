@@ -398,6 +398,7 @@ objc_library(
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
     ],
 )
 
