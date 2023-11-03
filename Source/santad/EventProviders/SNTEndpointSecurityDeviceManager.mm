@@ -214,7 +214,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (uint32_t)updatedMountFlags:(struct statfs*)sfs {
   uint32_t mask = sfs->f_flags | mountArgsToMask(self.remountArgs);
 
-  // NB: APFS mounts are get MNT_JOURNALED implicitly set. However, mount_apfs
+  // NB: APFS mounts get MNT_JOURNALED implicitly set. However, mount_apfs
   // does not support the `-j` option so this flag needs to be cleared.
   if (strncmp(sfs->f_fstypename, "apfs", sizeof(sfs->f_fstypename)) == 0) {
     mask &= ~MNT_JOURNALED;
