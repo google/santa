@@ -267,7 +267,8 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "USB Remounting Mode",
              [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
     }
-    printf("  %-25s | %s\n", "On Start USB Options", StartupOptionToString(configurator.onStartUSBOptions).UTF8String);
+    printf("  %-25s | %s\n", "On Start USB Options",
+           StartupOptionToString(configurator.onStartUSBOptions).UTF8String);
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
 
