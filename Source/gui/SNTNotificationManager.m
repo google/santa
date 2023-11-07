@@ -100,7 +100,20 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 
   // If GUI is in silent mode or if there's already a notification queued for
   // this message, don't do anything else.
-  if ([SNTConfigurator configurator].enableSilentMode) return;
+  if ([SNTConfigurator configurator].enableSilentMode) {
+    // hash bundle with path
+    dispatch_async(self.hashBundleBinariesQueue, ^{
+          SNTBinaryMessageWindowController *wc = (SNTBinaryMessageWindowController *)pendingMsg;
+          [self hashBundleBinariesForEvent:wc.event withProgressHandler:^(NSUInteger progressCount) {
+              // progress is reported to the distributed notification
+              [self postDistributedNotification: pendingMsg withProgress: progressCount];
+          } completionHandler:^(SNTStoredEvent *event, NSString *bundleHash) {
+              // event and hash reported to distributed notification
+              [self postDistributedNotificationWithEvent: event withBundleHash: bundleHash];
+          }];
+    });
+    return;
+  }
   if ([self notificationAlreadyQueued:pendingMsg]) return;
 
   // See if this message has been user-silenced.
@@ -129,6 +142,14 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   }
 }
 
+- (void)postDistributedNotificationWithUserInfo:(NSDictionary *)userInfo notificationName:(NSString *)notificationName {
+    NSDistributedNotificationCenter *dc = [NSDistributedNotificationCenter defaultCenter];
+    [dc postNotificationName:notificationName
+                      object:@"com.google.santa"
+                    userInfo:userInfo
+          deliverImmediately:YES];
+}
+
 // For blocked execution notifications, post an NSDistributedNotificationCenter
 // notification with the important details from the stored event. Distributed
 // notifications are system-wide broadcasts that can be sent by apps and observed
@@ -141,7 +162,6 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     return;
   }
   SNTBinaryMessageWindowController *wc = (SNTBinaryMessageWindowController *)pendingMsg;
-  NSDistributedNotificationCenter *dc = [NSDistributedNotificationCenter defaultCenter];
   NSMutableArray<NSDictionary *> *signingChain =
     [NSMutableArray arrayWithCapacity:wc.event.signingChain.count];
   for (MOLCertificate *cert in wc.event.signingChain) {
@@ -170,10 +190,38 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     kSigningChain : signingChain,
   };
 
-  [dc postNotificationName:@"com.google.santa.notification.blockedeexecution"
-                    object:@"com.google.santa"
-                  userInfo:userInfo
-        deliverImmediately:YES];
+  [self postDistributedNotificationWithUserInfo:userInfo
+                                  notificationName:@"com.google.santa.notification.blockedeexecution"];
+}
+
+- (void)postDistributedNotificationWithEvent:(SNTStoredEvent *)event withBundleHash: (NSString *) bundleHash {
+  NSDictionary *userInfo = @{
+    kFileSHA256: event.fileSHA256 ?: @"",
+    kFilePath : event.filePath ?: @"",
+    kFileBundleName : event.fileBundleName ?: @"",
+    kFileBundleID : event.fileBundleID ?: @"",
+    kFileBundleHash: bundleHash ?: @"",
+  };
+
+  [self postDistributedNotificationWithUserInfo:userInfo
+                                  notificationName:@"com.google.santa.notification.blockedeexecution.bundlehash"];
+}
+
+- (void)postDistributedNotification:(SNTMessageWindowController *)pendingMsg withProgress: (NSUInteger) progressCount {
+  if (![pendingMsg isKindOfClass:[SNTBinaryMessageWindowController class]]) {
+    return;
+  }
+  SNTBinaryMessageWindowController *wc = (SNTBinaryMessageWindowController *)pendingMsg;
+  NSDictionary *userInfo = @{
+    kFileBundleProgress : [NSString stringWithFormat:@"%lu", (unsigned long)progressCount] ?: @"0",
+    kFileSHA256: wc.event.fileSHA256 ?: @"",
+    kFilePath : wc.event.filePath ?: @"",
+    kFileBundleName : wc.event.fileBundleName ?: @"",
+    kFileBundleID : wc.event.fileBundleID ?: @"",
+  };
+
+  [self postDistributedNotificationWithUserInfo:userInfo
+                                  notificationName:@"com.google.santa.notification.blockedeexecution.bundlehash.progress"];
 }
 
 - (void)showQueuedWindow {
@@ -190,8 +238,17 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
       if ([self.currentWindowController isKindOfClass:[SNTBinaryMessageWindowController class]]) {
         SNTBinaryMessageWindowController *controller =
           (SNTBinaryMessageWindowController *)self.currentWindowController;
+        controller.foundFileCountLabel.stringValue = @"Searching for files...";  
         dispatch_async(self.hashBundleBinariesQueue, ^{
-          [self hashBundleBinariesForEvent:controller.event withController:controller];
+          [self hashBundleBinariesForEvent:controller.event withProgressHandler:^(NSUInteger progressCount) {
+              dispatch_async(dispatch_get_main_queue(), ^{
+                //  Progress is reported to the root NSProgress
+                [controller.progress becomeCurrentWithPendingUnitCount:progressCount];
+              });
+          } completionHandler:^(SNTStoredEvent *event, NSString *bundleHash) {
+              [controller updateBlockNotification:event withBundleHash:bundleHash];
+              [controller.progress resignCurrent];
+          }];
         });
       }
     }
@@ -199,8 +256,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
 }
 
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
-                    withController:(SNTBinaryMessageWindowController *)withController {
-  withController.foundFileCountLabel.stringValue = @"Searching for files...";
+                withProgressHandler:(void (^)(NSUInteger progressCount))progressHandler
+                completionHandler:(void (^)(SNTStoredEvent *event, NSString *bundleHash))completionHandler {
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   MOLXPCConnection *bc = [SNTXPCBundleServiceInterface configuredConnection];
@@ -212,26 +269,24 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   // Wait a max of 5 secs for the bundle service
   // Otherwise abandon bundle hashing and display the blockable event.
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
-    [withController updateBlockNotification:event withBundleHash:nil];
+    completionHandler(event, nil);
     LOGE(@"Timeout connecting to bundle service");
     return;
   }
 
   [[bc remoteObjectProxy] setNotificationListener:self.notificationListener];
 
-  // NSProgress becomes current for this thread. XPC messages vend a child node to the receiver.
-  [withController.progress becomeCurrentWithPendingUnitCount:100];
+  // Progress becomes current for this thread. XPC messages vend a child node to the receiver.
+  progressHandler(100);
 
-  // Start hashing. Progress is reported to the root NSProgress
-  // (currentWindowController.progress).
+  // Start hashing. Progress is reported 
   [[bc remoteObjectProxy]
     hashBundleBinariesForEvent:event
                          reply:^(NSString *bh, NSArray<SNTStoredEvent *> *events, NSNumber *ms) {
                            // Revert to displaying the blockable event if we fail to calculate the
                            // bundle hash
                            if (!bh)
-                             return [withController updateBlockNotification:event
-                                                             withBundleHash:nil];
+                             return completionHandler(event, nil);
 
                            event.fileBundleHash = bh;
                            event.fileBundleBinaryCount = @(events.count);
@@ -253,14 +308,11 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
                                                              relatedEvents:events];
                            [daemonConn invalidate];
 
-                           // Update the UI with the bundle hash. Also make the openEventButton
-                           // available.
-                           [withController updateBlockNotification:event withBundleHash:bh];
+                           // Update the completion with the bundle hash.
+                           completionHandler(event, bh);
 
                            [bc invalidate];
                          }];
-
-  [withController.progress resignCurrent];
 }
 
 #pragma mark SNTNotifierXPC protocol methods

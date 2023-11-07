@@ -89,6 +89,7 @@ NSString *const kFileBundleShortVersionString = @"file_bundle_version_string";
 NSString *const kFileBundleHash = @"file_bundle_hash";
 NSString *const kFileBundleHashMilliseconds = @"file_bundle_hash_millis";
 NSString *const kFileBundleBinaryCount = @"file_bundle_binary_count";
+NSString *const kFileBundleProgress = @"file_bundle_progress_count";
 NSString *const kPID = @"pid";
 NSString *const kPPID = @"ppid";
 NSString *const kParentName = @"parent_name";

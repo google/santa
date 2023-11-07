@@ -23,7 +23,8 @@
 
 @interface SNTNotificationManager (Testing)
 - (void)hashBundleBinariesForEvent:(SNTStoredEvent *)event
-                    withController:(SNTBinaryMessageWindowController *)controller;
+                withProgressHandler:(void (^)(NSUInteger progressCount))progressHandler
+                completionHandler:(void (^)(SNTStoredEvent *event, NSString *bundleHash))completionHandler;
 @end
 
 @interface SNTNotificationManagerTest : XCTestCase
@@ -53,7 +54,7 @@
   ev.parentName = @"launchd";
 
   SNTNotificationManager *sut = OCMPartialMock([[SNTNotificationManager alloc] init]);
-  OCMStub([sut hashBundleBinariesForEvent:OCMOCK_ANY withController:OCMOCK_ANY]).andDo(nil);
+  OCMStub([sut hashBundleBinariesForEvent:OCMOCK_ANY withProgressHandler:OCMOCK_ANY completionHandler:OCMOCK_ANY]).andDo(nil);
 
   id dncMock = OCMClassMock([NSDistributedNotificationCenter class]);
   OCMStub([dncMock defaultCenter]).andReturn(dncMock);

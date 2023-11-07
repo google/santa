@@ -88,6 +88,7 @@ extern NSString *const kFileBundleShortVersionString;
 extern NSString *const kFileBundleHash;
 extern NSString *const kFileBundleHashMilliseconds;
 extern NSString *const kFileBundleBinaryCount;
+extern NSString *const kFileBundleProgress;
 extern NSString *const kPID;
 extern NSString *const kPPID;
 extern NSString *const kParentName;
