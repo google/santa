@@ -34,7 +34,10 @@ jobs:
           bazel run //Testing/integration:allow_sysex
           sudo santactl sync --debug
       - name: Run integration test binaries
-        run: bazel test //Testing/integration:integration_tests
+        run: |
+          bazel test //Testing/integration:integration_tests
+          sleep 3
+          bazel run //Testing/integration:dismiss_santa_popup || true
       - name: Test config changes
         run: ./Testing/integration/test_config_changes.sh
       - name: Test sync server changes
