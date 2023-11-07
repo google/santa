@@ -71,6 +71,8 @@ namespace pbv1 = ::santa::pb::v1;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 
+static constexpr NSUInteger kMaxEncodeObjectEntries = 64;
+
 std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
                                            SNTDecisionCache *decision_cache, bool json) {
   return std::make_shared<Protobuf>(esapi, std::move(decision_cache), json);
@@ -449,6 +451,89 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
   return FinalizeProto(santa_msg);
 }
 
+void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements) {
+  if (!entitlements) {
+    return;
+  }
+
+  __block int numObjectsToEncode = (int)std::min(kMaxEncodeObjectEntries, entitlements.count);
+
+  pb_exec->mutable_entitlements()->Reserve(numObjectsToEncode);
+
+  [entitlements enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+    if (numObjectsToEncode-- == 0) {
+      *stop = YES;
+      return;
+    }
+
+    if (![key isKindOfClass:[NSString class]]) {
+      LOGW(@"Skipping entitlement key with unexpected key type: %@", key);
+      return;
+    }
+
+    NSError *err;
+    NSData *jsonData;
+    @try {
+      id val = obj;
+
+      // Fixup some types with data that can be better represented in JSON
+      if ([obj isKindOfClass:[NSDate class]]) {
+        // Example format output: "November 6, 2023 at 10:25:20 AM EST"
+        val = [NSDateFormatter localizedStringFromDate:obj
+                                             dateStyle:NSDateFormatterLongStyle
+                                             timeStyle:NSDateFormatterLongStyle];
+      } else if ([obj isKindOfClass:[NSData class]]) {
+        val = [obj base64EncodedStringWithOptions:0];
+      }
+
+      jsonData = [NSJSONSerialization dataWithJSONObject:val
+                                                 options:NSJSONWritingFragmentsAllowed
+                                                   error:&err];
+    } @catch (NSException *e) {
+      LOGW(@"Encountered entitlement that cannot directly convert to JSON: %@: %@", key, obj);
+    }
+
+    if (!jsonData) {
+      // If the first attempt to serialize to JSON failed, get a string
+      // representation of the object via the `description` method and attempt
+      // to serialize that instead. Serialization can fail for a number of
+      // reasons, such as arrays including invalid types.
+      @try {
+        jsonData = [NSJSONSerialization dataWithJSONObject:[obj description]
+                                                   options:NSJSONWritingFragmentsAllowed
+                                                     error:&err];
+      } @catch (NSException *e) {
+        LOGW(@"Unable to create fallback string: %@: %@", key, obj);
+      }
+
+      if (!jsonData) {
+        @try {
+          // As a final fallback, simply serialize an error message so that the
+          // entitlement key is still logged.
+          jsonData = [NSJSONSerialization dataWithJSONObject:@"JSON Serialization Failed"
+                                                     options:NSJSONWritingFragmentsAllowed
+                                                       error:&err];
+        } @catch (NSException *e) {
+          // This shouldn't be able to happen...
+          LOGW(@"Failed to serialize fallback error message");
+        }
+      }
+    }
+
+    // This shouldn't be possible given the fallback code above. But handle it
+    // just in case to prevent a crash.
+    if (!jsonData) {
+      LOGW(@"Failed to create valid JSON for entitlement: %@", key);
+      return;
+    }
+
+    ::pbv1::Entitlement *pb_entitlement = pb_exec->add_entitlements();
+    pb_entitlement->set_key(NSStringToUTF8StringView(key));
+    pb_entitlement->set_value(NSStringToUTF8StringView(
+      [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]));
+  }];
+}
+
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCachedDecision *cd) {
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
@@ -524,6 +609,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
 
   NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
   EncodeString([pb_exec] { return pb_exec->mutable_original_path(); }, orig_path);
+
+  EncodeEntitlements(pb_exec, cd.entitlements);
 
   return FinalizeProto(santa_msg);
 }

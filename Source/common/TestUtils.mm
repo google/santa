@@ -92,7 +92,11 @@ es_process_t MakeESProcess(es_file_t *file, audit_token_t tok, audit_token_t par
 }
 
 uint32_t MaxSupportedESMessageVersionForCurrentOS() {
-  // Note: ES message v3 was only in betas.
+  // Notes:
+  //   1. ES message v3 was only in betas.
+  //   2. Message version 7 appeared in macOS 13.3, but features from that are
+  //      not currently used. Leaving off support here so as to not require
+  //      adding v7 test JSON files.
   if (@available(macOS 13.0, *)) {
     return 6;
   } else if (@available(macOS 12.3, *)) {

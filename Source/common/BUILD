@@ -40,6 +40,12 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "SNTDeepCopy",
+    srcs = ["SNTDeepCopy.m"],
+    hdrs = ["SNTDeepCopy.h"],
+)
+
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],

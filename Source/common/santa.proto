@@ -213,6 +213,11 @@ message CertificateInfo {
   optional string common_name = 2;
 }
 
+message Entitlement {
+	string key = 1;
+	string value = 2;
+}
+
 // Information about a process execution event
 message Execution {
   // The process that executed the new image (e.g. the process that called
@@ -286,6 +291,11 @@ message Execution {
   // The original path on disk of the target executable
   // Applies when executables are translocated
   optional string original_path = 15;
+
+  // The set of entitlements associated with the target executable
+  // Only top level keys are represented
+  // Values (including nested keys) are JSON serialized
+  repeated Entitlement entitlements = 16;
 }
 
 // Information about a fork event

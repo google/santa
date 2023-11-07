@@ -199,6 +199,7 @@ objc_library(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeepCopy",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",

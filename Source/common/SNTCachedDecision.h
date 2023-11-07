@@ -38,6 +38,7 @@
 @property NSArray<MOLCertificate *> *certChain;
 @property NSString *teamID;
 @property NSString *signingID;
+@property NSDictionary *entitlements;
 
 @property NSString *quarantineURL;
 

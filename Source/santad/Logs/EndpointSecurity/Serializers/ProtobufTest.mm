@@ -60,6 +60,7 @@ namespace pbv1 = ::santa::pb::v1;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 extern void EncodeExitStatus(::pbv1::Exit *pbExit, int exitStatus);
+extern void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements);
 extern ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Reason GetReasonEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Mode GetModeEnum(SNTClientMode mode);
@@ -68,6 +69,7 @@ extern ::pbv1::FileAccess::AccessType GetAccessType(es_event_type_t event_type);
 extern ::pbv1::FileAccess::PolicyDecision GetPolicyDecision(FileAccessPolicyDecision decision);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
+using santa::santad::logs::endpoint_security::serializers::EncodeEntitlements;
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
 using santa::santad::logs::endpoint_security::serializers::GetAccessType;
 using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
@@ -166,28 +168,35 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   return json;
 }
 
-NSDictionary *findDelta(NSDictionary *a, NSDictionary *b) {
-  NSMutableDictionary *delta = NSMutableDictionary.dictionary;
+NSDictionary *FindDelta(NSDictionary *want, NSDictionary *got) {
+  NSMutableDictionary *delta = [NSMutableDictionary dictionary];
+  delta[@"want"] = [NSMutableDictionary dictionary];
+  delta[@"got"] = [NSMutableDictionary dictionary];
 
-  // Find objects in a that don't exist or are different in b.
-  [a enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
-    id otherObj = b[key];
+  // Find objects in `want` that don't exist or are different in `got`.
+  [want enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+    id otherObj = got[key];
 
-    if (![obj isEqual:otherObj]) {
-      delta[key] = obj;
+    if (!otherObj) {
+      delta[@"want"][key] = obj;
+      delta[@"got"][key] = @"Key missing";
+    } else if (![obj isEqual:otherObj]) {
+      delta[@"want"][key] = obj;
+      delta[@"got"][key] = otherObj;
     }
   }];
 
-  // Find objects in the other dictionary that don't exist in self
-  [b enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
-    id aObj = a[key];
+  // Find objects in `got` that don't exist in `want`
+  [got enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+    id aObj = want[key];
 
     if (!aObj) {
-      delta[key] = obj;
+      delta[@"want"][key] = @"Key missing";
+      delta[@"got"][key] = obj;
     }
   }];
 
-  return delta;
+  return [delta[@"want"] count] > 0 ? delta : nil;
 }
 
 void SerializeAndCheck(es_event_type_t eventType,
@@ -267,10 +276,7 @@ void SerializeAndCheck(es_event_type_t eventType,
                  options:NSJSONReadingMutableContainers
                    error:&jsonError];
     XCTAssertNil(jsonError, @"failed to parse got data as JSON");
-
-    // XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
-    NSDictionary *delta = findDelta(wantJSONDict, gotJSONDict);
-    XCTAssertEqualObjects(@{}, delta);
+    XCTAssertNil(FindDelta(wantJSONDict, gotJSONDict));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -338,6 +344,22 @@ void SerializeAndCheckNonESEvents(
   self.testCachedDecision.quarantineURL = @"google.com";
   self.testCachedDecision.certSHA256 = @"5678_cert_hash";
   self.testCachedDecision.decisionClientMode = SNTClientModeLockdown;
+  self.testCachedDecision.entitlements = @{
+    @"key_with_str_val" : @"bar",
+    @"key_with_num_val" : @(1234),
+    @"key_with_date_val" : [NSDate dateWithTimeIntervalSince1970:1699376402],
+    @"key_with_data_val" : [@"Hello World" dataUsingEncoding:NSUTF8StringEncoding],
+    @"key_with_arr_val" : @[ @"v1", @"v2", @"v3" ],
+    @"key_with_arr_val_nested" : @[ @"v1", @"v2", @"v3", @[ @"nv1", @"nv2" ] ],
+    @"key_with_arr_val_multitype" :
+      @[ @"v1", @"v2", @"v3", @(123), [NSDate dateWithTimeIntervalSince1970:1699376402] ],
+    @"key_with_dict_val" : @{@"k1" : @"v1", @"k2" : @"v2"},
+    @"key_with_dict_val_nested" : @{
+      @"k1" : @"v1",
+      @"k2" : @"v2",
+      @"k3" : @{@"nk1" : @"nv1", @"nk2" : [NSDate dateWithTimeIntervalSince1970:1699376402]}
+    },
+  };
 
   self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
   OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
@@ -464,8 +486,8 @@ void SerializeAndCheckNonESEvents(
   };
 
   for (const auto &kv : fdtypeToEnumType) {
-    XCTAssertEqual(GetFileDescriptorType(kv.first), kv.second, @"Bad fd type name for fdtype: %u",
-                   kv.first);
+    XCTAssertEqual(GetFileDescriptorType(kv.first), kv.second,
+                   @"Bad fd type name for fdtype: %u", kv.first);
   }
 }
 
@@ -571,6 +593,22 @@ void SerializeAndCheckNonESEvents(
                     }
                   }
                           json:YES];
+}
+
+- (void)testEncodeEntitlements {
+  ::pbv1::Execution pbExec;
+  NSMutableDictionary *ents = [NSMutableDictionary dictionary];
+
+  for (int i = 0; i < 100; i++) {
+    ents[[NSString stringWithFormat:@"k%d", i]] = @(i);
+  }
+
+  XCTAssertEqual(0, pbExec.entitlements_size());
+
+  EncodeEntitlements(&pbExec, ents);
+
+  int kMaxEncodeObjectEntries = 64; // From Protobuf.mm
+  XCTAssertEqual(kMaxEncodeObjectEntries, pbExec.entitlements_size());
 }
 
 - (void)testSerializeMessageExit {
