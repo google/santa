@@ -16,6 +16,9 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <DiskArbitration/DiskArbitration.h>
 #include <Foundation/Foundation.h>
+#include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/ucred.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -27,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MockDADisk : NSObject
 @property(nonatomic) NSDictionary *diskDescription;
 @property(nonatomic, readwrite) NSString *name;
+@property(nonatomic) BOOL wasMounted;
+@property(nonatomic) BOOL wasUnmounted;
 @end
 
 typedef void (^MockDADiskAppearedCallback)(DADiskRef ref);
@@ -36,17 +41,33 @@ typedef void (^MockDADiskAppearedCallback)(DADiskRef ref);
   NSMutableDictionary<NSString *, MockDADisk *> *insertedDevices;
 @property(nonatomic, readwrite, nonnull)
   NSMutableArray<MockDADiskAppearedCallback> *diskAppearedCallbacks;
-@property(nonatomic) BOOL wasRemounted;
 @property(nonatomic, nullable) dispatch_queue_t sessionQueue;
 
 - (instancetype _Nonnull)init;
 - (void)reset;
 
 // Also triggers DADiskRegisterDiskAppearedCallback
-- (void)insert:(MockDADisk *)ref bsdName:(NSString *)bsdName;
+- (void)insert:(MockDADisk *)ref;
 
 // Retrieve an initialized singleton MockDiskArbitration object
 + (instancetype _Nonnull)mockDiskArbitration;
+@end
+
+@interface MockStatfs : NSObject
+@property NSString *fromName;
+@property NSString *onName;
+@property NSNumber *flags;
+
+- (instancetype _Nonnull)initFrom:(NSString *)from on:(NSString *)on flags:(NSNumber *)flags;
+@end
+
+@interface MockMounts : NSObject
+@property(nonatomic) NSMutableDictionary<NSString *, MockStatfs *> *mounts;
+
+- (instancetype _Nonnull)init;
+- (void)reset;
+- (void)insert:(MockStatfs *)sfs;
++ (instancetype _Nonnull)mockMounts;
 @end
 
 //
@@ -80,6 +101,10 @@ void DARegisterDiskDescriptionChangedCallback(DASessionRef session,
 
 void DASessionSetDispatchQueue(DASessionRef session, dispatch_queue_t __nullable queue);
 DASessionRef __nullable DASessionCreate(CFAllocatorRef __nullable allocator);
+
+void DADiskUnmount(DADiskRef disk, DADiskUnmountOptions options,
+                   DADiskUnmountCallback __nullable callback, void *__nullable context);
+int getmntinfo_r_np(struct statfs *__nullable *__nullable mntbufp, int flags);
 
 CF_EXTERN_C_END
 NS_ASSUME_NONNULL_END

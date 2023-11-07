@@ -167,7 +167,7 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t inte
                      fieldNames:@[ @"Processor" ]
                        helpText:@"Events rate limited by each processor"];
 
-  SNTMetricCounter *faa_event_counts = [[SNTMetricSet sharedInstance]
+  SNTMetricCounter *faa_event_counts = [metric_set
     counterWithName:@"/santa/file_access_authorizer/log/count"
          fieldNames:@[
            @"config_version", @"access_type", @"rule_id", @"status", @"operation", @"decision"

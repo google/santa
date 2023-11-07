@@ -381,6 +381,11 @@ message Unlink {
   optional FileInfo target = 2;
 }
 
+// Information about a processes codesigning invalidation event
+message CodesigningInvalidated {
+  optional ProcessInfoLight instigator = 1;
+}
+
 // Information about a link event
 message Link {
   // The process performing the link
@@ -529,6 +534,7 @@ message SantaMessage {
     Bundle bundle = 19;
     Allowlist allowlist = 20;
     FileAccess file_access = 21;
+    CodesigningInvalidated codesigning_invalidated = 22;
   };
 }
 

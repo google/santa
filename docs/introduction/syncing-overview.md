@@ -48,7 +48,7 @@ syncs, listen for push notifications and upload events.
     this will be 10min. However there are a few ways to manipulate this:
     1.  The sync server can send down a configuration in the preflight to
         override the 10min interval. It can be anything greater than 10min.
-    2.  Firebase Cloud Messaging (FCM) can be used. The sync server can send
+    2.  Firebase Cloud Messaging (FCM) can be used*. The sync server can send
         down a configuration in the preflight to have the santactl daemon to
         start listening for FCM messages. If a connection to FCM is made, the
         full sync interval drops to a default of 4 hours. This can be further
@@ -57,6 +57,8 @@ syncs, listen for push notifications and upload events.
         the sync server dramatically.
 5.  Full syncs will continue to take place at their configured interval. If
     configured FCM messages will continue to be digested and acted upon.
+
+*The Firebase Cloud Messaging (FCM) based Push Notification system is only available on the internal Google deployment of Santa at this time
 
 #### santactl XPC interface
 

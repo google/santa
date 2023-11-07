@@ -158,6 +158,14 @@ typedef NS_ENUM(NSInteger, SNTOverrideFileAccessAction) {
   SNTOverrideFileAccessActionDiable,
 };
 
+typedef NS_ENUM(NSInteger, SNTDeviceManagerStartupPreferences) {
+  SNTDeviceManagerStartupPreferencesNone,
+  SNTDeviceManagerStartupPreferencesUnmount,
+  SNTDeviceManagerStartupPreferencesForceUnmount,
+  SNTDeviceManagerStartupPreferencesRemount,
+  SNTDeviceManagerStartupPreferencesForceRemount,
+};
+
 #ifdef __cplusplus
 enum class FileAccessPolicyDecision {
   kNoPolicy,

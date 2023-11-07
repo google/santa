@@ -71,6 +71,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
 | BlockUSBMount                     | Bool       | If YES, blocking USB Mass storage feature is enabled. Defaults to NO. |
 | RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j") when forcibly remounting devices. No default. |
+| OnStartUSBOptions                 | String     | If set, defines the action that should be taken on existing USB mounts when Santa starts up. Supported values are "Unmount", "ForceUnmount", "Remount", and "ForceRemount" (note: "remounts" are implemented by first unmounting and then mounting the device again). Existing mounts with mount flags that are a superset of RemountUSBMode are unaffected and left mounted. |
 | FileAccessPolicyPlist             | String      | Path to a file access configuration plist. This is ignored if `FileAccessPolicy` is also set. |
 | FileAccessPolicy                  | Dictionary  | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
 | FileAccessPolicyUpdateIntervalSec | Integer     | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
@@ -224,9 +225,9 @@ ways to install configuration profiles:
 | allowed\_path\_regex                | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
 | blocked\_path\_regex                | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
 | full\_sync\_interval\*              | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
-| fcm\_token\*                        | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
-| fcm\_full\_sync\_interval\*         | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
-| fcm\_global\_rule\_sync\_deadline\* | Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
+| fcm\_token\*†                       | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
+| fcm\_full\_sync\_interval\*†        | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
+| fcm\_global\_rule\_sync\_deadline\*†| Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
 | enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
 | enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
@@ -238,6 +239,7 @@ ways to install configuration profiles:
 
 **Performed once per preflight run (if set).
 
+†The Firebase Cloud Messaging (FCM) based Push Notification system is only available on the internal Google deployment of Santa at this time
 
 ## MDM-Specific Client Configuration
 

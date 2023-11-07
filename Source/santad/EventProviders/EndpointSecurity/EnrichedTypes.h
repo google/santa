@@ -320,9 +320,19 @@ class EnrichedUnlink : public EnrichedEventType {
   EnrichedFile target_;
 };
 
+class EnrichedCSInvalidated : public EnrichedEventType {
+ public:
+  EnrichedCSInvalidated(Message &&es_msg, EnrichedProcess &&instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+  EnrichedCSInvalidated(EnrichedCSInvalidated &&other)
+      : EnrichedEventType(std::move(other)) {}
+  EnrichedCSInvalidated(const EnrichedCSInvalidated &other) = delete;
+};
+
 using EnrichedType =
     std::variant<EnrichedClose, EnrichedExchange, EnrichedExec, EnrichedExit,
-                 EnrichedFork, EnrichedLink, EnrichedRename, EnrichedUnlink>;
+                 EnrichedFork, EnrichedLink, EnrichedRename, EnrichedUnlink,
+                 EnrichedCSInvalidated>;
 
 class EnrichedMessage {
  public:

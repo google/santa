@@ -14,6 +14,9 @@
 #import <Foundation/Foundation.h>
 
 #include <stdlib.h>
+#include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/ucred.h>
 
 #import "Source/santad/EventProviders/DiskArbitrationTestUtil.h"
 
@@ -37,11 +40,14 @@ NS_ASSUME_NONNULL_BEGIN
   [self.insertedDevices removeAllObjects];
   [self.diskAppearedCallbacks removeAllObjects];
   self.sessionQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-  self.wasRemounted = NO;
 }
 
-- (void)insert:(MockDADisk *)ref bsdName:(NSString *)bsdName {
-  self.insertedDevices[bsdName] = ref;
+- (void)insert:(MockDADisk *)ref {
+  if (!ref.diskDescription[@"DAMediaBSDName"]) {
+    [NSException raise:@"Missing DAMediaBSDName"
+                format:@"The MockDADisk is missing the DAMediaBSDName diskDescription key."];
+  }
+  self.insertedDevices[ref.diskDescription[@"DAMediaBSDName"]] = ref;
 
   for (MockDADiskAppearedCallback callback in self.diskAppearedCallbacks) {
     dispatch_sync(self.sessionQueue, ^{
@@ -62,12 +68,58 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+@implementation MockStatfs
+- (instancetype _Nonnull)initFrom:(NSString *)from on:(NSString *)on flags:(NSNumber *)flags {
+  self = [super init];
+  if (self) {
+    _fromName = from;
+    _onName = on;
+    _flags = flags;
+  }
+  return self;
+}
+@end
+
+@implementation MockMounts
+
+- (instancetype _Nonnull)init {
+  self = [super init];
+  if (self) {
+    _mounts = [NSMutableDictionary dictionary];
+  }
+  return self;
+}
+
+- (void)reset {
+  [self.mounts removeAllObjects];
+}
+
+- (void)insert:(MockStatfs *)sfs {
+  self.mounts[sfs.fromName] = sfs;
+}
+
++ (instancetype _Nonnull)mockMounts {
+  static MockMounts *sharedMounts;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    sharedMounts = [[MockMounts alloc] init];
+  });
+  return sharedMounts;
+}
+
+@end
+
 void DADiskMountWithArguments(DADiskRef _Nonnull disk, CFURLRef __nullable path,
                               DADiskMountOptions options, DADiskMountCallback __nullable callback,
                               void *__nullable context,
                               CFStringRef __nullable arguments[_Nullable]) {
-  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  mockDA.wasRemounted = YES;
+  MockDADisk *mockDisk = (__bridge MockDADisk *)disk;
+  mockDisk.wasMounted = YES;
+
+  if (context) {
+    dispatch_semaphore_t sema = (__bridge dispatch_semaphore_t)context;
+    dispatch_semaphore_signal(sema);
+  }
 }
 
 DADiskRef __nullable DADiskCreateFromBSDName(CFAllocatorRef __nullable allocator,
@@ -116,5 +168,33 @@ void DASessionSetDispatchQueue(DASessionRef session, dispatch_queue_t __nullable
 DASessionRef __nullable DASessionCreate(CFAllocatorRef __nullable allocator) {
   return (__bridge DASessionRef)[MockDiskArbitration mockDiskArbitration];
 };
+
+void DADiskUnmount(DADiskRef disk, DADiskUnmountOptions options,
+                   DADiskUnmountCallback __nullable callback, void *__nullable context) {
+  MockDADisk *mockDisk = (__bridge MockDADisk *)disk;
+  mockDisk.wasUnmounted = YES;
+
+  dispatch_semaphore_t sema = (__bridge dispatch_semaphore_t)context;
+  dispatch_semaphore_signal(sema);
+}
+
+int getmntinfo_r_np(struct statfs *__nullable *__nullable mntbufp, int flags) {
+  MockMounts *mockMounts = [MockMounts mockMounts];
+
+  struct statfs *sfs = (struct statfs *)calloc(mockMounts.mounts.count, sizeof(struct statfs));
+
+  __block NSUInteger i = 0;
+  [mockMounts.mounts
+    enumerateKeysAndObjectsUsingBlock:^(NSString *key, MockStatfs *mockSfs, BOOL *stop) {
+      strlcpy(sfs[i].f_mntfromname, mockSfs.fromName.UTF8String, sizeof(sfs[i].f_mntfromname));
+      strlcpy(sfs[i].f_mntonname, mockSfs.onName.UTF8String, sizeof(sfs[i].f_mntonname));
+      sfs[i].f_flags = [mockSfs.flags unsignedIntValue];
+      i++;
+    }];
+
+  *mntbufp = sfs;
+
+  return (int)mockMounts.mounts.count;
+}
 
 NS_ASSUME_NONNULL_END

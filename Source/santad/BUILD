@@ -395,8 +395,10 @@ objc_library(
         ":Metrics",
         ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
     ],
 )
 
@@ -1317,6 +1319,7 @@ santa_unit_test(
         ":Metrics",
         ":MockEndpointSecurityAPI",
         ":SNTEndpointSecurityDeviceManager",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDeviceEvent",
         "//Source/common:TestUtils",

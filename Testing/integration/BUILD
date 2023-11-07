@@ -32,3 +32,13 @@ run_command(
     name = "allow_sysex",
     cmd = "osascript $${BUILD_WORKSPACE_DIRECTORY}/Testing/integration/allow_sysex.scpt",
 )
+
+run_command(
+    name = "dismiss_santa_popup",
+    cmd = "osascript $${BUILD_WORKSPACE_DIRECTORY}/Testing/integration/dismiss_santa_popup.scpt",
+)
+
+run_command(
+    name = "dismiss_usb_popup",
+    cmd = "osascript $${BUILD_WORKSPACE_DIRECTORY}/Testing/integration/dismiss_usb_popup.scpt",
+)

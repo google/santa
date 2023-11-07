@@ -15,10 +15,21 @@
 #import <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
+
+NSString *StartupOptionToString(SNTDeviceManagerStartupPreferences pref) {
+  switch (pref) {
+    case SNTDeviceManagerStartupPreferencesUnmount: return @"Unmount";
+    case SNTDeviceManagerStartupPreferencesForceUnmount: return @"ForceUnmount";
+    case SNTDeviceManagerStartupPreferencesRemount: return @"Remount";
+    case SNTDeviceManagerStartupPreferencesForceRemount: return @"ForceRemount";
+    default: return @"None";
+  }
+}
 
 @interface SNTCommandStatus : SNTCommand <SNTCommandProtocol>
 @end
@@ -195,6 +206,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"remount_usb_mode" : (configurator.blockUSBMount && configurator.remountUSBMode.count
                                  ? configurator.remountUSBMode
                                  : @""),
+        @"on_start_usb_options" : StartupOptionToString(configurator.onStartUSBOptions),
       },
       @"database" : @{
         @"binary_rules" : @(binaryRuleCount),
@@ -252,9 +264,11 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
     if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {
-      printf("  %-25s | %s\n", "USB Remounting Mode:",
+      printf("  %-25s | %s\n", "USB Remounting Mode",
              [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
     }
+    printf("  %-25s | %s\n", "On Start USB Options",
+           StartupOptionToString(configurator.onStartUSBOptions).UTF8String);
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
 

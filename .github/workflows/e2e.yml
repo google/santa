@@ -1,25 +1,28 @@
 name: E2E
 
-on: workflow_dispatch
+on:
+  schedule:
+    - cron: '0 4 * * *' # Every day at 4:00 UTC (not to interfere with fuzzing)
+  workflow_dispatch:
 
 jobs:
   start_vm:
     runs-on: e2e-host
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
       - name: Start VM
-        run: python3 Testing/integration/actions/start_vm.py macOS_12.bundle.tar.gz
+        run: python3 Testing/integration/actions/start_vm.py macOS_14.bundle.tar.gz
 
   integration:
     runs-on: e2e-vm
     env:
       VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Install configuration profile
-        run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
       - name: Add homebrew to PATH
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
+      - name: Install configuration profile
+        run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
       - name: Build, install, and start moroz
         run: |
           bazel build @com_github_groob_moroz//cmd/moroz:moroz
@@ -36,6 +39,8 @@ jobs:
         run: ./Testing/integration/test_config_changes.sh
       - name: Test sync server changes
         run: ./Testing/integration/test_sync_changes.sh
+      - name: Test USB blocking
+        run: ./Testing/integration/test_usb.sh
       - name: Poweroff
         if: ${{ always() }}
         run: sudo shutdown -h +1

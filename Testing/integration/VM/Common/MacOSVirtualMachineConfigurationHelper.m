@@ -75,6 +75,21 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   return disk;
 }
 
++ (VZUSBMassStorageDeviceConfiguration *)createUSBDeviceConfigurationForDisk:(NSURL *)diskURL
+                                                                    readOnly:(BOOL)ro {
+  NSError *error;
+  VZDiskImageStorageDeviceAttachment *diskAttachment =
+    [[VZDiskImageStorageDeviceAttachment alloc] initWithURL:diskURL readOnly:ro error:&error];
+  if (!diskAttachment) {
+    NSLog(@"Failed to create VZDiskImageStorageDeviceAttachment: %@", error.localizedDescription);
+    exit(-1);
+  }
+  VZUSBMassStorageDeviceConfiguration *disk =
+    [[VZUSBMassStorageDeviceConfiguration alloc] initWithAttachment:diskAttachment];
+
+  return disk;
+}
+
 + (VZVirtioNetworkDeviceConfiguration *)createNetworkDeviceConfiguration {
   VZNATNetworkDeviceAttachment *natAttachment = [[VZNATNetworkDeviceAttachment alloc] init];
   VZVirtioNetworkDeviceConfiguration *networkConfiguration =
@@ -189,14 +204,21 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
 
 + (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir
-                                                 roDisk:(NSString *)roDisk {
+                                                 roDisk:(NSString *)roDisk
+                                                usbDisk:(NSString *)usbDisk {
   VZVirtualMachineConfiguration *configuration =
     [self createBaseVirtualMachineConfigurationWithBundleDir:bundleDir];
-  if (roDisk) {
+  if (roDisk && ![roDisk isEqualToString:@""]) {
     configuration.storageDevices = [configuration.storageDevices
       arrayByAddingObject:[self createBlockDeviceConfigurationForDisk:[[NSURL alloc]
                                                                         initFileURLWithPath:roDisk]
                                                              readOnly:YES]];
+  }
+  if (usbDisk && ![usbDisk isEqualToString:@""]) {
+    configuration.storageDevices = [configuration.storageDevices
+      arrayByAddingObject:[self createUSBDeviceConfigurationForDisk:[[NSURL alloc]
+                                                                      initFileURLWithPath:usbDisk]
+                                                           readOnly:NO]];
   }
   NSError *error;
   if (![configuration validateWithError:&error]) {
@@ -208,7 +230,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
 
 + (VZVirtualMachine *)createVirtualMachineWithBundleDir:(NSString *)bundleDir {
-  return [self createVirtualMachineWithBundleDir:bundleDir roDisk:nil];
+  return [self createVirtualMachineWithBundleDir:bundleDir roDisk:nil usbDisk:nil];
 }
 
 @end

@@ -121,6 +121,7 @@ static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kFailClosedKey = @"FailClosed";
 static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
 static NSString *const kRemountUSBModeKey = @"RemountUSBMode";
+static NSString *const kOnStartUSBOptions = @"OnStartUSBOptions";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
 static NSString *const kEnableTransitiveRulesKeyDeprecated = @"EnableTransitiveWhitelisting";
 static NSString *const kAllowedPathRegexKey = @"AllowedPathRegex";
@@ -181,6 +182,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kBlockedPathRegexKeyDeprecated : re,
       kBlockUSBMountKey : number,
       kRemountUSBModeKey : array,
+      kOnStartUSBOptions : string,
       kEnablePageZeroProtectionKey : number,
       kEnableBadSignatureProtectionKey : number,
       kEnableSilentModeKey : number,
@@ -633,6 +635,22 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     }
   }
   return args;
+}
+
+- (SNTDeviceManagerStartupPreferences)onStartUSBOptions {
+  NSString *action = [self.configState[kOnStartUSBOptions] lowercaseString];
+
+  if ([action isEqualToString:@"unmount"]) {
+    return SNTDeviceManagerStartupPreferencesUnmount;
+  } else if ([action isEqualToString:@"forceunmount"]) {
+    return SNTDeviceManagerStartupPreferencesForceUnmount;
+  } else if ([action isEqualToString:@"remount"]) {
+    return SNTDeviceManagerStartupPreferencesRemount;
+  } else if ([action isEqualToString:@"forceremount"]) {
+    return SNTDeviceManagerStartupPreferencesForceRemount;
+  } else {
+    return SNTDeviceManagerStartupPreferencesNone;
+  }
 }
 
 - (NSDictionary<NSString *, SNTRule *> *)staticRules {

@@ -26,6 +26,7 @@
 #include <memory>
 #include <set>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeviceEvent.h"
 #include "Source/common/TestUtils.h"
@@ -50,12 +51,17 @@ class MockAuthResultCache : public AuthResultCache {
 };
 
 @interface SNTEndpointSecurityDeviceManager (Testing)
+- (instancetype)init;
 - (void)logDiskAppeared:(NSDictionary *)props;
+- (BOOL)shouldOperateOnDisk:(DADiskRef)disk;
+- (void)performStartupTasks:(SNTDeviceManagerStartupPreferences)startupPrefs;
+- (uint32_t)updatedMountFlags:(struct statfs *)sfs;
 @end
 
 @interface SNTEndpointSecurityDeviceManagerTest : XCTestCase
 @property id mockConfigurator;
 @property MockDiskArbitration *mockDA;
+@property MockMounts *mockMounts;
 @end
 
 @implementation SNTEndpointSecurityDeviceManagerTest
@@ -69,6 +75,9 @@ class MockAuthResultCache : public AuthResultCache {
 
   self.mockDA = [MockDiskArbitration mockDiskArbitration];
   [self.mockDA reset];
+
+  self.mockMounts = [MockMounts mockMounts];
+  [self.mockMounts reset];
 
   fclose(stdout);
 }
@@ -112,7 +121,10 @@ class MockAuthResultCache : public AuthResultCache {
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
                                                     metrics:nullptr
                                                      logger:nullptr
-                                            authResultCache:nullptr];
+                                            authResultCache:nullptr
+                                              blockUSBMount:false
+                                             remountUSBMode:nil
+                                         startupPreferences:SNTDeviceManagerStartupPreferencesNone];
 
   setupDMCallback(deviceManager);
 
@@ -120,7 +132,7 @@ class MockAuthResultCache : public AuthResultCache {
   id partialDeviceManager = OCMPartialMock(deviceManager);
   OCMStub([partialDeviceManager logDiskAppeared:OCMOCK_ANY]);
 
-  [self.mockDA insert:disk bsdName:test_mntfromname];
+  [self.mockDA insert:disk];
 
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
@@ -211,7 +223,8 @@ class MockAuthResultCache : public AuthResultCache {
              };
            }];
 
-  XCTAssertEqual(self.mockDA.wasRemounted, YES);
+  XCTAssertEqual(self.mockDA.insertedDevices.count, 1);
+  XCTAssertTrue([self.mockDA.insertedDevices allValues][0].wasMounted);
 
   [self waitForExpectations:@[ expectation ] timeout:60.0];
 
@@ -274,7 +287,8 @@ class MockAuthResultCache : public AuthResultCache {
              };
            }];
 
-  XCTAssertEqual(self.mockDA.wasRemounted, YES);
+  XCTAssertEqual(self.mockDA.insertedDevices.count, 1);
+  XCTAssertTrue([self.mockDA.insertedDevices allValues][0].wasMounted);
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
 
@@ -303,7 +317,8 @@ class MockAuthResultCache : public AuthResultCache {
              };
            }];
 
-  XCTAssertEqual(self.mockDA.wasRemounted, NO);
+  XCTAssertEqual(self.mockDA.insertedDevices.count, 1);
+  XCTAssertFalse([self.mockDA.insertedDevices allValues][0].wasMounted);
 }
 
 - (void)testNotifyUnmountFlushesCache {
@@ -324,7 +339,10 @@ class MockAuthResultCache : public AuthResultCache {
     [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
                                                     metrics:nullptr
                                                      logger:nullptr
-                                            authResultCache:mockAuthCache];
+                                            authResultCache:mockAuthCache
+                                              blockUSBMount:YES
+                                             remountUSBMode:nil
+                                         startupPreferences:SNTDeviceManagerStartupPreferencesNone];
 
   deviceManager.blockUSBMount = YES;
 
@@ -338,6 +356,122 @@ class MockAuthResultCache : public AuthResultCache {
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
   XCTBubbleMockVerifyAndClearExpectations(mockAuthCache.get());
+}
+
+- (void)testPerformStartupTasks {
+  SNTEndpointSecurityDeviceManager *deviceManager = [[SNTEndpointSecurityDeviceManager alloc] init];
+
+  id partialDeviceManager = OCMPartialMock(deviceManager);
+  OCMStub([partialDeviceManager shouldOperateOnDisk:nil]).ignoringNonObjectArgs().andReturn(YES);
+
+  deviceManager.blockUSBMount = YES;
+  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
+
+  [self.mockMounts insert:[[MockStatfs alloc] initFrom:@"d1" on:@"v1" flags:@(0x0)]];
+  [self.mockMounts insert:[[MockStatfs alloc] initFrom:@"d2"
+                                                    on:@"v2"
+                                                 flags:@(MNT_RDONLY | MNT_NOEXEC | MNT_JOURNALED)]];
+
+  // Create mock disks with desired args
+  MockDADisk * (^CreateMockDisk)(NSString *, NSString *) =
+    ^MockDADisk *(NSString *mountOn, NSString *mountFrom) {
+    MockDADisk *mockDisk = [[MockDADisk alloc] init];
+    mockDisk.diskDescription = @{
+      @"DAVolumePath" : mountOn,      // f_mntonname,
+      @"DADevicePath" : mountOn,      // f_mntonname,
+      @"DAMediaBSDName" : mountFrom,  // f_mntfromname,
+    };
+
+    return mockDisk;
+  };
+
+  // Reset the Mock DA property, setup disks and remount args, then trigger the test
+  void (^PerformStartupTest)(NSArray<MockDADisk *> *, NSArray<NSString *> *,
+                             SNTDeviceManagerStartupPreferences) =
+    ^void(NSArray<MockDADisk *> *disks, NSArray<NSString *> *remountArgs,
+          SNTDeviceManagerStartupPreferences startupPref) {
+      [self.mockDA reset];
+
+      for (MockDADisk *d in disks) {
+        [self.mockDA insert:d];
+      }
+
+      deviceManager.remountArgs = remountArgs;
+
+      [deviceManager performStartupTasks:startupPref];
+    };
+
+  // Unmount with RemountUSBMode set
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
+
+    PerformStartupTest(@[ disk1, disk2 ], @[ @"noexec", @"rdonly" ],
+                       SNTDeviceManagerStartupPreferencesUnmount);
+
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertFalse(disk1.wasMounted);
+    XCTAssertFalse(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+
+  // Unmount with RemountUSBMode nil
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
+
+    PerformStartupTest(@[ disk1, disk2 ], nil, SNTDeviceManagerStartupPreferencesUnmount);
+
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertFalse(disk1.wasMounted);
+    XCTAssertTrue(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+
+  // Remount with RemountUSBMode set
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
+
+    PerformStartupTest(@[ disk1, disk2 ], @[ @"noexec", @"rdonly" ],
+                       SNTDeviceManagerStartupPreferencesRemount);
+
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertTrue(disk1.wasMounted);
+    XCTAssertFalse(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+
+  // Unmount with RemountUSBMode nil
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
+
+    PerformStartupTest(@[ disk1, disk2 ], nil, SNTDeviceManagerStartupPreferencesRemount);
+
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertFalse(disk1.wasMounted);
+    XCTAssertTrue(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+}
+
+- (void)testUpdatedMountFlags {
+  struct statfs sfs;
+
+  strlcpy(sfs.f_fstypename, "foo", sizeof(sfs.f_fstypename));
+  sfs.f_flags = MNT_JOURNALED | MNT_NOSUID | MNT_NODEV;
+
+  SNTEndpointSecurityDeviceManager *deviceManager = [[SNTEndpointSecurityDeviceManager alloc] init];
+  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
+
+  // For most filesystems, the flags are the union of what is in statfs and the remount args
+  XCTAssertEqual([deviceManager updatedMountFlags:&sfs], sfs.f_flags | MNT_RDONLY | MNT_NOEXEC);
+
+  // For APFS, flags are still unioned, but MNT_JOUNRNALED is cleared
+  strlcpy(sfs.f_fstypename, "apfs", sizeof(sfs.f_fstypename));
+  XCTAssertEqual([deviceManager updatedMountFlags:&sfs],
+                 (sfs.f_flags | MNT_RDONLY | MNT_NOEXEC) & ~MNT_JOURNALED);
 }
 
 - (void)testEnable {
