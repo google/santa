@@ -163,3 +163,10 @@ infrastructure.
 ```sh
 bazel build --apple_generate_dsym -c opt //:release
 ```
+
+### Remove Ad-Hoc Build
+if you would like to remove the ad-hoc build of Santa, you can run the following command:
+
+```sh
+systemextensionsctl uninstall - com.google.santa.daemon
+```
