@@ -106,7 +106,11 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
       [self hashBundleBinariesForEvent:wc.event
         withProgressHandler:^(NSUInteger progressCount) {
           // progress is reported to the distributed notification
-          [self postDistributedNotification:pendingMsg withProgress:progressCount];
+          [self postDistributedNotificationWithEvent:wc.event
+                                        withProgress:progressCount
+                                     withBinaryCount:0
+                                       withFileCount:0
+                                     withHashedCount:0];
         }
         completionHandler:^(SNTStoredEvent *event, NSString *bundleHash) {
           // event and hash reported to distributed notification
@@ -213,18 +217,20 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
                                  @"com.google.santa.notification.blockedeexecution.bundlehash"];
 }
 
-- (void)postDistributedNotification:(SNTMessageWindowController *)pendingMsg
-                       withProgress:(NSUInteger)progressCount {
-  if (![pendingMsg isKindOfClass:[SNTBinaryMessageWindowController class]]) {
-    return;
-  }
-  SNTBinaryMessageWindowController *wc = (SNTBinaryMessageWindowController *)pendingMsg;
+- (void)postDistributedNotificationWithEvent:(SNTStoredEvent *)event
+                                withProgress:(NSUInteger)progressCount
+                             withBinaryCount:(NSUInteger)binaryCount
+                               withFileCount:(NSUInteger)fileCount
+                             withHashedCount:(NSUInteger)hashedCount {
   NSDictionary *userInfo = @{
     kFileBundleProgress : [NSString stringWithFormat:@"%lu", (unsigned long)progressCount],
-    kFileSHA256 : wc.event.fileSHA256 ?: @"",
-    kFilePath : wc.event.filePath ?: @"",
-    kFileBundleName : wc.event.fileBundleName ?: @"",
-    kFileBundleID : wc.event.fileBundleID ?: @"",
+    kFileBundleBinaryCount : [NSString stringWithFormat:@"%lu", (unsigned long)binaryCount],
+    kFileBundleFileCount : [NSString stringWithFormat:@"%lu", (unsigned long)fileCount],
+    kFileBundleBinaryHashedCount : [NSString stringWithFormat:@"%lu", (unsigned long)hashedCount],
+    kFileSHA256 : event.fileSHA256 ?: @"",
+    kFilePath : event.filePath ?: @"",
+    kFileBundleName : event.fileBundleName ?: @"",
+    kFileBundleID : event.fileBundleID ?: @"",
   };
 
   [self postDistributedNotificationWithUserInfo:userInfo
@@ -433,6 +439,18 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
                  binaryCount:(uint64_t)binaryCount
                    fileCount:(uint64_t)fileCount
                  hashedCount:(uint64_t)hashedCount {
+  if ([SNTConfigurator configurator].enableSilentMode) {
+    NSUInteger percentCount = 0;
+    if (hashedCount > 0 && binaryCount > 0) {
+      percentCount = hashedCount / binaryCount * 100;
+    }
+    [self postDistributedNotificationWithEvent:event
+                                  withProgress:percentCount
+                               withBinaryCount:binaryCount
+                                 withFileCount:fileCount
+                               withHashedCount:hashedCount];
+    return;
+  }
   if ([self.currentWindowController isKindOfClass:[SNTBinaryMessageWindowController class]]) {
     SNTBinaryMessageWindowController *controller =
       (SNTBinaryMessageWindowController *)self.currentWindowController;
