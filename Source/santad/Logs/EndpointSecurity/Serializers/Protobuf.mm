@@ -72,6 +72,7 @@ namespace pbv1 = ::santa::pb::v1;
 namespace santa::santad::logs::endpoint_security::serializers {
 
 static constexpr NSUInteger kMaxEncodeObjectEntries = 64;
+static constexpr NSUInteger kMaxEncodeObjectLevels = 5;
 
 std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
                                            SNTDecisionCache *decision_cache, bool json) {
@@ -451,10 +452,48 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
   return FinalizeProto(santa_msg);
 }
 
+id StandardizedNestedObjects(id obj, int level) {
+  if (level-- == 0) {
+    return [obj description];
+  }
+
+  if ([obj isKindOfClass:[NSNumber class]] || [obj isKindOfClass:[NSString class]]) {
+    return obj;
+  } else if ([obj isKindOfClass:[NSArray class]]) {
+    NSMutableArray *arr = [NSMutableArray array];
+    for (id item in obj) {
+      [arr addObject:StandardizedNestedObjects(item, level)];
+    }
+    return arr;
+  } else if ([obj isKindOfClass:[NSDictionary class]]) {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    for (id key in obj) {
+      [dict setObject:StandardizedNestedObjects(obj[key], level) forKey:key];
+    }
+    return dict;
+  } else if ([obj isKindOfClass:[NSData class]]) {
+    return [obj base64EncodedStringWithOptions:0];
+  } else if ([obj isKindOfClass:[NSDate class]]) {
+    return [NSISO8601DateFormatter stringFromDate:obj
+                                         timeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]
+                                    formatOptions:NSISO8601DateFormatWithFractionalSeconds | NSISO8601DateFormatWithInternetDateTime];
+
+  } else {
+    NSLog(@"Got unknown... %d", level);
+    LOGW(@"Unexpected object encountered: %@", obj);
+    return [obj description];
+  }
+}
+
 void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements) {
   if (!entitlements) {
     return;
   }
+
+  // Since nested objects with varying types is hard for the API to serialize to
+  // JSON, first go through and standardize types to ensure better serialization
+  // as well as a consitent view of data.
+  entitlements = StandardizedNestedObjects(entitlements, kMaxEncodeObjectLevels);
 
   __block int numObjectsToEncode = (int)std::min(kMaxEncodeObjectEntries, entitlements.count);
 
@@ -474,19 +513,7 @@ void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements) 
     NSError *err;
     NSData *jsonData;
     @try {
-      id val = obj;
-
-      // Fixup some types with data that can be better represented in JSON
-      if ([obj isKindOfClass:[NSDate class]]) {
-        // Example format output: "November 6, 2023 at 10:25:20 AM EST"
-        val = [NSDateFormatter localizedStringFromDate:obj
-                                             dateStyle:NSDateFormatterLongStyle
-                                             timeStyle:NSDateFormatterLongStyle];
-      } else if ([obj isKindOfClass:[NSData class]]) {
-        val = [obj base64EncodedStringWithOptions:0];
-      }
-
-      jsonData = [NSJSONSerialization dataWithJSONObject:val
+      jsonData = [NSJSONSerialization dataWithJSONObject:obj
                                                  options:NSJSONWritingFragmentsAllowed
                                                    error:&err];
     } @catch (NSException *e) {

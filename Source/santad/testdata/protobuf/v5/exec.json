@@ -200,16 +200,16 @@
  "quarantine_url": "google.com",
  "entitlements": [
   {
-   "key": "key_with_arr_val",
-   "value": "[\"v1\",\"v2\",\"v3\"]"
+   "key": "key_with_arr_val_multitype",
+   "value": "[\"v1\",\"v2\",\"v3\",123,\"2023-11-07T17:00:02.000Z\"]"
   },
   {
    "key": "key_with_data_val",
    "value": "\"SGVsbG8gV29ybGQ=\""
   },
   {
-   "key": "key_with_arr_val_multitype",
-   "value": "\"(\\n    v1,\\n    v2,\\n    v3,\\n    123,\\n    \\\"2023-11-07 17:00:02 +0000\\\"\\n)\""
+   "key": "key_with_str_val",
+   "value": "\"bar\""
   },
   {
    "key": "key_with_arr_val_nested",
@@ -217,23 +217,23 @@
   },
   {
    "key": "key_with_dict_val",
-   "value": "{\"k1\":\"v1\",\"k2\":\"v2\"}"
+   "value": "{\"k2\":\"v2\",\"k1\":\"v1\"}"
   },
   {
    "key": "key_with_date_val",
-   "value": "\"November 7, 2023 at 5:00:02 PM GMT\""
+   "value": "\"2023-11-07T17:00:02.000Z\""
   },
   {
    "key": "key_with_dict_val_nested",
-   "value": "\"{\\n    k1 = v1;\\n    k2 = v2;\\n    k3 =     {\\n        nk1 = nv1;\\n        nk2 = \\\"2023-11-07 17:00:02 +0000\\\";\\n    };\\n}\""
+   "value": "{\"k3\":{\"nk1\":\"nv1\",\"nk2\":\"2023-11-07T17:00:02.000Z\"},\"k2\":\"v2\",\"k1\":\"v1\"}"
   },
   {
    "key": "key_with_num_val",
    "value": "1234"
   },
   {
-   "key": "key_with_str_val",
-   "value": "\"bar\""
+   "key": "key_with_arr_val",
+   "value": "[\"v1\",\"v2\",\"v3\"]"
   }
  ]
 }

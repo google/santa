@@ -214,8 +214,8 @@ message CertificateInfo {
 }
 
 message Entitlement {
-	string key = 1;
-	string value = 2;
+  string key = 1;
+  string value = 2;
 }
 
 // Information about a process execution event

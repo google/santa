@@ -276,7 +276,10 @@ void SerializeAndCheck(es_event_type_t eventType,
                  options:NSJSONReadingMutableContainers
                    error:&jsonError];
     XCTAssertNil(jsonError, @"failed to parse got data as JSON");
+
     XCTAssertNil(FindDelta(wantJSONDict, gotJSONDict));
+    // Note: Uncomment this line to help create testfile JSON when the assert above fails
+    // XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
