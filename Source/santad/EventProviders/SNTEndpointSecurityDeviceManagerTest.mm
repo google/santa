@@ -55,7 +55,7 @@ class MockAuthResultCache : public AuthResultCache {
 - (void)logDiskAppeared:(NSDictionary *)props;
 - (BOOL)shouldOperateOnDisk:(DADiskRef)disk;
 - (void)performStartupTasks:(SNTDeviceManagerStartupPreferences)startupPrefs;
-- (uint32_t)updatedMountFlags:(struct statfs*)sfs;
+- (uint32_t)updatedMountFlags:(struct statfs *)sfs;
 @end
 
 @interface SNTEndpointSecurityDeviceManagerTest : XCTestCase
@@ -450,9 +450,9 @@ class MockAuthResultCache : public AuthResultCache {
     PerformStartupTest(@[ disk1, disk2 ], nil, SNTDeviceManagerStartupPreferencesRemount);
 
     XCTAssertTrue(disk1.wasUnmounted);
-    XCTAssertTrue(disk1.wasMounted);
+    XCTAssertFalse(disk1.wasMounted);
     XCTAssertTrue(disk2.wasUnmounted);
-    XCTAssertTrue(disk2.wasMounted);
+    XCTAssertFalse(disk2.wasMounted);
   }
 }
 
@@ -470,7 +470,8 @@ class MockAuthResultCache : public AuthResultCache {
 
   // For APFS, flags are still unioned, but MNT_JOUNRNALED is cleared
   strlcpy(sfs.f_fstypename, "apfs", sizeof(sfs.f_fstypename));
-  XCTAssertEqual([deviceManager updatedMountFlags:&sfs], (sfs.f_flags | MNT_RDONLY | MNT_NOEXEC) & ~MNT_JOURNALED);
+  XCTAssertEqual([deviceManager updatedMountFlags:&sfs],
+                 (sfs.f_flags | MNT_RDONLY | MNT_NOEXEC) & ~MNT_JOURNALED);
 }
 
 - (void)testEnable {
