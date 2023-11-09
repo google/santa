@@ -213,9 +213,13 @@ message CertificateInfo {
   optional string common_name = 2;
 }
 
+// Information about a single entitlement key/value pair
 message Entitlement {
-  string key = 1;
-  string value = 2;
+  // The name of an entitlement
+  optional string key = 1;
+
+  // The value of an entitlement
+  optional string value = 2;
 }
 
 // Information about a process execution event

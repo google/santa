@@ -489,8 +489,8 @@ void SerializeAndCheckNonESEvents(
   };
 
   for (const auto &kv : fdtypeToEnumType) {
-    XCTAssertEqual(GetFileDescriptorType(kv.first), kv.second,
-                   @"Bad fd type name for fdtype: %u", kv.first);
+    XCTAssertEqual(GetFileDescriptorType(kv.first), kv.second, @"Bad fd type name for fdtype: %u",
+                   kv.first);
   }
 }
 
@@ -610,7 +610,7 @@ void SerializeAndCheckNonESEvents(
 
   EncodeEntitlements(&pbExec, ents);
 
-  int kMaxEncodeObjectEntries = 64; // From Protobuf.mm
+  int kMaxEncodeObjectEntries = 64;  // From Protobuf.mm
   XCTAssertEqual(kMaxEncodeObjectEntries, pbExec.entitlements_size());
 }
 
