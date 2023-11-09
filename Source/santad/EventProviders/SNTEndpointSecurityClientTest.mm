@@ -322,11 +322,14 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   // Ensure all paths are attempted to be muted even if some fail.
   // Ensure if any paths fail the overall result is false.
-  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "a", WatchItemPathType::kLiteral))
+  EXPECT_CALL(*mockESApi,
+              MuteTargetPath(testing::_, std::string_view("a"), WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "b", WatchItemPathType::kLiteral))
+  EXPECT_CALL(*mockESApi,
+              MuteTargetPath(testing::_, std::string_view("b"), WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(false));
-  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, "c", WatchItemPathType::kPrefix))
+  EXPECT_CALL(*mockESApi,
+              MuteTargetPath(testing::_, std::string_view("c"), WatchItemPathType::kPrefix))
     .WillOnce(testing::Return(true));
 
   std::vector<std::pair<std::string, WatchItemPathType>> paths = {
@@ -349,11 +352,14 @@ using santa::santad::event_providers::endpoint_security::Message;
 
   // Ensure all paths are attempted to be unmuted even if some fail.
   // Ensure if any paths fail the overall result is false.
-  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "a", WatchItemPathType::kLiteral))
+  EXPECT_CALL(*mockESApi,
+              UnmuteTargetPath(testing::_, std::string_view("a"), WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(true));
-  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "b", WatchItemPathType::kLiteral))
+  EXPECT_CALL(*mockESApi,
+              UnmuteTargetPath(testing::_, std::string_view("b"), WatchItemPathType::kLiteral))
     .WillOnce(testing::Return(false));
-  EXPECT_CALL(*mockESApi, UnmuteTargetPath(testing::_, "c", WatchItemPathType::kPrefix))
+  EXPECT_CALL(*mockESApi,
+              UnmuteTargetPath(testing::_, std::string_view("c"), WatchItemPathType::kPrefix))
     .WillOnce(testing::Return(true));
 
   std::vector<std::pair<std::string, WatchItemPathType>> paths = {
