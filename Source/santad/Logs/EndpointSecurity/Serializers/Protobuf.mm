@@ -476,10 +476,10 @@ id StandardizedNestedObjects(id obj, int level) {
   } else if ([obj isKindOfClass:[NSDate class]]) {
     return [NSISO8601DateFormatter stringFromDate:obj
                                          timeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]
-                                    formatOptions:NSISO8601DateFormatWithFractionalSeconds | NSISO8601DateFormatWithInternetDateTime];
+                                    formatOptions:NSISO8601DateFormatWithFractionalSeconds |
+                                                  NSISO8601DateFormatWithInternetDateTime];
 
   } else {
-    NSLog(@"Got unknown... %d", level);
     LOGW(@"Unexpected object encountered: %@", obj);
     return [obj description];
   }
@@ -555,9 +555,11 @@ void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements) 
     }
 
     ::pbv1::Entitlement *pb_entitlement = pb_exec->add_entitlements();
-    pb_entitlement->set_key(NSStringToUTF8StringView(key));
-    pb_entitlement->set_value(NSStringToUTF8StringView(
-      [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]));
+    EncodeString([pb_entitlement] { return pb_entitlement->mutable_key(); },
+                 NSStringToUTF8StringView(key));
+    EncodeString([pb_entitlement] { return pb_entitlement->mutable_value(); },
+                 NSStringToUTF8StringView([[NSString alloc] initWithData:jsonData
+                                                                encoding:NSUTF8StringEncoding]));
   }];
 }
 
