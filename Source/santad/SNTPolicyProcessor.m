@@ -21,6 +21,7 @@
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDeepCopy.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
@@ -92,6 +93,9 @@
           cd.signingID = nil;
         }
       }
+
+      cd.entitlements =
+        [csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict] sntDeepCopy];
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;

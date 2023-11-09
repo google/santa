@@ -120,5 +120,43 @@
   }
  },
  "explain": "extra!",
- "quarantine_url": "google.com"
+ "quarantine_url": "google.com",
+ "entitlements": [
+  {
+   "key": "key_with_arr_val_multitype",
+   "value": "[\"v1\",\"v2\",\"v3\",123,\"2023-11-07T17:00:02.000Z\"]"
+  },
+  {
+   "key": "key_with_data_val",
+   "value": "\"SGVsbG8gV29ybGQ=\""
+  },
+  {
+   "key": "key_with_str_val",
+   "value": "\"bar\""
+  },
+  {
+   "key": "key_with_arr_val_nested",
+   "value": "[\"v1\",\"v2\",\"v3\",[\"nv1\",\"nv2\"]]"
+  },
+  {
+   "key": "key_with_dict_val",
+   "value": "{\"k2\":\"v2\",\"k1\":\"v1\"}"
+  },
+  {
+   "key": "key_with_date_val",
+   "value": "\"2023-11-07T17:00:02.000Z\""
+  },
+  {
+   "key": "key_with_dict_val_nested",
+   "value": "{\"k3\":{\"nk1\":\"nv1\",\"nk2\":\"2023-11-07T17:00:02.000Z\"},\"k2\":\"v2\",\"k1\":\"v1\"}"
+  },
+  {
+   "key": "key_with_num_val",
+   "value": "1234"
+  },
+  {
+   "key": "key_with_arr_val",
+   "value": "[\"v1\",\"v2\",\"v3\"]"
+  }
+ ]
 }
