@@ -143,13 +143,11 @@ static NSString *const kPrinterProxyPostMonterey =
 - (void)updateEntitlementsPrefixFilter:(NSArray<NSString *> *)filter {
   absl::MutexLock lock(&self->_filterMutex);
   UpdatePrefixFilterLocked(self->_entitlementsPrefixFilter, filter);
-  LOGD(@"Updated EntitlementPrefixFilter: %@", filter);
 }
 
 - (void)updateEntitlementsTeamIDFilter:(NSArray<NSString *> *)filter {
   absl::MutexLock lock(&self->_filterMutex);
   UpdateTeamIDFilterLocked(self->_entitlementsTeamIDFilter, filter);
-  LOGD(@"Updated EntitlementTeamIDFilter: %@", filter);
 }
 
 - (void)incrementEventCounters:(SNTEventState)eventType {
