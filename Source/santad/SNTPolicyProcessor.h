@@ -39,9 +39,9 @@
 ///  Convenience initializer. Will obtain the teamID and construct the signingID
 ///  identifier if able.
 ///
-/// IMPORTANT: The lifetimes of arguments to `entitlementsFilterCallback` are
-/// only guaranteed for the duration of the call to the block. Do not perform
-/// any async processing without extending their lifetimes.
+///  IMPORTANT: The lifetimes of arguments to `entitlementsFilterCallback` are
+///  only guaranteed for the duration of the call to the block. Do not perform
+///  any async processing without extending their lifetimes.
 ///
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                      targetProcess:(nonnull const es_process_t *)targetProc

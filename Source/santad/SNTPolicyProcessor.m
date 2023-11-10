@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTPolicyProcessor.h"
+#include <Foundation/Foundation.h>
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <Security/SecCode.h>
@@ -97,13 +98,16 @@
         }
       }
 
+      NSDictionary *entitlements =
+        csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict];
+
       if (entitlementsFilterCallback) {
-        cd.entitlements = entitlementsFilterCallback(
-          csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict]);
+        NSDictionary *filtered = entitlementsFilterCallback(entitlements);
+        cd.entitlements = filtered;
+        cd.entitlementsFiltered = filtered.count == entitlements.count;
       } else {
-        cd.entitlements =
-          [csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict]
-            sntDeepCopy];
+        cd.entitlements = [entitlements sntDeepCopy];
+        cd.entitlementsFiltered = NO;
       }
     }
   }
