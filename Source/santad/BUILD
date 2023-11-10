@@ -237,10 +237,12 @@ objc_library(
         ":SNTSyncdQueue",
         ":TTYWriter",
         "//Source/common:BranchPrediction",
+        "//Source/common:PrefixTree",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeepCopy",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
@@ -249,7 +251,9 @@ objc_library(
         "//Source/common:SNTStoredEvent",
         "//Source/common:SantaVnode",
         "//Source/common:String",
+        "//Source/common:Unit",
         "@MOLCodesignChecker",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

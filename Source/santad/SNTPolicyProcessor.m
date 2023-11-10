@@ -46,7 +46,10 @@
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256
                                             teamID:(nullable NSString *)teamID
-                                         signingID:(nullable NSString *)signingID {
+                                         signingID:(nullable NSString *)signingID
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nullable)(
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.teamID = teamID;
@@ -94,8 +97,14 @@
         }
       }
 
-      cd.entitlements =
-        [csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict] sntDeepCopy];
+      if (entitlementsFilterCallback) {
+        cd.entitlements = entitlementsFilterCallback(
+          csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict]);
+      } else {
+        cd.entitlements =
+          [csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict]
+            sntDeepCopy];
+      }
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
@@ -225,17 +234,25 @@
 }
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                     targetProcess:(nonnull const es_process_t *)targetProc {
+                                     targetProcess:(nonnull const es_process_t *)targetProc
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nonnull)(
+                            const char *_Nullable teamID,
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   NSString *signingID;
   NSString *teamID;
 
+  const char *entitlementsFilterTeamID = NULL;
+
   if (targetProc->signing_id.length > 0) {
     if (targetProc->team_id.length > 0) {
+      entitlementsFilterTeamID = targetProc->team_id.data;
       teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
       signingID =
         [NSString stringWithFormat:@"%@:%@", teamID,
                                    [NSString stringWithUTF8String:targetProc->signing_id.data]];
     } else if (targetProc->is_platform_binary) {
+      entitlementsFilterTeamID = "platform";
       signingID =
         [NSString stringWithFormat:@"platform:%@",
                                    [NSString stringWithUTF8String:targetProc->signing_id.data]];
@@ -246,7 +263,10 @@
                         fileSHA256:nil
                  certificateSHA256:nil
                             teamID:teamID
-                         signingID:signingID];
+                         signingID:signingID
+        entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
+          return entitlementsFilterCallback(entitlementsFilterTeamID, entitlements);
+        }];
 }
 
 // Used by `$ santactl fileinfo`.
@@ -263,7 +283,8 @@
                         fileSHA256:fileSHA256
                  certificateSHA256:certificateSHA256
                             teamID:teamID
-                         signingID:signingID];
+                         signingID:signingID
+        entitlementsFilterCallback:nil];
 }
 
 ///

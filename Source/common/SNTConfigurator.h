@@ -643,6 +643,18 @@
 @property(readonly, nonatomic) NSUInteger metricExportTimeout;
 
 ///
+/// List of TeamIDs for which entitlements should not be logged. Use the string
+/// "platform" to refer to platform binaries.
+///
+@property(readonly, nonatomic) NSArray<NSString *> *entitlementsPrefixFilter;
+
+///
+/// List of prefix strings for which individual entitlement keys with a matching
+/// prefix should not be logged.
+///
+@property(readonly, nonatomic) NSArray<NSString *> *entitlementsTeamIDFilter;
+
+///
 ///  Retrieve an initialized singleton configurator object using the default file path.
 ///
 + (instancetype)configurator;

@@ -14,6 +14,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTExecutionController.h"
+#include <Foundation/Foundation.h>
 
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #include <bsm/libbsm.h>
@@ -24,12 +25,16 @@
 #include <utmpx.h>
 
 #include <memory>
+#include <set>
+#include <string>
 
 #include "Source/common/BranchPrediction.h"
+#include "Source/common/PrefixTree.h"
 #import "Source/common/SNTBlockMessage.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDeepCopy.h"
 #import "Source/common/SNTDropRootPrivs.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
@@ -38,17 +43,38 @@
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/common/SantaVnode.h"
 #include "Source/common/String.h"
+#include "Source/common/Unit.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTDecisionCache.h"
 #import "Source/santad/SNTNotificationQueue.h"
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
+#include "absl/synchronization/mutex.h"
 
+using santa::common::PrefixTree;
+using santa::common::Unit;
 using santa::santad::TTYWriter;
 using santa::santad::event_providers::endpoint_security::Message;
 
 static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1;  // -1 to account for null terminator
+
+void UpdateTeamIDFilterLocked(std::set<std::string> &filterSet, NSArray<NSString *> *filter) {
+  filterSet.clear();
+
+  for (NSString *prefix in filter) {
+    filterSet.insert(santa::common::NSStringToUTF8String(prefix));
+  }
+}
+
+void UpdatePrefixFilterLocked(std::unique_ptr<PrefixTree<Unit>> &tree,
+                              NSArray<NSString *> *filter) {
+  tree->Reset();
+
+  for (NSString *item in filter) {
+    tree->InsertPrefix(item.UTF8String, Unit{});
+  }
+}
 
 @interface SNTExecutionController ()
 @property SNTEventTable *eventTable;
@@ -63,6 +89,9 @@ static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1;  // -1 to account fo
 
 @implementation SNTExecutionController {
   std::shared_ptr<TTYWriter> _ttyWriter;
+  absl::Mutex _filterMutex;
+  std::set<std::string> _entitlementsTeamIDFilter;
+  std::unique_ptr<PrefixTree<Unit>> _entitlementsPrefixFilter;
 }
 
 static NSString *const kPrinterProxyPreMonterey =
@@ -79,7 +108,9 @@ static NSString *const kPrinterProxyPostMonterey =
                        eventTable:(SNTEventTable *)eventTable
                     notifierQueue:(SNTNotificationQueue *)notifierQueue
                        syncdQueue:(SNTSyncdQueue *)syncdQueue
-                        ttyWriter:(std::shared_ptr<TTYWriter>)ttyWriter {
+                        ttyWriter:(std::shared_ptr<TTYWriter>)ttyWriter
+         entitlementsPrefixFilter:(NSArray<NSString *> *)entitlementsPrefixFilter
+         entitlementsTeamIDFilter:(NSArray<NSString *> *)entitlementsTeamIDFilter {
   self = [super init];
   if (self) {
     _ruleTable = ruleTable;
@@ -100,8 +131,25 @@ static NSString *const kPrinterProxyPostMonterey =
     _events = [metricSet counterWithName:@"/santa/events"
                               fieldNames:@[ @"action_response" ]
                                 helpText:@"Events processed by Santa per response"];
+
+    self->_entitlementsPrefixFilter = std::make_unique<PrefixTree<Unit>>();
+
+    UpdatePrefixFilterLocked(self->_entitlementsPrefixFilter, entitlementsPrefixFilter);
+    UpdateTeamIDFilterLocked(self->_entitlementsTeamIDFilter, entitlementsTeamIDFilter);
   }
   return self;
+}
+
+- (void)updateEntitlementsPrefixFilter:(NSArray<NSString *> *)filter {
+  absl::MutexLock lock(&self->_filterMutex);
+  UpdatePrefixFilterLocked(self->_entitlementsPrefixFilter, filter);
+  LOGD(@"Updated EntitlementPrefixFilter: %@", filter);
+}
+
+- (void)updateEntitlementsTeamIDFilter:(NSArray<NSString *> *)filter {
+  absl::MutexLock lock(&self->_filterMutex);
+  UpdateTeamIDFilterLocked(self->_entitlementsTeamIDFilter, filter);
+  LOGD(@"Updated EntitlementTeamIDFilter: %@", filter);
 }
 
 - (void)incrementEventCounters:(SNTEventState)eventType {
@@ -208,8 +256,41 @@ static NSString *const kPrinterProxyPostMonterey =
   // TODO(markowsky): Maybe add a metric here for how many large executables we're seeing.
   // if (binInfo.fileSize > SomeUpperLimit) ...
 
-  SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
-                                                      targetProcess:targetProc];
+  SNTCachedDecision *cd = [self.policyProcessor
+           decisionForFileInfo:binInfo
+                 targetProcess:targetProc
+    entitlementsFilterCallback:^NSDictionary *(const char *teamID, NSDictionary *entitlements) {
+      if (!entitlements) {
+        return nil;
+      }
+
+      absl::ReaderMutexLock lock(&self->_filterMutex);
+
+      if (teamID && self->_entitlementsTeamIDFilter.count(std::string(teamID)) > 0) {
+        LOGD(@"Dropping entitlement logging for configured TeamID: %s", teamID);
+        return nil;
+      }
+
+      if (self->_entitlementsPrefixFilter->NodeCount() == 0) {
+        LOGD(@"Copying full entitlements for tid: %s", teamID);
+        return [entitlements sntDeepCopy];
+      } else {
+        LOGD(@"Filtering entitlements for tid: %s", teamID);
+        NSMutableDictionary *filtered = [NSMutableDictionary dictionary];
+
+        [entitlements enumerateKeysAndObjectsUsingBlock:^(NSString *key, id obj, BOOL *stop) {
+          if (!self->_entitlementsPrefixFilter->HasPrefix(key.UTF8String)) {
+            if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]]) {
+              [filtered setObject:[obj sntDeepCopy] forKey:key];
+            } else {
+              [filtered setObject:[obj copy] forKey:key];
+            }
+          }
+        }];
+
+        return filtered.count > 0 ? filtered : nil;
+      }
+    }];
 
   cd.vnodeId = SantaVnode::VnodeForFile(targetProc->executable);
 

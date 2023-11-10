@@ -358,6 +358,52 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
               // Forcefully exit. The daemon will be restarted immediately.
               exit(EXIT_SUCCESS);
             }],
+    [[SNTKVOManager alloc]
+      initWithObject:configurator
+            selector:@selector(entitlementsTeamIDFilter)
+                type:[NSArray class]
+            callback:^(NSArray<NSString *> *oldValue, NSArray<NSString *> *newValue) {
+              if ((!oldValue && !newValue) || [oldValue isEqualToArray:newValue]) {
+                return;
+              }
+
+              LOGI(@"EntitlementsTeamIDFilter changed. '%@' --> '%@'. Flushing caches.", oldValue,
+                   newValue);
+
+              // Get the value from the configurator since that method ensures proper structure
+              [exec_controller
+                updateEntitlementsTeamIDFilter:[configurator entitlementsTeamIDFilter]];
+
+              // Clear the AuthResultCache, then clear the ES cache to ensure
+              // future execs get SNTCachedDecision entitlement values filtered
+              // with the new settings.
+              auth_result_cache->FlushCache(FlushCacheMode::kAllCaches,
+                                            FlushCacheReason::kEntitlementsPrefixFilterChanged);
+              [authorizer_client clearCache];
+            }],
+    [[SNTKVOManager alloc]
+      initWithObject:configurator
+            selector:@selector(entitlementsPrefixFilter)
+                type:[NSArray class]
+            callback:^(NSArray<NSString *> *oldValue, NSArray<NSString *> *newValue) {
+              if ((!oldValue && !newValue) || [oldValue isEqualToArray:newValue]) {
+                return;
+              }
+
+              LOGI(@"EntitlementsPrefixFilter changed. '%@' --> '%@'. Flushing caches.", oldValue,
+                   newValue);
+
+              // Get the value from the configurator since that method ensures proper structure
+              [exec_controller
+                updateEntitlementsPrefixFilter:[configurator entitlementsPrefixFilter]];
+
+              // Clear the AuthResultCache, then clear the ES cache to ensure
+              // future execs get SNTCachedDecision entitlement values filtered
+              // with the new settings.
+              auth_result_cache->FlushCache(FlushCacheMode::kAllCaches,
+                                            FlushCacheReason::kEntitlementsPrefixFilterChanged);
+              [authorizer_client clearCache];
+            }],
   ]];
 
   if (@available(macOS 13.0, *)) {
