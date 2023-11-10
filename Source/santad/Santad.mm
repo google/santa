@@ -378,7 +378,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
               // future execs get SNTCachedDecision entitlement values filtered
               // with the new settings.
               auth_result_cache->FlushCache(FlushCacheMode::kAllCaches,
-                                            FlushCacheReason::kEntitlementsPrefixFilterChanged);
+                                            FlushCacheReason::kEntitlementsTeamIDFilterChanged);
               [authorizer_client clearCache];
             }],
     [[SNTKVOManager alloc]
