@@ -89,7 +89,7 @@ void UpdatePrefixFilterLocked(std::unique_ptr<PrefixTree<Unit>> &tree,
 
 @implementation SNTExecutionController {
   std::shared_ptr<TTYWriter> _ttyWriter;
-  absl::Mutex _filterMutex;
+  absl::Mutex _entitlementFilterMutex;
   std::set<std::string> _entitlementsTeamIDFilter;
   std::unique_ptr<PrefixTree<Unit>> _entitlementsPrefixFilter;
 }
@@ -141,12 +141,12 @@ static NSString *const kPrinterProxyPostMonterey =
 }
 
 - (void)updateEntitlementsPrefixFilter:(NSArray<NSString *> *)filter {
-  absl::MutexLock lock(&self->_filterMutex);
+  absl::MutexLock lock(&self->_entitlementFilterMutex);
   UpdatePrefixFilterLocked(self->_entitlementsPrefixFilter, filter);
 }
 
 - (void)updateEntitlementsTeamIDFilter:(NSArray<NSString *> *)filter {
-  absl::MutexLock lock(&self->_filterMutex);
+  absl::MutexLock lock(&self->_entitlementFilterMutex);
   UpdateTeamIDFilterLocked(self->_entitlementsTeamIDFilter, filter);
 }
 
@@ -262,7 +262,7 @@ static NSString *const kPrinterProxyPostMonterey =
         return nil;
       }
 
-      absl::ReaderMutexLock lock(&self->_filterMutex);
+      absl::ReaderMutexLock lock(&self->_entitlementFilterMutex);
 
       if (teamID && self->_entitlementsTeamIDFilter.count(std::string(teamID)) > 0) {
         LOGD(@"Dropping entitlement logging for configured TeamID: %s", teamID);

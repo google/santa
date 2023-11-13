@@ -102,9 +102,8 @@
         csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict];
 
       if (entitlementsFilterCallback) {
-        NSDictionary *filtered = entitlementsFilterCallback(entitlements);
-        cd.entitlements = filtered;
-        cd.entitlementsFiltered = filtered.count == entitlements.count;
+        cd.entitlements = entitlementsFilterCallback(entitlements);
+        cd.entitlementsFiltered = (cd.entitlements.count == entitlements.count);
       } else {
         cd.entitlements = [entitlements sntDeepCopy];
         cd.entitlementsFiltered = NO;
