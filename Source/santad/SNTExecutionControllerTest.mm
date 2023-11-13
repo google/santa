@@ -96,7 +96,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
                                                     eventTable:self.mockEventDatabase
                                                  notifierQueue:nil
                                                     syncdQueue:nil
-                                                     ttyWriter:nullptr];
+                                                     ttyWriter:nullptr
+                                      entitlementsPrefixFilter:nil
+                                      entitlementsTeamIDFilter:nil];
 }
 
 - (void)tearDown {

@@ -222,6 +222,18 @@ message Entitlement {
   optional string value = 2;
 }
 
+// Information about entitlements
+message EntitlementInfo {
+  // Whether or not the set of reported entilements is complete or has been
+  // filtered (e.g. by configuration or clipped because too many to log).
+  optional bool entitlements_filtered = 1;
+
+  // The set of entitlements associated with the target executable
+  // Only top level keys are represented
+  // Values (including nested keys) are JSON serialized
+  repeated Entitlement entitlements = 2;
+}
+
 // Information about a process execution event
 message Execution {
   // The process that executed the new image (e.g. the process that called
@@ -296,10 +308,8 @@ message Execution {
   // Applies when executables are translocated
   optional string original_path = 15;
 
-  // The set of entitlements associated with the target executable
-  // Only top level keys are represented
-  // Values (including nested keys) are JSON serialized
-  repeated Entitlement entitlements = 16;
+  // Entitlement information about the target executbale
+  optional EntitlementInfo entitlement_info = 16;
 }
 
 // Information about a fork event

@@ -60,7 +60,7 @@ namespace pbv1 = ::santa::pb::v1;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 extern void EncodeExitStatus(::pbv1::Exit *pbExit, int exitStatus);
-extern void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements);
+extern void EncodeEntitlements(::pbv1::Execution *pb_exec, SNTCachedDecision *cd);
 extern ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Reason GetReasonEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Mode GetModeEnum(SNTClientMode mode);
@@ -599,19 +599,67 @@ void SerializeAndCheckNonESEvents(
 }
 
 - (void)testEncodeEntitlements {
-  ::pbv1::Execution pbExec;
-  NSMutableDictionary *ents = [NSMutableDictionary dictionary];
+  int kMaxEncodeObjectEntries = 64;  // From Protobuf.mm
+  // Test basic encoding without filtered entitlements
+  {
+    ::pbv1::Execution pbExec;
 
-  for (int i = 0; i < 100; i++) {
-    ents[[NSString stringWithFormat:@"k%d", i]] = @(i);
+    SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+    cd.entitlements = @{@"com.google.test" : @(YES)};
+
+    XCTAssertEqual(0, pbExec.entitlement_info().entitlements_size());
+    XCTAssertFalse(cd.entitlementsFiltered);
+    XCTAssertEqual(1, cd.entitlements.count);
+
+    EncodeEntitlements(&pbExec, cd);
+
+    XCTAssertEqual(1, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(pbExec.entitlement_info().has_entitlements_filtered());
+    XCTAssertFalse(pbExec.entitlement_info().entitlements_filtered());
   }
 
-  XCTAssertEqual(0, pbExec.entitlements_size());
+  // Test basic encoding with filtered entitlements
+  {
+    ::pbv1::Execution pbExec;
 
-  EncodeEntitlements(&pbExec, ents);
+    SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+    cd.entitlements = @{@"com.google.test" : @(YES), @"com.google.test2" : @(NO)};
+    cd.entitlementsFiltered = YES;
 
-  int kMaxEncodeObjectEntries = 64;  // From Protobuf.mm
-  XCTAssertEqual(kMaxEncodeObjectEntries, pbExec.entitlements_size());
+    XCTAssertEqual(0, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(cd.entitlementsFiltered);
+    XCTAssertEqual(2, cd.entitlements.count);
+
+    EncodeEntitlements(&pbExec, cd);
+
+    XCTAssertEqual(2, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(pbExec.entitlement_info().has_entitlements_filtered());
+    XCTAssertTrue(pbExec.entitlement_info().entitlements_filtered());
+  }
+
+  // Test max number of entitlements logged
+  // When entitlements are clipped, `entitlements_filtered` is set to true
+  {
+    ::pbv1::Execution pbExec;
+    NSMutableDictionary *ents = [NSMutableDictionary dictionary];
+
+    for (int i = 0; i < 100; i++) {
+      ents[[NSString stringWithFormat:@"k%d", i]] = @(i);
+    }
+
+    SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+    cd.entitlements = ents;
+
+    XCTAssertEqual(0, pbExec.entitlement_info().entitlements_size());
+    XCTAssertFalse(cd.entitlementsFiltered);
+    XCTAssertGreaterThan(cd.entitlements.count, kMaxEncodeObjectEntries);
+
+    EncodeEntitlements(&pbExec, cd);
+
+    XCTAssertEqual(kMaxEncodeObjectEntries, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(pbExec.entitlement_info().has_entitlements_filtered());
+    XCTAssertTrue(pbExec.entitlement_info().entitlements_filtered());
+  }
 }
 
 - (void)testSerializeMessageExit {

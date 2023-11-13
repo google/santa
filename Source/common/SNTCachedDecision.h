@@ -39,6 +39,7 @@
 @property NSString *teamID;
 @property NSString *signingID;
 @property NSDictionary *entitlements;
+@property BOOL entitlementsFiltered;
 
 @property NSString *quarantineURL;
 

@@ -77,7 +77,9 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | FileAccessPolicyUpdateIntervalSec | Integer     | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
 | SyncClientContentEncoding         | String      | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none" (Defaults to deflate.)  |
 | SyncExtraHeaders                  | Dictionary  | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
-| EnableDebugLogging                | Bool  | If YES, the client will log additional debug messages to the Apple Unified Log.  For example, transitive rule creation logs can be viewed with `log stream --predicate 'sender=="com.google.santa.daemon"'`.  Defaults to NO. |
+| EnableDebugLogging                | Bool        | If YES, the client will log additional debug messages to the Apple Unified Log.  For example, transitive rule creation logs can be viewed with `log stream --predicate 'sender=="com.google.santa.daemon"'`.  Defaults to NO. |
+| EntitlementsPrefixFilter          | Array       | Array of strings of entitlement prefixes that should not be logged (for example: `com.apple.private`). No default. |
+| EntitlementsTeamIDFilter          | Array       | Array of TeamID strings. Entitlements from processes with a matching TeamID in the code signature will not be logged. Use the value `platform` to filter entitlements from platform binaries. No default. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current

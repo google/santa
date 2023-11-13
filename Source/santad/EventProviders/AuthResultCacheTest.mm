@@ -230,13 +230,16 @@ static inline void AssertCacheCounts(std::shared_ptr<AuthResultCache> cache, uin
     {FlushCacheReason::kStaticRulesChanged, @"StaticRulesChanged"},
     {FlushCacheReason::kExplicitCommand, @"ExplicitCommand"},
     {FlushCacheReason::kFilesystemUnmounted, @"FilesystemUnmounted"},
+    {FlushCacheReason::kEntitlementsPrefixFilterChanged, @"EntitlementsPrefixFilterChanged"},
+    {FlushCacheReason::kEntitlementsTeamIDFilterChanged, @"EntitlementsTeamIDFilterChanged"},
   };
 
   for (const auto &kv : reasonToString) {
     XCTAssertEqualObjects(FlushCacheReasonToString(kv.first), kv.second);
   }
 
-  XCTAssertThrows(FlushCacheReasonToString((FlushCacheReason)12345));
+  XCTAssertThrows(FlushCacheReasonToString(
+    (FlushCacheReason)(static_cast<int>(FlushCacheReason::kEntitlementsTeamIDFilterChanged) + 1)));
 }
 
 @end

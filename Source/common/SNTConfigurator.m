@@ -20,6 +20,21 @@
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTSystemInfo.h"
 
+// Ensures the given object is an NSArray and only contains NSString value types
+static NSArray<NSString *> *EnsureArrayOfStrings(id obj) {
+  if (![obj isKindOfClass:[NSArray class]]) {
+    return nil;
+  }
+
+  for (id item in obj) {
+    if (![item isKindOfClass:[NSString class]]) {
+      return nil;
+    }
+  }
+
+  return obj;
+}
+
 @interface SNTConfigurator ()
 /// A NSUserDefaults object set to use the com.google.santa suite.
 @property(readonly, nonatomic) NSUserDefaults *defaults;
@@ -115,6 +130,9 @@ static NSString *const kClientContentEncoding = @"SyncClientContentEncoding";
 static NSString *const kFCMProject = @"FCMProject";
 static NSString *const kFCMEntity = @"FCMEntity";
 static NSString *const kFCMAPIKey = @"FCMAPIKey";
+
+static NSString *const kEntitlementsPrefixFilterKey = @"EntitlementsPrefixFilter";
+static NSString *const kEntitlementsTeamIDFilterKey = @"EntitlementsTeamIDFilter";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
@@ -240,6 +258,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kEnableAllEventUploadKey : number,
       kDisableUnknownEventUploadKey : number,
       kOverrideFileAccessActionKey : string,
+      kEntitlementsPrefixFilterKey : array,
+      kEntitlementsTeamIDFilterKey : array,
     };
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
@@ -525,6 +545,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 + (NSSet *)keyPathsForValuesAffectingOverrideFileAccessActionKey {
   return [self syncAndConfigStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEntitlementsPrefixFilter {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingEntitlementsTeamIDFilter {
+  return [self configStateSet];
 }
 
 #pragma mark Public Interface
@@ -1109,6 +1137,14 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 
 - (void)clearSyncState {
   self.syncState = [NSMutableDictionary dictionary];
+}
+
+- (NSArray *)entitlementsPrefixFilter {
+  return EnsureArrayOfStrings(self.configState[kEntitlementsPrefixFilterKey]);
+}
+
+- (NSArray *)entitlementsTeamIDFilter {
+  return EnsureArrayOfStrings(self.configState[kEntitlementsTeamIDFilterKey]);
 }
 
 #pragma mark Private Defaults Methods

@@ -485,22 +485,29 @@ id StandardizedNestedObjects(id obj, int level) {
   }
 }
 
-void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements) {
-  if (!entitlements) {
+void EncodeEntitlements(::pbv1::Execution *pb_exec, SNTCachedDecision *cd) {
+  ::pbv1::EntitlementInfo *pb_entitlement_info = pb_exec->mutable_entitlement_info();
+
+  pb_entitlement_info->set_entitlements_filtered(cd.entitlementsFiltered != NO);
+
+  if (!cd.entitlements) {
     return;
   }
 
   // Since nested objects with varying types is hard for the API to serialize to
   // JSON, first go through and standardize types to ensure better serialization
   // as well as a consitent view of data.
-  entitlements = StandardizedNestedObjects(entitlements, kMaxEncodeObjectLevels);
+  NSDictionary *entitlements = StandardizedNestedObjects(cd.entitlements, kMaxEncodeObjectLevels);
 
   __block int numObjectsToEncode = (int)std::min(kMaxEncodeObjectEntries, entitlements.count);
 
-  pb_exec->mutable_entitlements()->Reserve(numObjectsToEncode);
+  pb_entitlement_info->mutable_entitlements()->Reserve(numObjectsToEncode);
 
   [entitlements enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
     if (numObjectsToEncode-- == 0) {
+      // Because entitlements are being clipped, ensure that we update that
+      // the set of entitlements were filtered.
+      pb_entitlement_info->set_entitlements_filtered(true);
       *stop = YES;
       return;
     }
@@ -554,7 +561,7 @@ void EncodeEntitlements(::pbv1::Execution *pb_exec, NSDictionary *entitlements) 
       return;
     }
 
-    ::pbv1::Entitlement *pb_entitlement = pb_exec->add_entitlements();
+    ::pbv1::Entitlement *pb_entitlement = pb_entitlement_info->add_entitlements();
     EncodeString([pb_entitlement] { return pb_entitlement->mutable_key(); },
                  NSStringToUTF8StringView(key));
     EncodeString([pb_entitlement] { return pb_entitlement->mutable_value(); },
@@ -639,7 +646,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
   NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
   EncodeString([pb_exec] { return pb_exec->mutable_original_path(); }, orig_path);
 
-  EncodeEntitlements(pb_exec, cd.entitlements);
+  EncodeEntitlements(pb_exec, cd);
 
   return FinalizeProto(santa_msg);
 }

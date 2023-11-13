@@ -74,6 +74,11 @@ class PrefixTree {
     node_count_ = 0;
   }
 
+  uint32_t NodeCount() {
+    absl::ReaderMutexLock lock(&lock_);
+    return node_count_;
+  }
+
 #if SANTA_PREFIX_TREE_DEBUG
   void Print() {
     char buf[max_depth_ + 1];
@@ -81,11 +86,6 @@ class PrefixTree {
 
     absl::ReaderMutexLock lock(&lock_);
     PrintLocked(root_, buf, 0);
-  }
-
-  uint32_t NodeCount() {
-    absl::ReaderMutexLock lock(&lock_);
-    return node_count_;
   }
 #endif
 

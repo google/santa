@@ -57,7 +57,9 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
                        eventTable:(SNTEventTable *)eventTable
                     notifierQueue:(SNTNotificationQueue *)notifierQueue
                        syncdQueue:(SNTSyncdQueue *)syncdQueue
-                        ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter;
+                        ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter
+         entitlementsPrefixFilter:(NSArray<NSString *> *)prefixFilter
+         entitlementsTeamIDFilter:(NSArray<NSString *> *)teamIDFilter;
 
 ///
 ///  Handles the logic of deciding whether to allow the binary to run or not, sends the response to
@@ -82,4 +84,6 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
 - (bool)synchronousShouldProcessExecEvent:
   (const santa::santad::event_providers::endpoint_security::Message &)esMsg;
 
+- (void)updateEntitlementsPrefixFilter:(NSArray<NSString *> *)filter;
+- (void)updateEntitlementsTeamIDFilter:(NSArray<NSString *> *)filter;
 @end
