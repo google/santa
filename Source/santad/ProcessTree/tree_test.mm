@@ -84,7 +84,6 @@ using namespace process_tree;
   uint64_t event_id = 1;
   // PID 1.1: fork() -> PID 2.2
   const struct pid child_pid = {.pid = 2, .pidversion = 2};
-  self.tree->Step(event_id);
   self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
 
   auto child_opt = self.tree->Get(child_pid);
@@ -98,7 +97,6 @@ using namespace process_tree;
   // PID 2.2: exec("/bin/bash") -> PID 2.3
   const struct pid child_exec_pid = {.pid = 2, .pidversion = 3};
   const struct program child_exec_prog = {.executable = "/bin/bash", .arguments = {"/bin/bash", "-i"}};
-  self.tree->Step(event_id);
   self.tree->HandleExec(event_id++, *child, child_exec_pid, child_exec_prog, child->effective_cred_);
 
   child_opt = self.tree->Get(child_exec_pid);
@@ -117,14 +115,12 @@ using namespace process_tree;
 
   // PID 1.1: fork() -> PID 2.2
   const struct pid login_pid = {.pid = 2, .pidversion = 2};
-  self.tree->Step(event_id);
   self.tree->HandleFork(event_id++, *self.init_proc, login_pid);
 
   // PID 2.2: exec("/usr/bin/login") -> PID 2.3
   const struct pid login_exec_pid = {.pid = 2, .pidversion = 3};
   const struct program login_prog = {.executable = std::string(kAnnotatedExecutable), .arguments = {}};
   auto login = *self.tree->Get(login_pid);
-  self.tree->Step(event_id);
   self.tree->HandleExec(event_id++, *login, login_exec_pid, login_prog, cred);
 
   // Ensure we have an annotation on login itself...
@@ -134,13 +130,11 @@ using namespace process_tree;
 
   // PID 2.3: fork() -> PID 3.3
   const struct pid shell_pid = {.pid = 3, .pidversion = 3};
-  self.tree->Step(event_id);
   self.tree->HandleFork(event_id++, *login, shell_pid);
   // PID 3.3: exec("/bin/zsh") -> PID 3.4
   const struct pid shell_exec_pid = {.pid = 3, .pidversion = 4};
   const struct program shell_prog = {.executable = "/bin/zsh", .arguments = {}};
   auto shell = *self.tree->Get(shell_pid);
-  self.tree->Step(event_id);
   self.tree->HandleExec(event_id++, *shell, shell_exec_pid, shell_prog, cred);
 
   // ... and also ensure we have an annotation on the descendant zsh.
@@ -153,10 +147,8 @@ using namespace process_tree;
   uint64_t event_id = 1;
   const struct pid child_pid = {.pid = 2, .pidversion = 2};
   {
-    self.tree->Step(event_id);
     self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
     auto child = *self.tree->Get(child_pid);
-    self.tree->Step(event_id);
     self.tree->HandleExit(event_id++, *child);
   }
 
@@ -166,13 +158,15 @@ using namespace process_tree;
     XCTAssertTrue(child.has_value());
   }
 
-  // ... until we step far enough into the future (32 event).
+  // ... until we step far enough into the future (32 events).
+  struct pid churn_pid = {.pid = 3, .pidversion = 3};
   for (int i = 0; i < 32; i++) {
-    self.tree->Step(event_id++);
+    self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
+    churn_pid.pid++;
   }
 
   // Now when we try processing the next event, it should have fallen out of the tree.
-  self.tree->Step(event_id++);
+  self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
   {
     auto child = self.tree->Get(child_pid);
     XCTAssertFalse(child.has_value());
@@ -183,10 +177,8 @@ using namespace process_tree;
   uint64_t event_id = 1;
   const struct pid child_pid = {.pid = 2, .pidversion = 2};
   {
-    self.tree->Step(event_id);
     self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
     auto child = *self.tree->Get(child_pid);
-    self.tree->Step(event_id);
     self.tree->HandleExit(event_id++, *child);
   }
 
@@ -199,7 +191,8 @@ using namespace process_tree;
   // Even if we step far into the future, we should still be able to lookup
   // the child.
   for (int i = 0; i < 1000; i++) {
-    self.tree->Step(event_id++);
+    struct pid churn_pid = {.pid = 100+i, .pidversion = 100+i};
+    self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
     auto child = self.tree->Get(child_pid);
     XCTAssertTrue(child.has_value());
   }

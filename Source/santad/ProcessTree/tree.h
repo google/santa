@@ -60,11 +60,6 @@ class ProcessTree {
   // Inform the tree of a process exit.
   void HandleExit(uint64_t timestamp, const Process &p);
 
-  // Mark that the client has processed up to the given timestamp.
-  // Returns whether the given timestamp is "novel", and the tree should be
-  // informed of the event.
-  bool Step(uint64_t timestamp);
-
   // Mark the given pid as needing to be retained in the tree's map for future
   // access. Normally, Processes are removed once all clients process past the
   // event which would remove the Process (e.g. exit), however in cases where
@@ -113,6 +108,11 @@ class ProcessTree {
   void BackfillInsertChildren(
       absl::flat_hash_map<pid_t, std::vector<const Process>> &parent_map,
       std::shared_ptr<Process> parent, const Process &unlinked_proc);
+
+  // Mark that an event with the given timestamp is being processed.
+  // Returns whether the given timestamp is "novel", and the tree should be
+  // updated with the results of the event.
+  bool Step(uint64_t timestamp);
 
   std::optional<std::shared_ptr<Process>> GetLocked(
       const struct pid target) const ABSL_SHARED_LOCKS_REQUIRED(mtx_);
