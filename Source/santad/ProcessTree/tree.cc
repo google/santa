@@ -111,45 +111,46 @@ void ProcessTree::BackfillInsertChildren(
 
 void ProcessTree::HandleFork(uint64_t timestamp, const Process &parent,
                              const pid new_pid) {
-    if (Step(timestamp)) {
-  std::shared_ptr<Process> child;
-  {
-    absl::MutexLock lock(&mtx_);
-    child = std::make_shared<Process>(new_pid, parent.effective_cred_,
-                                      parent.program_, map_[parent.pid_]);
-    map_.emplace(new_pid, child);
-  }
-  for (const auto &annotator : annotators_) {
-    annotator->AnnotateFork(*this, parent, *child);
-  }
+  if (Step(timestamp)) {
+    std::shared_ptr<Process> child;
+    {
+      absl::MutexLock lock(&mtx_);
+      child = std::make_shared<Process>(new_pid, parent.effective_cred_,
+                                        parent.program_, map_[parent.pid_]);
+      map_.emplace(new_pid, child);
     }
+    for (const auto &annotator : annotators_) {
+      annotator->AnnotateFork(*this, parent, *child);
+    }
+  }
 }
 
 void ProcessTree::HandleExec(uint64_t timestamp, const Process &p,
                              const pid new_pid, const program prog,
                              const cred c) {
-if (Step(timestamp)) {
-  // TODO(nickmg): should struct pid be reworked and only pid_version be passed?
-  assert(new_pid.pid == p.pid_.pid);
+  if (Step(timestamp)) {
+    // TODO(nickmg): should struct pid be reworked and only pid_version be
+    // passed?
+    assert(new_pid.pid == p.pid_.pid);
 
-  auto new_proc = std::make_shared<Process>(
-      new_pid, c, std::make_shared<const program>(prog), p.parent_);
-  {
-    absl::MutexLock lock(&mtx_);
-    remove_at_.push_back({timestamp, p.pid_});
-    map_.emplace(new_proc->pid_, new_proc);
+    auto new_proc = std::make_shared<Process>(
+        new_pid, c, std::make_shared<const program>(prog), p.parent_);
+    {
+      absl::MutexLock lock(&mtx_);
+      remove_at_.push_back({timestamp, p.pid_});
+      map_.emplace(new_proc->pid_, new_proc);
+    }
+    for (const auto &annotator : annotators_) {
+      annotator->AnnotateExec(*this, p, *new_proc);
+    }
   }
-  for (const auto &annotator : annotators_) {
-    annotator->AnnotateExec(*this, p, *new_proc);
-  }
-}
 }
 
 void ProcessTree::HandleExit(uint64_t timestamp, const Process &p) {
   if (Step(timestamp)) {
-  absl::MutexLock lock(&mtx_);
-      remove_at_.push_back({timestamp, p.pid_});
-    }
+    absl::MutexLock lock(&mtx_);
+    remove_at_.push_back({timestamp, p.pid_});
+  }
 }
 
 bool ProcessTree::Step(uint64_t timestamp) {

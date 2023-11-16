@@ -16,7 +16,7 @@
 
 namespace process_tree {
 absl::StatusOr<Process> LoadPID(pid_t pid) {
-    // TODO
-    return absl::UnimplementedError("LoadPID not implemented");
+  // TODO
+  return absl::UnimplementedError("LoadPID not implemented");
 }
 }  // namespace process_tree

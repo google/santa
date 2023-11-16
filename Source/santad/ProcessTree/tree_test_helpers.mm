@@ -21,24 +21,21 @@
 
 namespace process_tree {
 class ProcessTreeTestPeer : public ProcessTree {
-  public:
-   std::shared_ptr<const Process> InsertInit();
+ public:
+  std::shared_ptr<const Process> InsertInit();
 };
 
 std::shared_ptr<const Process> ProcessTreeTestPeer::InsertInit() {
-    absl::MutexLock lock(&mtx_);
-    struct pid initpid = {
-      .pid = 1,
-      .pidversion = 1,
-    };
-    auto proc = std::make_shared<Process>(
-      initpid, (cred){.uid = 0, .gid = 0},
-      std::make_shared<program>((program){.executable = "/init", .arguments = {"/init"}}),
-      nullptr
-    );
-    map_.emplace(initpid,
-      proc);
-      return proc;
+  absl::MutexLock lock(&mtx_);
+  struct pid initpid = {
+    .pid = 1,
+    .pidversion = 1,
+  };
+  auto proc = std::make_shared<Process>(
+    initpid, (cred){.uid = 0, .gid = 0},
+    std::make_shared<program>((program){.executable = "/init", .arguments = {"/init"}}), nullptr);
+  map_.emplace(initpid, proc);
+  return proc;
 }
 
 }  // namespace process_tree

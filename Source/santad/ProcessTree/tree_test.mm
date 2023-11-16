@@ -31,33 +31,28 @@ static constexpr std::string_view kAnnotatedExecutable = "/usr/bin/login";
 class TestAnnotator : public Annotator {
  public:
   TestAnnotator() {}
-  void AnnotateFork(ProcessTree &tree, const Process &parent,
-                    const Process &child) override;
+  void AnnotateFork(ProcessTree &tree, const Process &parent, const Process &child) override;
   void AnnotateExec(ProcessTree &tree, const Process &orig_process,
                     const Process &new_process) override;
   std::optional<pb::Annotations> Proto() const override;
 };
 
-void TestAnnotator::AnnotateFork(ProcessTree &tree, const Process &parent,
-                                       const Process &child) {
+void TestAnnotator::AnnotateFork(ProcessTree &tree, const Process &parent, const Process &child) {
   // "Base case". Propagate existing annotations down to descendants.
   if (auto annotation = tree.GetAnnotation<TestAnnotator>(parent)) {
     tree.AnnotateProcess(child, std::move(*annotation));
   }
 }
 
-void TestAnnotator::AnnotateExec(ProcessTree &tree,
-                                       const Process &orig_process,
-                                       const Process &new_process) {
+void TestAnnotator::AnnotateExec(ProcessTree &tree, const Process &orig_process,
+                                 const Process &new_process) {
   if (auto annotation = tree.GetAnnotation<TestAnnotator>(orig_process)) {
     tree.AnnotateProcess(new_process, std::move(*annotation));
     return;
   }
 
   if (new_process.program_->executable == kAnnotatedExecutable) {
-    tree.AnnotateProcess(
-        new_process,
-        std::make_shared<TestAnnotator>());
+    tree.AnnotateProcess(new_process, std::make_shared<TestAnnotator>());
   }
 }
 
@@ -96,8 +91,10 @@ using namespace process_tree;
 
   // PID 2.2: exec("/bin/bash") -> PID 2.3
   const struct pid child_exec_pid = {.pid = 2, .pidversion = 3};
-  const struct program child_exec_prog = {.executable = "/bin/bash", .arguments = {"/bin/bash", "-i"}};
-  self.tree->HandleExec(event_id++, *child, child_exec_pid, child_exec_prog, child->effective_cred_);
+  const struct program child_exec_prog = {.executable = "/bin/bash",
+                                          .arguments = {"/bin/bash", "-i"}};
+  self.tree->HandleExec(event_id++, *child, child_exec_pid, child_exec_prog,
+                        child->effective_cred_);
 
   child_opt = self.tree->Get(child_exec_pid);
   XCTAssertTrue(child_opt.has_value());
@@ -119,7 +116,8 @@ using namespace process_tree;
 
   // PID 2.2: exec("/usr/bin/login") -> PID 2.3
   const struct pid login_exec_pid = {.pid = 2, .pidversion = 3};
-  const struct program login_prog = {.executable = std::string(kAnnotatedExecutable), .arguments = {}};
+  const struct program login_prog = {.executable = std::string(kAnnotatedExecutable),
+                                     .arguments = {}};
   auto login = *self.tree->Get(login_pid);
   self.tree->HandleExec(event_id++, *login, login_exec_pid, login_prog, cred);
 
@@ -191,7 +189,7 @@ using namespace process_tree;
   // Even if we step far into the future, we should still be able to lookup
   // the child.
   for (int i = 0; i < 1000; i++) {
-    struct pid churn_pid = {.pid = 100+i, .pidversion = 100+i};
+    struct pid churn_pid = {.pid = 100 + i, .pidversion = 100 + i};
     self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
     auto child = self.tree->Get(child_pid);
     XCTAssertTrue(child.has_value());
@@ -212,4 +210,3 @@ using namespace process_tree;
 }
 
 @end
-
