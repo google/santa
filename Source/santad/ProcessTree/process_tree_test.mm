@@ -183,7 +183,8 @@ using namespace process_tree;
   {
     auto child = self.tree->Get(child_pid);
     XCTAssertTrue(child.has_value());
-    self.tree->RetainProcess((*child)->pid_);
+    std::vector<struct Pid> pids = {(*child)->pid_};
+    self.tree->RetainProcess(pids);
   }
 
   // Even if we step far into the future, we should still be able to lookup
@@ -199,7 +200,8 @@ using namespace process_tree;
   {
     auto child = self.tree->Get(child_pid);
     XCTAssertTrue(child.has_value());
-    self.tree->ReleaseProcess((*child)->pid_);
+    std::vector<struct Pid> pids = {(*child)->pid_};
+    self.tree->ReleaseProcess(pids);
   }
 
   // ... it should immediately be removed.

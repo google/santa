@@ -60,16 +60,16 @@ class ProcessTree {
   // Inform the tree of a process exit.
   void HandleExit(uint64_t timestamp, const Process &p);
 
-  // Mark the given pid as needing to be retained in the tree's map for future
+  // Mark the given pids as needing to be retained in the tree's map for future
   // access. Normally, Processes are removed once all clients process past the
   // event which would remove the Process (e.g. exit), however in cases where
   // async processing occurs, the Process may need to be accessed after the
   // exit.
-  void RetainProcess(const struct Pid p);
+  void RetainProcess(std::vector<struct Pid> &pids);
 
-  // Release a previously retained process, signaling that the client is done
-  // processing the event that retained it.
-  void ReleaseProcess(const struct Pid p);
+  // Release previously retained processes, signaling that the client is done
+  // processing the event that retained them.
+  void ReleaseProcess(std::vector<struct Pid> &pids);
 
   // Annotate the given process with an Annotator (state).
   void AnnotateProcess(const Process &p, std::shared_ptr<const Annotator> a);
