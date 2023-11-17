@@ -19,9 +19,9 @@
 #include <memory>
 #include <string>
 
-#include "Source/santad/ProcessTree/Annotations/base.h"
+#include "Source/santad/ProcessTree/annotations/annotator.h"
 #include "Source/santad/ProcessTree/process.h"
-#include "Source/santad/ProcessTree/tree_test_helpers.h"
+#include "Source/santad/ProcessTree/process_tree_test_helpers.h"
 #include "absl/synchronization/mutex.h"
 
 namespace process_tree {
@@ -78,7 +78,7 @@ using namespace process_tree;
 - (void)testSimpleOps {
   uint64_t event_id = 1;
   // PID 1.1: fork() -> PID 2.2
-  const struct pid child_pid = {.pid = 2, .pidversion = 2};
+  const struct Pid child_pid = {.pid = 2, .pidversion = 2};
   self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
 
   auto child_opt = self.tree->Get(child_pid);
@@ -90,8 +90,8 @@ using namespace process_tree;
   XCTAssertEqual(self.tree->GetParent(*child), self.init_proc);
 
   // PID 2.2: exec("/bin/bash") -> PID 2.3
-  const struct pid child_exec_pid = {.pid = 2, .pidversion = 3};
-  const struct program child_exec_prog = {.executable = "/bin/bash",
+  const struct Pid child_exec_pid = {.pid = 2, .pidversion = 3};
+  const struct Program child_exec_prog = {.executable = "/bin/bash",
                                           .arguments = {"/bin/bash", "-i"}};
   self.tree->HandleExec(event_id++, *child, child_exec_pid, child_exec_prog,
                         child->effective_cred_);
@@ -107,16 +107,16 @@ using namespace process_tree;
 
 - (void)testAnnotation {
   uint64_t event_id = 1;
-  const struct cred cred = {.uid = 0, .gid = 0};
+  const struct Cred cred = {.uid = 0, .gid = 0};
   self.tree->RegisterAnnotator(std::make_unique<TestAnnotator>());
 
   // PID 1.1: fork() -> PID 2.2
-  const struct pid login_pid = {.pid = 2, .pidversion = 2};
+  const struct Pid login_pid = {.pid = 2, .pidversion = 2};
   self.tree->HandleFork(event_id++, *self.init_proc, login_pid);
 
   // PID 2.2: exec("/usr/bin/login") -> PID 2.3
-  const struct pid login_exec_pid = {.pid = 2, .pidversion = 3};
-  const struct program login_prog = {.executable = std::string(kAnnotatedExecutable),
+  const struct Pid login_exec_pid = {.pid = 2, .pidversion = 3};
+  const struct Program login_prog = {.executable = std::string(kAnnotatedExecutable),
                                      .arguments = {}};
   auto login = *self.tree->Get(login_pid);
   self.tree->HandleExec(event_id++, *login, login_exec_pid, login_prog, cred);
@@ -127,11 +127,11 @@ using namespace process_tree;
   XCTAssertTrue(annotation.has_value());
 
   // PID 2.3: fork() -> PID 3.3
-  const struct pid shell_pid = {.pid = 3, .pidversion = 3};
+  const struct Pid shell_pid = {.pid = 3, .pidversion = 3};
   self.tree->HandleFork(event_id++, *login, shell_pid);
   // PID 3.3: exec("/bin/zsh") -> PID 3.4
-  const struct pid shell_exec_pid = {.pid = 3, .pidversion = 4};
-  const struct program shell_prog = {.executable = "/bin/zsh", .arguments = {}};
+  const struct Pid shell_exec_pid = {.pid = 3, .pidversion = 4};
+  const struct Program shell_prog = {.executable = "/bin/zsh", .arguments = {}};
   auto shell = *self.tree->Get(shell_pid);
   self.tree->HandleExec(event_id++, *shell, shell_exec_pid, shell_prog, cred);
 
@@ -143,7 +143,7 @@ using namespace process_tree;
 
 - (void)testCleanup {
   uint64_t event_id = 1;
-  const struct pid child_pid = {.pid = 2, .pidversion = 2};
+  const struct Pid child_pid = {.pid = 2, .pidversion = 2};
   {
     self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
     auto child = *self.tree->Get(child_pid);
@@ -157,7 +157,7 @@ using namespace process_tree;
   }
 
   // ... until we step far enough into the future (32 events).
-  struct pid churn_pid = {.pid = 3, .pidversion = 3};
+  struct Pid churn_pid = {.pid = 3, .pidversion = 3};
   for (int i = 0; i < 32; i++) {
     self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
     churn_pid.pid++;
@@ -173,7 +173,7 @@ using namespace process_tree;
 
 - (void)testRefcountCleanup {
   uint64_t event_id = 1;
-  const struct pid child_pid = {.pid = 2, .pidversion = 2};
+  const struct Pid child_pid = {.pid = 2, .pidversion = 2};
   {
     self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
     auto child = *self.tree->Get(child_pid);
@@ -189,7 +189,7 @@ using namespace process_tree;
   // Even if we step far into the future, we should still be able to lookup
   // the child.
   for (int i = 0; i < 1000; i++) {
-    struct pid churn_pid = {.pid = 100 + i, .pidversion = 100 + i};
+    struct Pid churn_pid = {.pid = 100 + i, .pidversion = 100 + i};
     self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
     auto child = self.tree->Get(child_pid);
     XCTAssertTrue(child.has_value());

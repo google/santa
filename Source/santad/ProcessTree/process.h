@@ -21,48 +21,48 @@
 #include <typeindex>
 #include <vector>
 
-#include "Source/santad/ProcessTree/Annotations/base.h"
+#include "Source/santad/ProcessTree/annotations/annotator.h"
 #include "absl/container/flat_hash_map.h"
 
 namespace process_tree {
 
-struct pid {
+struct Pid {
   pid_t pid;
   int pidversion;
 
-  friend bool operator==(const struct pid &lhs, const struct pid &rhs) {
+  friend bool operator==(const struct Pid &lhs, const struct Pid &rhs) {
     return lhs.pid == rhs.pid && lhs.pidversion == rhs.pidversion;
   }
-  friend bool operator!=(const struct pid &lhs, const struct pid &rhs) {
+  friend bool operator!=(const struct Pid &lhs, const struct Pid &rhs) {
     return !(lhs == rhs);
   }
 };
 
 template <typename H>
-H AbslHashValue(H h, const struct pid &p) {
+H AbslHashValue(H h, const struct Pid &p) {
   return H::combine(std::move(h), p.pid, p.pidversion);
 }
 
-struct cred {
+struct Cred {
   uid_t uid;
   gid_t gid;
 
-  friend bool operator==(const struct cred &lhs, const struct cred &rhs) {
+  friend bool operator==(const struct Cred &lhs, const struct Cred &rhs) {
     return lhs.uid == rhs.uid && lhs.gid == rhs.gid;
   }
-  friend bool operator!=(const struct cred &lhs, const struct cred &rhs) {
+  friend bool operator!=(const struct Cred &lhs, const struct Cred &rhs) {
     return !(lhs == rhs);
   }
 };
 
-struct program {
+struct Program {
   std::string executable;
   std::vector<std::string> arguments;
 
-  friend bool operator==(const struct program &lhs, const struct program &rhs) {
+  friend bool operator==(const struct Program &lhs, const struct Program &rhs) {
     return lhs.executable == rhs.executable && lhs.arguments == rhs.arguments;
   }
-  friend bool operator!=(const struct program &lhs, const struct program &rhs) {
+  friend bool operator!=(const struct Program &lhs, const struct Program &rhs) {
     return !(lhs == rhs);
   }
 };
@@ -72,8 +72,8 @@ class ProcessTree;
 
 class Process {
  public:
-  explicit Process(const pid pid, const cred cred,
-                   std::shared_ptr<const program> program,
+  explicit Process(const Pid pid, const Cred cred,
+                   std::shared_ptr<const Program> program,
                    std::shared_ptr<const Process> parent)
       : pid_(pid),
         effective_cred_(cred),
@@ -82,9 +82,9 @@ class Process {
         parent_(parent) {}
 
   // Const "attributes" are public
-  const struct pid pid_;
-  const struct cred effective_cred_;
-  const std::shared_ptr<const program> program_;
+  const struct Pid pid_;
+  const struct Cred effective_cred_;
+  const std::shared_ptr<const Program> program_;
 
  private:
   // This is not API.

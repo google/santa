@@ -3,8 +3,8 @@ package(
 )
 
 cc_library(
-    name = "base",
-    hdrs = ["base.h"],
+    name = "annotator",
+    hdrs = ["Annotator.h"],
     deps = [
         "//Source/santad/ProcessTree:process_tree_cc_proto",
     ],

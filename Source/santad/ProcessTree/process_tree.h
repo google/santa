@@ -46,7 +46,7 @@ class ProcessTree {
   // Inform the tree of a fork event, in which the parent process spawns a child
   // with the only difference between the two being the pid.
   void HandleFork(uint64_t timestamp, const Process &parent,
-                  const struct pid child);
+                  const struct Pid child);
 
   // Inform the tree of an exec event, in which the program and potentially cred
   // of a Process change.
@@ -54,8 +54,8 @@ class ProcessTree {
   // It is a programming error to pass a new_pid such that
   // p.pid_.pid != new_pid.pid.
   void HandleExec(uint64_t timestamp, const Process &p,
-                  const struct pid new_pid, const struct program prog,
-                  const struct cred c);
+                  const struct Pid new_pid, const struct Program prog,
+                  const struct Cred c);
 
   // Inform the tree of a process exit.
   void HandleExit(uint64_t timestamp, const Process &p);
@@ -65,11 +65,11 @@ class ProcessTree {
   // event which would remove the Process (e.g. exit), however in cases where
   // async processing occurs, the Process may need to be accessed after the
   // exit.
-  void RetainProcess(const struct pid p);
+  void RetainProcess(const struct Pid p);
 
   // Release a previously retained process, signaling that the client is done
   // processing the event that retained it.
-  void ReleaseProcess(const struct pid p);
+  void ReleaseProcess(const struct Pid p);
 
   // Annotate the given process with an Annotator (state).
   void AnnotateProcess(const Process &p, std::shared_ptr<const Annotator> a);
@@ -80,7 +80,7 @@ class ProcessTree {
   std::optional<std::shared_ptr<const T>> GetAnnotation(const Process &p) const;
 
   // Get the fully merged proto form of all annotations on the given process.
-  std::optional<pb::Annotations> GetAnnotations(const struct pid p);
+  std::optional<pb::Annotations> GetAnnotations(const struct Pid p);
 
   // Atomically get the slice of Processes going from the given process "up"
   // to the root. The root process has no parent. N.B. There may be more than
@@ -95,7 +95,7 @@ class ProcessTree {
 
   // Get the Process for the given pid in the tree if it exists.
   std::optional<std::shared_ptr<const Process>> Get(
-      const struct pid target) const;
+      const struct Pid target) const;
 
   // Traverse the tree from the given Process to its parent.
   std::shared_ptr<const Process> GetParent(const Process &p) const;
@@ -115,20 +115,20 @@ class ProcessTree {
   bool Step(uint64_t timestamp);
 
   std::optional<std::shared_ptr<Process>> GetLocked(
-      const struct pid target) const ABSL_SHARED_LOCKS_REQUIRED(mtx_);
+      const struct Pid target) const ABSL_SHARED_LOCKS_REQUIRED(mtx_);
 
   void DebugDumpLocked(std::ostream &stream, int depth, pid_t ppid) const;
 
   std::vector<std::unique_ptr<Annotator>> annotators_;
 
   mutable absl::Mutex mtx_;
-  absl::flat_hash_map<const struct pid, std::shared_ptr<Process>> map_
+  absl::flat_hash_map<const struct Pid, std::shared_ptr<Process>> map_
       ABSL_GUARDED_BY(mtx_);
   // List of pids which should be removed from map_, and at the timestamp at
   // which they should be.
   // Elements are removed when the timestamp falls out of the seen_timestamps_
   // list below, signifying that all clients have synced past the timestamp.
-  std::vector<std::pair<uint64_t, struct pid>> remove_at_ ABSL_GUARDED_BY(mtx_);
+  std::vector<std::pair<uint64_t, struct Pid>> remove_at_ ABSL_GUARDED_BY(mtx_);
   // Rolling list of event timestamps processed by the tree.
   // This is used to ensure an event only gets processed once, even if events
   // come out of order.
@@ -148,7 +148,7 @@ std::optional<std::shared_ptr<const T>> ProcessTree::GetAnnotation(
 class ProcessToken {
  public:
   explicit ProcessToken(std::shared_ptr<ProcessTree> tree,
-                        std::vector<struct pid> pids);
+                        std::vector<struct Pid> pids);
   ~ProcessToken();
   ProcessToken(const ProcessToken &other)
       : ProcessToken(other.tree_, other.pids_) {}
@@ -165,7 +165,7 @@ class ProcessToken {
 
  private:
   std::shared_ptr<ProcessTree> tree_;
-  std::vector<struct pid> pids_;
+  std::vector<struct Pid> pids_;
 };
 
 }  // namespace process_tree

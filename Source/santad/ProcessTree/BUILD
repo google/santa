@@ -9,7 +9,7 @@ cc_library(
     name = "process",
     hdrs = ["process.h"],
     deps = [
-        "//Source/santad/ProcessTree/Annotations:base",
+        "//Source/santad/ProcessTree/annotations:annotator",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
@@ -19,16 +19,16 @@ cc_library(
 objc_library(
     name = "process_tree",
     srcs = [
-        "tree.cc",
-        "tree_macos.mm",
+        "process_tree.cc",
+        "process_tree_macos.mm",
     ],
-    hdrs = ["tree.h"],
+    hdrs = ["process_tree.h"],
     sdk_dylibs = [
         "bsm",
     ],
     deps = [
         ":process",
-        "//Source/santad/ProcessTree/Annotations:base",
+        "//Source/santad/ProcessTree/annotations:annotator",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
@@ -46,9 +46,9 @@ cc_proto_library(
 )
 
 objc_library(
-    name = "tree_test_helpers",
-    srcs = ["tree_test_helpers.mm"],
-    hdrs = ["tree_test_helpers.h"],
+    name = "process_tree_test_helpers",
+    srcs = ["process_tree_test_helpers.mm"],
+    hdrs = ["process_tree_test_helpers.h"],
     deps = [
         ":process_tree",
         "@com_google_absl//absl/synchronization",
@@ -57,10 +57,10 @@ objc_library(
 
 santa_unit_test(
     name = "process_tree_test",
-    srcs = ["tree_test.mm"],
+    srcs = ["process_tree_test.mm"],
     deps = [
         ":process",
-        ":tree_test_helpers",
-        "//Source/santad/ProcessTree/Annotations:base",
+        ":process_tree_test_helpers",
+        "//Source/santad/ProcessTree/annotations:annotator",
     ],
 )

@@ -11,7 +11,7 @@
 /// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
-#include "Source/santad/ProcessTree/tree.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 
 #include <libproc.h>
 
@@ -22,7 +22,7 @@
 #include <typeinfo>
 #include <vector>
 
-#include "Source/santad/ProcessTree/Annotations/base.h"
+#include "Source/santad/ProcessTree/annotations/annotator.h"
 #include "Source/santad/ProcessTree/process.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
 #include "absl/status/status.h"
@@ -110,7 +110,7 @@ void ProcessTree::BackfillInsertChildren(
 }
 
 void ProcessTree::HandleFork(uint64_t timestamp, const Process &parent,
-                             const pid new_pid) {
+                             const Pid new_pid) {
   if (Step(timestamp)) {
     std::shared_ptr<Process> child;
     {
@@ -126,15 +126,15 @@ void ProcessTree::HandleFork(uint64_t timestamp, const Process &parent,
 }
 
 void ProcessTree::HandleExec(uint64_t timestamp, const Process &p,
-                             const pid new_pid, const program prog,
-                             const cred c) {
+                             const Pid new_pid, const Program prog,
+                             const Cred c) {
   if (Step(timestamp)) {
     // TODO(nickmg): should struct pid be reworked and only pid_version be
     // passed?
     assert(new_pid.pid == p.pid_.pid);
 
     auto new_proc = std::make_shared<Process>(
-        new_pid, c, std::make_shared<const program>(prog), p.parent_);
+        new_pid, c, std::make_shared<const Program>(prog), p.parent_);
     {
       absl::MutexLock lock(&mtx_);
       remove_at_.push_back({timestamp, p.pid_});
@@ -193,7 +193,7 @@ bool ProcessTree::Step(uint64_t timestamp) {
   return true;
 }
 
-void ProcessTree::RetainProcess(const struct pid p) {
+void ProcessTree::RetainProcess(const struct Pid p) {
   absl::MutexLock lock(&mtx_);
   auto proc = GetLocked(p);
   if (proc) {
@@ -201,7 +201,7 @@ void ProcessTree::RetainProcess(const struct pid p) {
   }
 }
 
-void ProcessTree::ReleaseProcess(const struct pid p) {
+void ProcessTree::ReleaseProcess(const struct Pid p) {
   absl::MutexLock lock(&mtx_);
   auto proc = GetLocked(p);
   if (proc) {
@@ -228,7 +228,7 @@ void ProcessTree::AnnotateProcess(const Process &p,
   map_[p.pid_]->annotations_.emplace(std::type_index(typeid(x)), std::move(a));
 }
 
-std::optional<pb::Annotations> ProcessTree::GetAnnotations(const pid p) {
+std::optional<pb::Annotations> ProcessTree::GetAnnotations(const Pid p) {
   auto proc = Get(p);
   if (!proc || (*proc)->annotations_.size() == 0) {
     return std::nullopt;
@@ -273,13 +273,13 @@ void ProcessTree::Iterate(
 }
 
 std::optional<std::shared_ptr<const Process>> ProcessTree::Get(
-    const pid target) const {
+    const Pid target) const {
   absl::ReaderMutexLock lock(&mtx_);
   return GetLocked(target);
 }
 
 std::optional<std::shared_ptr<Process>> ProcessTree::GetLocked(
-    const pid target) const {
+    const Pid target) const {
   auto it = map_.find(target);
   if (it == map_.end()) {
     return std::nullopt;
@@ -317,15 +317,15 @@ Tokens
 */
 
 ProcessToken::ProcessToken(std::shared_ptr<ProcessTree> tree,
-                           std::vector<struct pid> pids)
+                           std::vector<struct Pid> pids)
     : tree_(std::move(tree)), pids_(std::move(pids)) {
-  for (const struct pid &p : pids_) {
+  for (const struct Pid &p : pids_) {
     tree_->RetainProcess(p);
   }
 }
 
 ProcessToken::~ProcessToken() {
-  for (const struct pid &p : pids_) {
+  for (const struct Pid &p : pids_) {
     tree_->ReleaseProcess(p);
   }
 }
