@@ -115,10 +115,11 @@ bool ProcessTree::Step(uint64_t timestamp) {
     return false;
   }
 
-  if (std::binary_search(seen_timestamps_.begin(), seen_timestamps_.end(),
-                         timestamp)) {
-    // Event seen, signal it should not be reprocessed.
-    return false;
+  for (const auto seen_ts : seen_timestamps_) {
+    if (seen_ts == timestamp) {
+      // Event seen, signal it should not be reprocessed.
+      return false;
+    }
   }
 
   auto insert_point =
@@ -145,20 +146,24 @@ bool ProcessTree::Step(uint64_t timestamp) {
   return true;
 }
 
-void ProcessTree::RetainProcess(const struct Pid p) {
+void ProcessTree::RetainProcess(std::vector<struct Pid> &pids) {
   absl::MutexLock lock(&mtx_);
-  auto proc = GetLocked(p);
-  if (proc) {
-    (*proc)->refcnt_++;
+  for (const struct Pid &p : pids) {
+    auto proc = GetLocked(p);
+    if (proc) {
+      (*proc)->refcnt_++;
+    }
   }
 }
 
-void ProcessTree::ReleaseProcess(const struct Pid p) {
+void ProcessTree::ReleaseProcess(std::vector<struct Pid> &pids) {
   absl::MutexLock lock(&mtx_);
-  auto proc = GetLocked(p);
-  if (proc) {
-    if (--(*proc)->refcnt_ == 0 && (*proc)->tombstoned_) {
-      map_.erase(p);
+  for (const struct Pid &p : pids) {
+    auto proc = GetLocked(p);
+    if (proc) {
+      if (--(*proc)->refcnt_ == 0 && (*proc)->tombstoned_) {
+        map_.erase(p);
+      }
     }
   }
 }
@@ -271,15 +276,9 @@ Tokens
 ProcessToken::ProcessToken(std::shared_ptr<ProcessTree> tree,
                            std::vector<struct Pid> pids)
     : tree_(std::move(tree)), pids_(std::move(pids)) {
-  for (const struct Pid &p : pids_) {
-    tree_->RetainProcess(p);
-  }
+  tree_->RetainProcess(pids);
 }
 
-ProcessToken::~ProcessToken() {
-  for (const struct Pid &p : pids_) {
-    tree_->ReleaseProcess(p);
-  }
-}
+ProcessToken::~ProcessToken() { tree_->ReleaseProcess(pids_); }
 
 }  // namespace process_tree
