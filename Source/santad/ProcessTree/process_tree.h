@@ -145,6 +145,13 @@ std::optional<std::shared_ptr<const T>> ProcessTree::GetAnnotation(
   return std::dynamic_pointer_cast<const T>(it->second);
 }
 
+// ProcessTokens provide a lifetime based approach to retaining processes
+// in a ProcessTree. When a token is created with a list of pids that may need
+// to be referenced during processing of a given event, the ProcessToken informs
+// the tree to retain those pids in its map so any call to ProcessTree::Get()
+// during event processing succeeds. When the token is destroyed, it signals the
+// tree to release the pids, which removes them from the tree if they would have
+// fallen out otherwise due to a destruction event (e.g. exit).
 class ProcessToken {
  public:
   explicit ProcessToken(std::shared_ptr<ProcessTree> tree,
