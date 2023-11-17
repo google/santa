@@ -41,8 +41,7 @@ absl::Status ProcessTree::Backfill() {
   pids.resize(n_procs + 16);  // add space for a few more processes
                               // in case some spawn in-between.
 
-  n_procs =
-      proc_listpids(PROC_ALL_PIDS, 0, pids.data(), (int)(pids.size() * sizeof(pid_t)));
+  n_procs = proc_listpids(PROC_ALL_PIDS, 0, pids.data(), (int)(pids.size() * sizeof(pid_t)));
   if (n_procs < 0) {
     return absl::InternalError("proc_listpids failed");
   }
