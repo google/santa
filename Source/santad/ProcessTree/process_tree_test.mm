@@ -189,7 +189,7 @@ using namespace process_tree;
   // Even if we step far into the future, we should still be able to lookup
   // the child.
   for (int i = 0; i < 1000; i++) {
-    struct Pid churn_pid = {.pid = 100 + i, .pidversion = 100 + i};
+    struct Pid churn_pid = {.pid = 100 + i, .pidversion = (uint64_t)(100 + i)};
     self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
     auto child = self.tree->Get(child_pid);
     XCTAssertTrue(child.has_value());

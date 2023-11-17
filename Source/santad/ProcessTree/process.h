@@ -28,7 +28,7 @@ namespace process_tree {
 
 struct Pid {
   pid_t pid;
-  int pidversion;
+  uint64_t pidversion;
 
   friend bool operator==(const struct Pid &lhs, const struct Pid &rhs) {
     return lhs.pid == rhs.pid && lhs.pidversion == rhs.pidversion;
