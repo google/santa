@@ -26,7 +26,7 @@
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 
-namespace process_tree {
+namespace santa::santad::process_tree {
 
 void ProcessTree::BackfillInsertChildren(
     absl::flat_hash_map<pid_t, std::vector<const Process>> &parent_map,
@@ -281,4 +281,4 @@ ProcessToken::ProcessToken(std::shared_ptr<ProcessTree> tree,
 
 ProcessToken::~ProcessToken() { tree_->ReleaseProcess(pids_); }
 
-}  // namespace process_tree
+}  // namespace santa::santad::process_tree

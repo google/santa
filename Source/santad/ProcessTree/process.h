@@ -24,7 +24,7 @@
 #include "Source/santad/ProcessTree/annotations/annotator.h"
 #include "absl/container/flat_hash_map.h"
 
-namespace process_tree {
+namespace santa::santad::process_tree {
 
 struct Pid {
   pid_t pid;
@@ -102,6 +102,6 @@ class Process {
   bool tombstoned_;
 };
 
-}  // namespace process_tree
+}  // namespace santa::santad::process_tree
 
 #endif

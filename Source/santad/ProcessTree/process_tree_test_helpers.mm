@@ -19,7 +19,8 @@
 #include "Source/santad/ProcessTree/process.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
-namespace process_tree {
+namespace santa::santad::process_tree {
+
 class ProcessTreeTestPeer : public ProcessTree {
  public:
   std::shared_ptr<const Process> InsertInit();
@@ -38,4 +39,4 @@ std::shared_ptr<const Process> ProcessTreeTestPeer::InsertInit() {
   return proc;
 }
 
-}  // namespace process_tree
+}  // namespace santa::santad::process_tree

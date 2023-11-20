@@ -18,7 +18,7 @@
 
 #include "Source/santad/ProcessTree/process_tree.pb.h"
 
-namespace process_tree {
+namespace santa::santad::process_tree {
 
 class ProcessTree;
 class Process;
@@ -34,6 +34,6 @@ class Annotator {
   virtual std::optional<pb::Annotations> Proto() const = 0;
 };
 
-}  // namespace process_tree
+}  // namespace santa::santad::process_tree
 
 #endif

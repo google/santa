@@ -25,7 +25,7 @@
 #include "absl/synchronization/mutex.h"
 #include "process.h"
 
-namespace process_tree {
+namespace santa::santad::process_tree {
 
 absl::StatusOr<Process> LoadPID(pid_t pid);
 
@@ -175,6 +175,6 @@ class ProcessToken {
   std::vector<struct Pid> pids_;
 };
 
-}  // namespace process_tree
+}  // namespace santa::santad::process_tree
 
 #endif

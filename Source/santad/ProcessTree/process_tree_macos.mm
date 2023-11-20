@@ -23,7 +23,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 
-namespace process_tree {
+namespace santa::santad::process_tree {
 
 absl::StatusOr<Process> LoadPID(pid_t pid) {
   // TODO
@@ -75,4 +75,4 @@ absl::Status ProcessTree::Backfill() {
   return absl::OkStatus();
 }
 
-}  // namespace process_tree
+}  // namespace santa::santad::process_tree

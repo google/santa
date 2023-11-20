@@ -24,7 +24,7 @@
 #include "Source/santad/ProcessTree/process_tree_test_helpers.h"
 #include "absl/synchronization/mutex.h"
 
-namespace process_tree {
+namespace santa::santad::process_tree {
 
 static constexpr std::string_view kAnnotatedExecutable = "/usr/bin/login";
 
@@ -59,9 +59,9 @@ void TestAnnotator::AnnotateExec(ProcessTree &tree, const Process &orig_process,
 std::optional<pb::Annotations> TestAnnotator::Proto() const {
   return std::nullopt;
 }
-}  // namespace process_tree
+}  // namespace santa::santad::process_tree
 
-using namespace process_tree;
+using namespace santa::santad::process_tree;
 
 @interface ProcessTreeTest : XCTestCase
 @property std::shared_ptr<ProcessTreeTestPeer> tree;
