@@ -15,21 +15,33 @@
 #import "Source/santad/SNTPolicyProcessor.h"
 #include <Foundation/Foundation.h>
 
+#include <Availability.h>
+#include <Kernel/kern/cs_blobs.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <Security/SecCode.h>
-
-#include "Source/common/SNTLogging.h"
+#import <Security/Security.h>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeepCopy.h"
 #import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
+#import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+
+NSArray<NSString *> *FieldValuesForProperties(BOOL csDevFlagSet, BOOL validationCategoryThree,
+                                              BOOL oidsSet) {
+#define SNT_BOOL_STR(b) (b) ? @"True" : @"False"
+  return
+    @[ SNT_BOOL_STR(csDevFlagSet), SNT_BOOL_STR(validationCategoryThree), SNT_BOOL_STR(oidsSet) ];
+#undef SNT_BOOL_STR
+}
 
 @interface SNTPolicyProcessor ()
 @property SNTRuleTable *ruleTable;
 @property SNTConfigurator *configurator;
+@property SNTMetricCounter *experimentalDevMetrics;
 @end
 
 @implementation SNTPolicyProcessor
@@ -39,6 +51,11 @@
   if (self) {
     _ruleTable = ruleTable;
     _configurator = [SNTConfigurator configurator];
+
+    _experimentalDevMetrics = [[SNTMetricSet sharedInstance]
+      counterWithName:@"/santa/tmp_signing_info_experiment"
+           fieldNames:@[ @"CSDevFlagSet", @"ValidationCategory", @"DevOIDSet" ]
+             helpText:@"Temporary experiment for dev signed code"];
   }
   return self;
 }
@@ -48,6 +65,7 @@
                                  certificateSHA256:(nullable NSString *)certificateSHA256
                                             teamID:(nullable NSString *)teamID
                                          signingID:(nullable NSString *)signingID
+                                     targetProcess:(nullable const es_process_t *)targetProc
                         entitlementsFilterCallback:
                           (NSDictionary *_Nullable (^_Nullable)(
                             NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
@@ -108,6 +126,53 @@
         cd.entitlements = [entitlements sntDeepCopy];
         cd.entitlementsFiltered = NO;
       }
+
+#if defined(MAC_OS_VERSION_13_3) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_13_3
+      if (@available(macOS 13.0, *)) {
+        // Temporary experiment code...
+        if (targetProc != NULL && fileInfo.path != nil) {
+          // Doing a second SecStaticCodeCreate to not need to worry about modifying the
+          // dependency...
+          SecStaticCodeRef codeRef = NULL;
+          OSStatus status = SecStaticCodeCreateWithPath(
+            (__bridge CFURLRef)[NSURL fileURLWithPath:fileInfo.path], kSecCSDefaultFlags, &codeRef);
+          if (status == errSecSuccess) {
+            CFDictionaryRef cfSigningInfo = NULL;
+            SecCodeCopySigningInformation(
+              codeRef, kSecCSSigningInformation | kSecCSRequirementInformation, &cfSigningInfo);
+            NSDictionary *signingInfo = CFBridgingRelease(cfSigningInfo);
+
+            // Taken from Security framework: LWCRHelper.mm
+            NSString *reqVaidationCategryKey = @"validation-category";
+            // Taken from Security framework:
+            NSArray *keys = @[ @"1.2.840.113635.100.6.1.2", @"1.2.840.113635.100.6.1.12" ];
+            NSDictionary *lwCodeReq = signingInfo[(
+              __bridge NSString *)kSecCodeInfoDefaultDesignatedLightweightCodeRequirement];
+
+            NSDictionary *vals = CFBridgingRelease(SecCertificateCopyValues(
+              csInfo.leafCertificate.certRef, (__bridge CFArrayRef)keys, NULL));
+
+            BOOL validationCategoryThree = [lwCodeReq[reqVaidationCategryKey] intValue] == 3;
+            BOOL csDevFlagSet = ((targetProc->codesigning_flags & CS_DEV_CODE) != 0);
+            BOOL oidsSet = vals.count > 0;
+
+            [self.experimentalDevMetrics
+              incrementForFieldValues:FieldValuesForProperties(csDevFlagSet,
+                                                               validationCategoryThree, oidsSet)];
+
+            if (!(csDevFlagSet == validationCategoryThree && csDevFlagSet == oidsSet)) {
+              NSDictionary *certVals = CFBridgingRelease(
+                SecCertificateCopyValues(csInfo.leafCertificate.certRef, NULL, NULL));
+              LOGI(@"EXPERIMENTAL Unexpected state difference: %@ | Flags(%d): 0x%08x, VC(%d): %d, "
+                   @"oids(%d): %@",
+                   fileInfo.path, csDevFlagSet, targetProc->codesigning_flags,
+                   validationCategoryThree, [lwCodeReq[reqVaidationCategryKey] intValue], oidsSet,
+                   [certVals allKeys]);
+            }
+          }
+        }
+      }
+#endif
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
@@ -267,6 +332,7 @@
                  certificateSHA256:nil
                             teamID:teamID
                          signingID:signingID
+                     targetProcess:targetProc
         entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
           return entitlementsFilterCallback(entitlementsFilterTeamID, entitlements);
         }];
@@ -287,6 +353,7 @@
                  certificateSHA256:certificateSHA256
                             teamID:teamID
                          signingID:signingID
+                     targetProcess:NULL
         entitlementsFilterCallback:nil];
 }
 
