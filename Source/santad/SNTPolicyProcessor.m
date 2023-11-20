@@ -15,18 +15,17 @@
 #import "Source/santad/SNTPolicyProcessor.h"
 #include <Foundation/Foundation.h>
 
+#include <Availability.h>
 #include <Kernel/kern/cs_blobs.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <Security/SecCode.h>
-#include <Security/Security.h>
+#import <Security/Security.h>
 
-#include "Source/common/SNTLogging.h"
-
-#include "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeepCopy.h"
 #import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
@@ -126,7 +125,7 @@ NSArray<NSString *> *FieldValuesForProperties(BOOL csDevFlagSet, BOOL validation
         cd.entitlementsFiltered = NO;
       }
 
-#if HAVE_MACOS_13
+#if defined(MAC_OS_VERSION_13_3) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_13_3
       if (@available(macOS 13.0, *)) {
         // Temporary experiment code...
         if (targetProc != NULL && fileInfo.path != nil) {

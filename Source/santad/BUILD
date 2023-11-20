@@ -196,7 +196,6 @@ objc_library(
     ],
     hdrs = ["SNTPolicyProcessor.h"],
     deps = [
-        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
