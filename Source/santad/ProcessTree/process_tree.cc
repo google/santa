@@ -31,8 +31,6 @@ namespace santa::santad::process_tree {
 void ProcessTree::BackfillInsertChildren(
     absl::flat_hash_map<pid_t, std::vector<const Process>> &parent_map,
     std::shared_ptr<Process> parent, const Process &unlinked_proc) {
-  // We could also pull e.g. start time, pgid, associated tty, etc. from
-  // bsdinfo here.
   auto proc = std::make_shared<Process>(
       unlinked_proc.pid_, unlinked_proc.effective_cred_,
       // Re-use shared pointers from parent if value equivalent
