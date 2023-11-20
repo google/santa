@@ -22,6 +22,7 @@
 
 #include "Source/common/SNTLogging.h"
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTDeepCopy.h"
@@ -125,47 +126,52 @@ NSArray<NSString *> *FieldValuesForProperties(BOOL csDevFlagSet, BOOL validation
         cd.entitlementsFiltered = NO;
       }
 
-      // Temporary experiment code...
-      if (targetProc != NULL) {
-        // Doing a second SecStaticCodeCreate to not need to worry about modifying the dependency...
-        SecStaticCodeRef codeRef = NULL;
-        OSStatus status = SecStaticCodeCreateWithPath(
-          (__bridge CFURLRef)[NSURL fileURLWithPath:fileInfo.path], kSecCSDefaultFlags, &codeRef);
-        if (status == errSecSuccess) {
-          CFDictionaryRef cfSigningInfo = NULL;
-          SecCodeCopySigningInformation(
-            codeRef, kSecCSSigningInformation | kSecCSRequirementInformation, &cfSigningInfo);
-          NSDictionary *signingInfo = CFBridgingRelease(cfSigningInfo);
+#if HAVE_MACOS_13
+      if (@available(macOS 13.0, *)) {
+        // Temporary experiment code...
+        if (targetProc != NULL && fileInfo.path != nil) {
+          // Doing a second SecStaticCodeCreate to not need to worry about modifying the
+          // dependency...
+          SecStaticCodeRef codeRef = NULL;
+          OSStatus status = SecStaticCodeCreateWithPath(
+            (__bridge CFURLRef)[NSURL fileURLWithPath:fileInfo.path], kSecCSDefaultFlags, &codeRef);
+          if (status == errSecSuccess) {
+            CFDictionaryRef cfSigningInfo = NULL;
+            SecCodeCopySigningInformation(
+              codeRef, kSecCSSigningInformation | kSecCSRequirementInformation, &cfSigningInfo);
+            NSDictionary *signingInfo = CFBridgingRelease(cfSigningInfo);
 
-          // Taken from Security framework: LWCRHelper.mm
-          NSString *reqVaidationCategryKey = @"validation-category";
-          // Taken from Security framework:
-          NSArray *keys = @[ @"1.2.840.113635.100.6.1.2", @"1.2.840.113635.100.6.1.12" ];
-          NSDictionary *lwCodeReq = signingInfo[(
-            __bridge NSString *)kSecCodeInfoDefaultDesignatedLightweightCodeRequirement];
+            // Taken from Security framework: LWCRHelper.mm
+            NSString *reqVaidationCategryKey = @"validation-category";
+            // Taken from Security framework:
+            NSArray *keys = @[ @"1.2.840.113635.100.6.1.2", @"1.2.840.113635.100.6.1.12" ];
+            NSDictionary *lwCodeReq = signingInfo[(
+              __bridge NSString *)kSecCodeInfoDefaultDesignatedLightweightCodeRequirement];
 
-          NSDictionary *vals = CFBridgingRelease(SecCertificateCopyValues(
-            csInfo.leafCertificate.certRef, (__bridge CFArrayRef)keys, NULL));
+            NSDictionary *vals = CFBridgingRelease(SecCertificateCopyValues(
+              csInfo.leafCertificate.certRef, (__bridge CFArrayRef)keys, NULL));
 
-          BOOL validationCategoryThree = [lwCodeReq[reqVaidationCategryKey] intValue] == 3;
-          BOOL csDevFlagSet = ((targetProc->codesigning_flags & CS_DEV_CODE) != 0);
-          BOOL oidsSet = vals.count > 0;
+            BOOL validationCategoryThree = [lwCodeReq[reqVaidationCategryKey] intValue] == 3;
+            BOOL csDevFlagSet = ((targetProc->codesigning_flags & CS_DEV_CODE) != 0);
+            BOOL oidsSet = vals.count > 0;
 
-          [self.experimentalDevMetrics
-            incrementForFieldValues:FieldValuesForProperties(csDevFlagSet, validationCategoryThree,
-                                                             oidsSet)];
+            [self.experimentalDevMetrics
+              incrementForFieldValues:FieldValuesForProperties(csDevFlagSet,
+                                                               validationCategoryThree, oidsSet)];
 
-          if (!(csDevFlagSet == validationCategoryThree && csDevFlagSet == oidsSet)) {
-            NSDictionary *certVals = CFBridgingRelease(
-              SecCertificateCopyValues(csInfo.leafCertificate.certRef, NULL, NULL));
-            LOGI(@"EXPERIMENTAL Unexpected state difference: %@ | Flags(%d): 0x%08x, VC(%d): %d, "
-                 @"oids(%d): %@",
-                 fileInfo.path, csDevFlagSet, targetProc->codesigning_flags,
-                 validationCategoryThree, [lwCodeReq[reqVaidationCategryKey] intValue], oidsSet,
-                 [certVals allKeys]);
+            if (!(csDevFlagSet == validationCategoryThree && csDevFlagSet == oidsSet)) {
+              NSDictionary *certVals = CFBridgingRelease(
+                SecCertificateCopyValues(csInfo.leafCertificate.certRef, NULL, NULL));
+              LOGI(@"EXPERIMENTAL Unexpected state difference: %@ | Flags(%d): 0x%08x, VC(%d): %d, "
+                   @"oids(%d): %@",
+                   fileInfo.path, csDevFlagSet, targetProc->codesigning_flags,
+                   validationCategoryThree, [lwCodeReq[reqVaidationCategryKey] intValue], oidsSet,
+                   [certVals allKeys]);
+            }
           }
         }
       }
+#endif
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
