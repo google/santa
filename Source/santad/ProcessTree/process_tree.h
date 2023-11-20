@@ -34,7 +34,7 @@ class ProcessTreeTestPeer;
 
 class ProcessTree {
  public:
-  explicit ProcessTree() {}
+  explicit ProcessTree() : seen_timestamps_({}) {}
 
   // Register an Annotator class to be automatically processed on process
   // lifecycle events.
