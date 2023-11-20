@@ -32,8 +32,10 @@
 
 NSArray<NSString *> *FieldValuesForProperties(BOOL csDevFlagSet, BOOL validationCategoryThree,
                                               BOOL oidsSet) {
-#define BOOL_STR(b) (b) ? @"True" : @"False"
-  return @[ BOOL_STR(csDevFlagSet), BOOL_STR(validationCategoryThree), BOOL_STR(oidsSet) ];
+#define SNT_BOOL_STR(b) (b) ? @"True" : @"False"
+  return
+    @[ SNT_BOOL_STR(csDevFlagSet), SNT_BOOL_STR(validationCategoryThree), SNT_BOOL_STR(oidsSet) ];
+#undef SNT_BOOL_STR
 }
 
 @interface SNTPolicyProcessor ()
