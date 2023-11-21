@@ -101,7 +101,6 @@ using namespace santa::santad::process_tree;
   child = *child_opt;
   XCTAssertEqual(child->pid_, child_exec_pid);
   XCTAssertEqual(*child->program_, child_exec_prog);
-  // Assert we specifically re-use the same cred struct pointer.
   XCTAssertEqual(child->effective_cred_, self.init_proc->effective_cred_);
 }
 

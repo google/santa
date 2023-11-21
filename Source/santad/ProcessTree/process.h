@@ -79,7 +79,9 @@ class Process {
         effective_cred_(cred),
         program_(program),
         annotations_(),
-        parent_(parent) {}
+        parent_(parent),
+        refcnt_(0),
+        tombstoned_(false) {}
 
   // Const "attributes" are public
   const struct Pid pid_;
