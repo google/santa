@@ -14,6 +14,7 @@
 
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 
+#import <CommonCrypto/CommonDigest.h>
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
@@ -24,6 +25,7 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/String.h"
 
 static const uint32_t kRuleTableCurrentVersion = 7;
 
@@ -310,8 +312,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) {
 
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   SNTRule *r = [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
-                                             state:[rs intForColumn:@"state"]
-                                              type:[rs intForColumn:@"type"]
+                                             state:(SNTRuleState)[rs intForColumn:@"state"]
+                                              type:(SNTRuleType)[rs intForColumn:@"type"]
                                          customMsg:[rs stringForColumn:@"custommsg"]
                                          timestamp:[rs intForColumn:@"timestamp"]];
   r.customURL = [rs stringForColumn:@"customurl"];
@@ -587,6 +589,27 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) {
     [rs close];
   }];
   return rules;
+}
+
+- (NSString *)hashOfHashes {
+  __block CC_SHA256_CTX sha;
+  CC_SHA256_Init(&sha);
+
+  [self inDatabase:^(FMDatabase *db) {
+    FMResultSet *rs =
+      [db executeQuery:@"SELECT * FROM rules WHERE type!=?", @(SNTRuleStateAllowTransitive)];
+    while ([rs next]) {
+      SNTRule *r = [self ruleFromResultSet:rs];
+      NSString *digest = r.digest;
+      CC_SHA256_Update(&sha, digest.UTF8String, (CC_LONG)digest.length);
+    }
+    [rs close];
+  }];
+
+  unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256_Final(digest, &sha);
+
+  return santa::SHA256DigestToNSString(digest);
 }
 
 @end

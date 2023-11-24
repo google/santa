@@ -161,6 +161,7 @@
     databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(ruleCounts), nil])]);
   OCMStub([self.daemonConnRop
     syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeNormal), nil])]);
+  OCMStub([self.daemonConnRop databaseRulesHash:([OCMArg invokeBlockWithArgs:@"the-hash", nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
 }
