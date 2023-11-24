@@ -15,6 +15,7 @@
 #ifndef SANTA__COMMON__STRING_H
 #define SANTA__COMMON__STRING_H
 
+#include <CommonCrypto/CommonDigest.h>
 #include <EndpointSecurity/ESTypes.h>
 #include <Foundation/Foundation.h>
 
@@ -51,6 +52,27 @@ static inline NSString *OptionalStringToNSString(const std::optional<std::string
 
 static inline std::string_view StringTokenToStringView(es_string_token_t es_str) {
   return std::string_view(es_str.data, es_str.length);
+}
+
+static inline NSString *SHA1DigestToNSString(const unsigned char digest[CC_SHA1_DIGEST_LENGTH]) {
+  return [[NSString alloc]
+    initWithFormat:
+      @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+      digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
+      digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
+      digest[16], digest[17], digest[18], digest[19]];
+}
+
+static inline NSString *SHA256DigestToNSString(
+  const unsigned char digest[CC_SHA256_DIGEST_LENGTH]) {
+  return [[NSString alloc]
+    initWithFormat:@"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+                    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+                   digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6],
+                   digest[7], digest[8], digest[9], digest[10], digest[11], digest[12], digest[13],
+                   digest[14], digest[15], digest[16], digest[17], digest[18], digest[19],
+                   digest[20], digest[21], digest[22], digest[23], digest[24], digest[25],
+                   digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]];
 }
 
 }  // namespace santa

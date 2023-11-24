@@ -106,6 +106,10 @@ The following table expands upon the above logic to list most of the permutation
     req->set_cdhash_rule_count(uint32(counts.cdhash));
   }];
 
+  [rop databaseRulesHash:^(NSString *hash) {
+    req->set_rules_hash(NSStringToUTF8String(hash));
+  }];
+
   [rop clientMode:^(SNTClientMode cm) {
     switch (cm) {
       case SNTClientModeMonitor: req->set_client_mode(::pbv1::MONITOR); break;

@@ -19,6 +19,7 @@
 #include <os/base.h>
 
 #import "Source/common/SNTSyncConstants.h"
+#import "Source/common/String.h"
 
 // https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/
 static const NSUInteger kExpectedTeamIDLength = 10;
@@ -228,8 +229,8 @@ static const NSUInteger kExpectedTeamIDLength = 10;
   self = [super init];
   if (self) {
     _identifier = DECODE(NSString, @"identifier");
-    _state = [DECODE(NSNumber, @"state") intValue];
-    _type = [DECODE(NSNumber, @"type") intValue];
+    _state = (SNTRuleState)[DECODE(NSNumber, @"state") intValue];
+    _type = (SNTRuleType)[DECODE(NSNumber, @"type") intValue];
     _customMsg = DECODE(NSString, @"custommsg");
     _customURL = DECODE(NSString, @"customurl");
     _timestamp = [DECODE(NSNumber, @"timestamp") unsignedIntegerValue];
@@ -304,6 +305,17 @@ static const NSUInteger kExpectedTeamIDLength = 10;
 
 - (void)resetTimestamp {
   self.timestamp = (NSUInteger)[[NSDate date] timeIntervalSinceReferenceDate];
+}
+
+- (NSString *)digest {
+  NSString *ruleDigestFormat = [[NSString alloc]
+    initWithFormat:@"%@:%ld:%ld:%lu", self.identifier, self.state, self.type, self.timestamp];
+  NSData *ruleData = [ruleDigestFormat dataUsingEncoding:NSUTF8StringEncoding];
+
+  unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(ruleData.bytes, (CC_LONG)ruleData.length, (unsigned char *)&digest);
+
+  return santa::SHA256DigestToNSString(digest);
 }
 
 @end

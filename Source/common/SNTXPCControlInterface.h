@@ -35,6 +35,7 @@
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
 - (void)databaseRuleForIdentifiers:(SNTRuleIdentifiers *)identifiers
                              reply:(void (^)(SNTRule *))reply;
+- (void)databaseRulesHash:(void (^)(NSString *hash))reply;
 - (void)retrieveAllRules:(void (^)(NSArray<SNTRule *> *rules, NSError *error))reply;
 
 ///

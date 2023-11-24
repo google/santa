@@ -276,13 +276,14 @@
   XCTAssertEqualObjects(kRulePolicyRemove, [sut dictionaryRepresentation][kRulePolicy]);
 }
 
-/*
-- (void)testRuleTypeToString {
-  SNTRule *sut = [[SNTRule alloc] init];
-  XCTAssertEqual(kRuleTypeBinary, [sut ruleTypeToString:@""]);//SNTRuleTypeBinary]);
-  XCTAssertEqual(kRuleTypeCertificate,[sut ruleTypeToString:SNTRuleTypeCertificate]);
-  XCTAssertEqual(kRuleTypeTeamID, [sut ruleTypeToString:SNTRuleTypeTeamID]);
-  XCTAssertEqual(kRuleTypeSigningID,[sut ruleTypeToString:SNTRuleTypeSigningID]);
-}*/
+- (void)testDigest {
+  SNTRule *sut = [[SNTRule alloc]
+    initWithIdentifier:@"84de9c61777ca36b13228e2446d53e966096e78db7a72c632b5c185b2ffe68a6"
+                 state:SNTRuleStateAllow
+                  type:SNTRuleTypeBinary
+             customMsg:nil];
+  XCTAssertEqualObjects(sut.digest,
+                        @"9aa5d934be605e081fe3535909c4bfa230e5ae4d4dbde2d616b249ac0368ef11");
+}
 
 @end

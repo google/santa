@@ -16,9 +16,11 @@
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/common/String.h"
+#import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
 #include <google/protobuf/arena.h>
@@ -41,10 +43,13 @@ using santa::NSStringToUTF8String;
   req->set_rules_received(static_cast<uint32_t>(self.syncState.rulesReceived));
   req->set_rules_processed(static_cast<uint32_t>(self.syncState.rulesProcessed));
 
+  id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
+  [rop databaseRulesHash:^(NSString *hash) {
+    req->set_rules_hash(NSStringToUTF8String(hash));
+  }];
+
   ::pbv1::PostflightResponse response;
   [self performRequest:[self requestWithMessage:req] intoMessage:&response timeout:30];
-
-  id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 
   // Set client mode if it changed
   if (self.syncState.clientMode) {

@@ -111,6 +111,11 @@
 - (NSArray<SNTRule *> *)retrieveAllRules;
 
 ///
+///  Retrieve a hash of the hashes of all rules.
+///
+- (NSString *)hashOfHashes;
+
+///
 ///  A map of a file hashes to cached decisions. This is used to pre-validate and whitelist
 ///  certain critical system binaries that are integral to Santa's functionality.
 ///

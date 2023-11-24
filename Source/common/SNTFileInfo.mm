@@ -26,6 +26,7 @@
 #include <sys/xattr.h>
 
 #import "Source/common/SNTLogging.h"
+#import "Source/common/String.h"
 
 // Simple class to hold the data of a mach_header and the offset within the file
 // in which that header was found.
@@ -63,8 +64,6 @@
 @end
 
 @implementation SNTFileInfo
-
-extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 
 - (instancetype)initWithResolvedPath:(NSString *)path error:(NSError **)error {
   struct stat fileStat;
@@ -165,7 +164,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
 - (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256 {
   const int MAX_CHUNK_SIZE = 256 * 1024;  // 256 KB
   const size_t chunkSize = _fileSize > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : _fileSize;
-  char *chunk = malloc(chunkSize);
+  char *chunk = (char *)malloc(chunkSize);
 
   @try {
     CC_SHA1_CTX c1;
@@ -202,28 +201,12 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     if (sha1) {
       unsigned char digest[CC_SHA1_DIGEST_LENGTH];
       CC_SHA1_Final(digest, &c1);
-      NSString *const SHA1FormatString =
-        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
-      *sha1 = [[NSString alloc]
-        initWithFormat:SHA1FormatString, digest[0], digest[1], digest[2], digest[3], digest[4],
-                       digest[5], digest[6], digest[7], digest[8], digest[9], digest[10],
-                       digest[11], digest[12], digest[13], digest[14], digest[15], digest[16],
-                       digest[17], digest[18], digest[19]];
+      *sha1 = santa::SHA1DigestToNSString(digest);
     }
     if (sha256) {
       unsigned char digest[CC_SHA256_DIGEST_LENGTH];
       CC_SHA256_Final(digest, &c256);
-      NSString *const SHA256FormatString =
-        @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-         "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
-
-      *sha256 = [[NSString alloc]
-        initWithFormat:SHA256FormatString, digest[0], digest[1], digest[2], digest[3], digest[4],
-                       digest[5], digest[6], digest[7], digest[8], digest[9], digest[10],
-                       digest[11], digest[12], digest[13], digest[14], digest[15], digest[16],
-                       digest[17], digest[18], digest[19], digest[20], digest[21], digest[22],
-                       digest[23], digest[24], digest[25], digest[26], digest[27], digest[28],
-                       digest[29], digest[30], digest[31]];
+      *sha256 = santa::SHA256DigestToNSString(digest);
     }
   } @finally {
     free(chunk);

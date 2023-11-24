@@ -84,4 +84,21 @@
 ///
 - (NSDictionary *)dictionaryRepresentation;
 
+///
+///  Returns a SHA-256 digest of this rule.
+///  The format of this digest must be consistent to allow possible reimplementation outside of
+///  Santa The digest is a SHA-256 of the rule values separated by colons in the following order:
+///
+///    identifier:state:type:timestamp
+///
+///  The state and type are long integers. The timestamp is a long unsigned integer.
+///
+///  The custom URL and custom message fields are not part of the hash because:
+///    a) They could potentially be very long and slow down hashing
+///    b) They could be formatted in a very slightly different way causing hash values not to match
+///    c) They are not part of the evaluation for a rule and so are not critical like the other
+///    values are
+///
+- (NSString *)digest;
+
 @end

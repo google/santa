@@ -54,8 +54,12 @@ message PreflightRequest {
   uint32 teamid_rule_count = 15      [json_name="teamid_rule_count"];
   uint32 signingid_rule_count = 16   [json_name="signingid_rule_count"];
   uint32 cdhash_rule_count = 17      [json_name="cdhash_rule_count"];
+
   // The UUID of the machine that is sending this preflight.
   string machine_id = 18             [json_name="machine_id"];
+
+  // A hash of the hashes of all current rules.
+  string rules_hash = 19             [json_name="rules_hash"];
 }
 
 enum SyncType {
@@ -309,6 +313,9 @@ message PostflightRequest {
   uint32 rules_processed = 2  [json_name="rules_processed"];
   // The UUID of the machine that is sending this postflight.
   string machine_id = 3       [json_name="machine_id"];
+
+  // A hash of the hashes of all current rules.
+  string rules_hash = 4       [json_name="rules_hash"];
 }
 
 message PostflightResponse { }
