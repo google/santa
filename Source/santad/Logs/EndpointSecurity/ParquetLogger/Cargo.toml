@@ -1,0 +1,12 @@
+[package]
+name = "parquet_logger"
+version = "0.1.0"
+edition = "2021"
+description = "Parquet output support for Santa"
+
+[lib]
+name = "parquet_logger"
+path = "parquet_logger.rs"
+
+[dependencies]
+parquet2 = "0.17.2"

@@ -224,3 +224,50 @@ rules_fuzzing_dependencies()
 load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
 
 rules_fuzzing_init()
+
+# Rust support:
+
+# To find additional information on this release or newer ones visit:
+# https://github.com/bazelbuild/rules_rust/releases
+http_archive(
+    name = "rules_rust",
+    sha256 = "36ab8f9facae745c9c9c1b33d225623d976e78f2cc3f729b7973d8c20934ab95",
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.31.0/rules_rust-v0.31.0.tar.gz"],
+)
+
+load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
+
+rules_rust_dependencies()
+
+rust_register_toolchains(
+    edition = "2021",
+)
+
+load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
+
+crate_universe_dependencies()
+
+load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
+
+crates_repository(
+    name = "crate_index",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = [
+        # Root Cargo file.
+        "//:Cargo.toml",
+        # The below this line must be kept in sync with the workspaces listed in
+        # the root Cargo file.
+        "//:Source/santad/Logs/EndpointSecurity/ParquetLogger/Cargo.toml",
+    ],
+    # Removing this causes rust_*_library targets to select across platforms that
+    # might not be defined, breaking the build.
+    supported_platform_triples = [
+        "i686-apple-darwin", 
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
+    ],
+)
+
+load("@crate_index//:defs.bzl", "crate_repositories")
+
+crate_repositories()

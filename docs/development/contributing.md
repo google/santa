@@ -29,10 +29,43 @@ the tests are complete and passing.
 
 ### Code Style
 
-All code submissions should try to match the surrounding code.  Wherever possible,
-code should adhere to either the
-[Google Objective-C Style Guide](https://google.github.io/styleguide/objcguide.xml)
-or the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
+Santa is written in a mix of C++, Objective-C and a small amount of Rust. All
+code submissions should try to match the surrounding code. We follow the [Google
+Objective-C Style Guide](https://google.github.io/styleguide/objcguide.xml), the
+[Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) and
+the [Rust Style Guide](https://doc.rust-lang.org/beta/style-guide/index.html).
+
+Files containing C++ and Objective-C code are named `ClassName.mm` and
+`ClassName.h`. Rust code is named `library_name.rs`. The BUILD rules follow the
+same naming convention: `ClassName` for the C-family, and `library_name` for
+Rust.
+
+### Using Rust
+
+Rust support in Santa is experimental, and currently only used for specific
+external dependencies written in Rust.
+
+Adding new Rust libraries requires some extra steps:
+
+* Each Rust library must have both a `rust_static_library` BUILD target and a
+  `Cargo.toml` file listing its dependencies.
+* Each new `Cargo.toml` file must be added to the list in the root `Cargo.toml`
+  file AND the `workspace.members` key in the root `WORKSPACE` file.
+* Each `rust_static_library` should be wrapped in a `cc_library`, rather than
+  depended on directly. (This is quite natural when using `cxx`.)
+* Rust code shouldn't be placed just anywhere - generally, each
+  `rust_static_library` target should be in a separate directory, with its own
+  `Cargo.toml` file. (This lets rust-analyzer understand the code structure.)
+
+Additionally, please follow these guidelines:
+
+* Do not write new Rust code without discussing it with the maintainers first.
+* Do not "rewrite it in Rust" for no practical reason.
+* Keep the Rust code to the leaves.
+* Don't hand over control between Rust and C++ more than absolutely necessary.
+* Have C++ call into Rust, not the other way around.
+* Don't use cxx to return `Result` types across the FFI. (It might throw a C++
+  exception.)
 
 ### The small print
 Contributions made by corporations are covered by a different agreement than
