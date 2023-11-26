@@ -202,7 +202,6 @@ objc_library(
         "//Source/common:SNTDeepCopy",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
-        "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
         "@FMDB",
         "@MOLCertificate",
