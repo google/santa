@@ -118,7 +118,9 @@
   // assumption that orgs are generally more relaxed about dev signed cert
   // protections and users can more easily produce dev-signed code that
   // would otherwise be inadvertently allowed.
-  if (!isProdSignedCallback()) {
+  // Note: Only perform the check if the SigningID is still set, otherwise
+  // it is unsigned or had issues above that already cleared the values.
+  if (cd.signingID && !isProdSignedCallback()) {
     LOGD(@"Ignoring TeamID and SigningID rules for code not signed with production cert: %@",
          cd.signingID);
     cd.teamID = nil;
