@@ -282,7 +282,7 @@
     certificateSHA256:nil
     teamID:teamID
     signingID:signingID
-    isProdSignedCallback:^BOOL() {
+    isProdSignedCallback:^BOOL {
       return ((targetProc->codesigning_flags & CS_DEV_CODE) == 0);
     }
     entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
@@ -296,11 +296,10 @@
                                  certificateSHA256:(nullable NSString *)certificateSHA256
                                             teamID:(nullable NSString *)teamID
                                          signingID:(nullable NSString *)signingID {
-  SNTFileInfo *fileInfo;
   MOLCodesignChecker *csInfo;
   NSError *error;
 
-  fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
+  SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
   if (!fileInfo) {
     LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
   } else {
@@ -315,9 +314,10 @@
                  certificateSHA256:certificateSHA256
                             teamID:teamID
                          signingID:signingID
-              isProdSignedCallback:^BOOL() {
+              isProdSignedCallback:^BOOL {
                 if (csInfo) {
-                  // Development OID values taken from Security framework
+                  // Development OID values defined by Apple and used by the Security Framework
+                  // https://images.apple.com/certificateauthority/pdf/Apple_WWDR_CPS_v1.31.pdf
                   NSArray *keys = @[ @"1.2.840.113635.100.6.1.2", @"1.2.840.113635.100.6.1.12" ];
                   NSDictionary *vals = CFBridgingRelease(SecCertificateCopyValues(
                     csInfo.leafCertificate.certRef, (__bridge CFArrayRef)keys, NULL));
