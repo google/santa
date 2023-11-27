@@ -44,15 +44,15 @@
   return self;
 }
 
-- (nonnull SNTCachedDecision *)
-         decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                  fileSHA256:(nullable NSString *)fileSHA256
-           certificateSHA256:(nullable NSString *)certificateSHA256
-                      teamID:(nullable NSString *)teamID
-                   signingID:(nullable NSString *)signingID
-         isDevSignedCallback:(BOOL (^_Nonnull)(MOLCertificate *))isDevSignedCallback
-  entitlementsFilterCallback:(NSDictionary *_Nullable (^_Nullable)(
-                               NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                        fileSHA256:(nullable NSString *)fileSHA256
+                                 certificateSHA256:(nullable NSString *)certificateSHA256
+                                            teamID:(nullable NSString *)teamID
+                                         signingID:(nullable NSString *)signingID
+                              isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nullable)(
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.teamID = teamID;
@@ -100,15 +100,6 @@
         }
       }
 
-      // Do not evaluate TeamID/SigningID rules for dev-signed code based on the
-      // assumption that orgs are generally more relaxed about dev signed cert
-      // protections and users can more easily produce dev-signed code that
-      // would otherwise be inadvertently allowed.
-      if (isDevSignedCallback(csInfo.leafCertificate)) {
-        cd.teamID = nil;
-        cd.signingID = nil;
-      }
-
       NSDictionary *entitlements =
         csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict];
 
@@ -122,6 +113,17 @@
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
+
+  // Do not evaluate TeamID/SigningID rules for dev-signed code based on the
+  // assumption that orgs are generally more relaxed about dev signed cert
+  // protections and users can more easily produce dev-signed code that
+  // would otherwise be inadvertently allowed.
+  if (!isProdSignedCallback()) {
+    LOGD(@"Ignoring TeamID and SigningID rules for code not signed with production cert: %@",
+         cd.signingID);
+    cd.teamID = nil;
+    cd.signingID = nil;
+  }
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
                                             signingID:cd.signingID
@@ -278,8 +280,8 @@
     certificateSHA256:nil
     teamID:teamID
     signingID:signingID
-    isDevSignedCallback:^BOOL(MOLCertificate *leafCertificate __unused) {
-      return ((targetProc->codesigning_flags & CS_DEV_CODE) != 0);
+    isProdSignedCallback:^BOOL() {
+      return ((targetProc->codesigning_flags & CS_DEV_CODE) == 0);
     }
     entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
       return entitlementsFilterCallback(entitlementsFilterTeamID, entitlements);
@@ -293,20 +295,35 @@
                                             teamID:(nullable NSString *)teamID
                                          signingID:(nullable NSString *)signingID {
   SNTFileInfo *fileInfo;
+  MOLCodesignChecker *csInfo;
   NSError *error;
+
   fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
-  if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+  if (!fileInfo) {
+    LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+  } else {
+    csInfo = [fileInfo codesignCheckerWithError:&error];
+    if (error) {
+      LOGW(@"Failed to get codesign ingo for file %@: %@", filePath, error.localizedDescription);
+    }
+  }
+
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
                  certificateSHA256:certificateSHA256
                             teamID:teamID
                          signingID:signingID
-               isDevSignedCallback:^BOOL(MOLCertificate *leafCertificate) {
-                 NSArray *keys = @[ @"1.2.840.113635.100.6.1.2", @"1.2.840.113635.100.6.1.12" ];
-                 NSDictionary *vals = CFBridgingRelease(SecCertificateCopyValues(
-                   leafCertificate.certRef, (__bridge CFArrayRef)keys, NULL));
-                 return vals.count > 0;
-               }
+              isProdSignedCallback:^BOOL() {
+                if (csInfo) {
+                  // Development OID values taken from Security framework
+                  NSArray *keys = @[ @"1.2.840.113635.100.6.1.2", @"1.2.840.113635.100.6.1.12" ];
+                  NSDictionary *vals = CFBridgingRelease(SecCertificateCopyValues(
+                    csInfo.leafCertificate.certRef, (__bridge CFArrayRef)keys, NULL));
+                  return vals.count == 0;
+                } else {
+                  return NO;
+                }
+              }
         entitlementsFilterCallback:nil];
 }
 
