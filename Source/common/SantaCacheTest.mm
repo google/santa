@@ -245,7 +245,7 @@ struct S {
   uint64_t first_val;
   uint64_t second_val;
 
-  auto operator<=>(const S&rhs) const = default;
+  auto operator<=>(const S &rhs) const = default;
 };
 template <>
 uint64_t SantaCacheHasher<S>(S const &s) {
