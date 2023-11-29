@@ -14,6 +14,7 @@
 
 #import <XCTest/XCTest.h>
 
+#include <compare>
 #include <numeric>
 #include <string>
 #include <vector>
