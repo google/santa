@@ -245,7 +245,7 @@ struct S {
   uint64_t first_val;
   uint64_t second_val;
 
-  bool operator==(const S &rhs) {
+  bool operator==(const S &rhs) const {
     return first_val == rhs.first_val && second_val == rhs.second_val;
   }
 };
