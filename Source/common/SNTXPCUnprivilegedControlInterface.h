@@ -71,6 +71,8 @@
 - (void)syncCleanRequired:(void (^)(BOOL))reply;
 - (void)enableBundles:(void (^)(BOOL))reply;
 - (void)enableTransitiveRules:(void (^)(BOOL))reply;
+- (void)blockUSBMount:(void (^)(BOOL))reply;
+- (void)remountUSBMode:(void (^)(NSArray<NSString *> *))reply;
 
 ///
 /// Metrics ops
