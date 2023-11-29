@@ -7,9 +7,9 @@ build --copt=-Wno-error=deprecated-declarations
 # isn't recognized on older SDKs
 build --copt=-Wno-unknown-warning-option
 build --copt=-Wno-error=deprecated-non-prototype
-build --per_file_copt=.*\.mm\$@-std=c++17
-build --cxxopt=-std=c++17
-build --host_cxxopt=-std=c++17
+build --per_file_copt=.*\.mm\$@-std=c++20
+build --cxxopt=-std=c++20
+build --host_cxxopt=-std=c++20
 
 build --copt=-DSANTA_OPEN_SOURCE=1
 build --cxxopt=-DSANTA_OPEN_SOURCE=1
