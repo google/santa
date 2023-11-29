@@ -265,15 +265,15 @@ static NSString *const kPrinterProxyPostMonterey =
       absl::ReaderMutexLock lock(&self->_entitlementFilterMutex);
 
       if (teamID && self->_entitlementsTeamIDFilter.count(std::string(teamID)) > 0) {
-        LOGD(@"Dropping entitlement logging for configured TeamID: %s", teamID);
+        // Dropping entitlement logging for configured TeamID
         return nil;
       }
 
       if (self->_entitlementsPrefixFilter->NodeCount() == 0) {
-        LOGD(@"Copying full entitlements for tid: %s", teamID);
+        // Copying full entitlements for TeamID
         return [entitlements sntDeepCopy];
       } else {
-        LOGD(@"Filtering entitlements for tid: %s", teamID);
+        // Filtering entitlements for TeamID
         NSMutableDictionary *filtered = [NSMutableDictionary dictionary];
 
         [entitlements enumerateKeysAndObjectsUsingBlock:^(NSString *key, id obj, BOOL *stop) {

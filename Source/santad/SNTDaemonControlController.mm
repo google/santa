@@ -258,10 +258,19 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
+- (void)blockUSBMount:(void (^)(BOOL))reply {
+  reply([[SNTConfigurator configurator] blockUSBMount]);
+}
+
 - (void)setBlockUSBMount:(BOOL)enabled reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setBlockUSBMount:enabled];
   reply();
 }
+
+- (void)remountUSBMode:(void (^)(NSArray<NSString *> *))reply {
+  reply([[SNTConfigurator configurator] remountUSBMode]);
+}
+
 - (void)setRemountUSBMode:(NSArray *)remountUSBMode reply:(void (^)(void))reply {
   [[SNTConfigurator configurator] setRemountUSBMode:remountUSBMode];
   reply();
