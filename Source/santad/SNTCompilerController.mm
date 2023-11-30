@@ -132,8 +132,8 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
   NSError *error = nil;
   SNTFileInfo *fi = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetFile error:&error];
   if (error) {
-    LOGD(@"Unable to create SNTFileInfo while attempting to create transitive rule. Path: %@",
-         @(targetFile->path.data));
+    LOGD(@"Unable to create SNTFileInfo while attempting to create transitive rule. Event: %d | Path: %@ | Error: %@",
+         (int)esMsg->event_type, @(targetFile->path.data), error);
     return;
   }
 
