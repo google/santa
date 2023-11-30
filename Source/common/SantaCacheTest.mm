@@ -14,7 +14,6 @@
 
 #import <XCTest/XCTest.h>
 
-#include <compare>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -246,7 +245,9 @@ struct S {
   uint64_t first_val;
   uint64_t second_val;
 
-  auto operator<=>(const S &rhs) const = default;
+  bool operator==(const S &rhs) const {
+    return first_val == rhs.first_val && second_val == rhs.second_val;
+  }
 };
 template <>
 uint64_t SantaCacheHasher<S>(S const &s) {
