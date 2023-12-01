@@ -7,3 +7,15 @@ pub extern "C" fn parquet2_1337_bloom_filter_contains(x: i64) -> bool {
     bloom_filter::insert(&mut bits, bloom_filter::hash_native::<i64>(1337));
     bloom_filter::is_in_set(&bits, bloom_filter::hash_native(x))
 }
+
+#[cxx::bridge(namespace = "pedro::wire")]
+mod ffi {
+    struct EventHeader {
+        unix_timestamp: i64,
+    }
+
+    // Rust types and signatures exposed to C++.
+    extern "Rust" {
+        
+    }
+}

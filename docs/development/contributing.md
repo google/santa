@@ -37,8 +37,8 @@ the [Rust Style Guide](https://doc.rust-lang.org/beta/style-guide/index.html).
 
 Files containing C++ and Objective-C code are named `ClassName.mm` and
 `ClassName.h`. Rust code is named `library_name.rs`. The BUILD rules follow the
-same naming convention: `ClassName` for the C-family, and `library_name` for
-Rust.
+same naming convention: `ClassName` for the C-family, and `library_name` or
+`library_bridge` (if using cxx) for Rust.
 
 ### Using Rust
 

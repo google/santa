@@ -10,10 +10,11 @@ licenses(["notice"])
 rust_binary(
     name = "cxxbridge",
     srcs = glob(["src/**/*.rs"]),
+    aliases = aliases(),
     data = [
         "src/gen/include/cxx.h",
     ],
     edition = "2021",
-    aliases = aliases(),
+    visibility = ["//visibility:public"],
     deps = all_crate_deps(),
 )
