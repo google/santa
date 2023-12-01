@@ -249,6 +249,21 @@ crate_universe_dependencies()
 
 load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
 
+# If we don't specify which platforms to build, rust_*_library targets will
+# select() across platforms that are not guaranteed to exist in the local Bazel,
+# which breaks the build.
+#
+# This is probably a Bazel bug, because rules_rust
+# specifies the correct module dependency and Bazel just ignores it and fetches
+# an old version.
+#
+# TODO(the80srobot): Find the right Bazel subproject and file a bug.
+RUST_SUPPORTED_PLATFORM_TRIPLES = [
+    "i686-apple-darwin",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+]
+
 crates_repository(
     name = "crate_index",
     cargo_lockfile = "//:Cargo.lock",
@@ -259,15 +274,32 @@ crates_repository(
         # the root Cargo file.
         "//:Source/santad/Logs/EndpointSecurity/ParquetLogger/Cargo.toml",
     ],
-    # Removing this causes rust_*_library targets to select across platforms that
-    # might not be defined, breaking the build.
-    supported_platform_triples = [
-        "i686-apple-darwin", 
-        "x86_64-apple-darwin",
-        "aarch64-apple-darwin",
-    ],
+    supported_platform_triples = RUST_SUPPORTED_PLATFORM_TRIPLES,
 )
 
 load("@crate_index//:defs.bzl", "crate_repositories")
 
 crate_repositories()
+
+# cxxbridge is a codegen tool for Rust/C++ bindings. To understand why this is
+# set up the way it is, read
+# http://bazelbuild.github.io/rules_rust/crate_universe.html#binary-dependencies.
+http_archive(
+    name = "cxxbridge-cmd",
+    build_file = "//external_patches/cxxbridge-cmd:BUILD",
+    sha256 = "dc5db43c367778010dff55b602f71eccff712b8edf54a3f08687bd1c7cbad6df",
+    strip_prefix = "cxxbridge-cmd-1.0.110",
+    type = "tar.gz",
+    urls = ["https://crates.io/api/v1/crates/cxxbridge-cmd/1.0.110/download"],
+)
+
+# See above for notes.
+crates_repository(
+    name = "cxxbridge_cmd_deps",
+    cargo_lockfile = "//external_patches/cxxbridge-cmd:Cargo.lock",
+    lockfile = "//external_patches/cxxbridge-cmd:Cargo.Bazel.lock",
+    manifests = ["@cxxbridge-cmd//:Cargo.toml"],
+    supported_platform_triples = RUST_SUPPORTED_PLATFORM_TRIPLES,
+)
+load("@cxxbridge_cmd_deps//:defs.bzl", cxxbridge_cmd_deps = "crate_repositories")
+cxxbridge_cmd_deps()
