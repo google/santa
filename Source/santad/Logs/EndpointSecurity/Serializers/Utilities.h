@@ -59,6 +59,8 @@ NSString *MountFromName(NSString *path);
 es_file_t *GetAllowListTargetFile(
   const santa::santad::event_providers::endpoint_security::Message &msg);
 
+const mach_port_t GetDefaultIOKitCommsPort();
+
 }  // namespace santa::santad::logs::endpoint_security::serializers::Utilities
 
 #endif
