@@ -24,6 +24,14 @@ template <typename ElementT, ElementT InvalidV, auto RetainFunc,
           auto ReleaseFunc>
 class ScopedTypeRef {
  public:
+  ScopedTypeRef() : object_(InvalidV) {}
+
+  // Can be implemented safely, but not currently needed
+  ScopedTypeRef(ScopedTypeRef&& other) = delete;
+  ScopedTypeRef& operator=(ScopedTypeRef&& rhs) = delete;
+  ScopedTypeRef(const ScopedTypeRef& other) = delete;
+  ScopedTypeRef& operator=(const ScopedTypeRef& other) = delete;
+
   // Take ownership of a given object
   static ScopedTypeRef<ElementT, InvalidV, RetainFunc, ReleaseFunc> Assume(
       ElementT object) {
@@ -58,14 +66,6 @@ class ScopedTypeRef {
     assert(object_ == InvalidV);
     return &object_;
   }
-
-  ScopedTypeRef() : object_(InvalidV) {}
-
-  // Can be implemented safely, but not currently needed
-  ScopedTypeRef(ScopedTypeRef&& other) = delete;
-  ScopedTypeRef& operator=(ScopedTypeRef&& rhs) = delete;
-  ScopedTypeRef(const ScopedTypeRef& other) = delete;
-  ScopedTypeRef& operator=(const ScopedTypeRef& other) = delete;
 
  private:
   // Not API.
