@@ -21,6 +21,9 @@ objc_library(
     name = "SNTRuleTable",
     srcs = ["DataLayer/SNTRuleTable.m"],
     hdrs = ["DataLayer/SNTRuleTable.h"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
     deps = [
         ":SNTDatabaseTable",
         "//Source/common:Platform",
@@ -475,7 +478,6 @@ objc_library(
         "bsm",
     ],
     deps = [
-        ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":SNTDecisionCache",
         "//Source/common:SantaCache",
