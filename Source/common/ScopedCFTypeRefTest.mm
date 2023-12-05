@@ -118,7 +118,7 @@ using santa::common::ScopedCFTypeRef;
     XCTAssertEqual(want, got);
   }
 
-  // The original `array` object should still be invalid due to the extra retain.
+  // The original `array` object should still be valid due to the extra retain.
   // Ensure the retain count has decreased since `scopedArray` went out of scope
   XCTAssertEqual(1, CFArrayGetCount(array));
 }

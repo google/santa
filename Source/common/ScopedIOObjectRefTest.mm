@@ -96,7 +96,7 @@ using santa::santad::logs::endpoint_security::serializers::Utilities::GetDefault
     XCTAssertNotEqual(IO_OBJECT_NULL, scopedIORef.Unsafe());
   }
 
-  // The original `service` object should still be invalid due to the extra retain.
+  // The original `service` object should still be valid due to the extra retain.
   // Ensure the retain count has decreased since `scopedIORef` went out of scope.
   XCTAssertEqual(1, IOObjectGetUserRetainCount(service));
 }
