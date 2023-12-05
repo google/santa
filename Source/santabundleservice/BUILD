@@ -35,6 +35,10 @@ macos_command_line_application(
     ],
     infoplists = ["Info.plist"],
     minimum_os_version = "11.0",
+    provisioning_profile = select({
+        "//:adhoc_build": None,
+        "//conditions:default": "//profiles:santa_dev",
+    }),
     version = "//:version",
     visibility = ["//:santa_package_group"],
     deps = [":santabs_lib"],
