@@ -125,6 +125,11 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
 
   self->_esClient = self->_esApi->NewClient(^(es_client_t *c, Message esMsg) {
     int64_t processingStart = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+
+    // Update event stats BEFORE calling into the processor class to ensure
+    // sequence numbers are processed in order.
+    self->_metrics->UpdateEventStats(self->_processor, esMsg.operator->());
+
     es_event_type_t eventType = esMsg->event_type;
     if ([self shouldHandleMessage:esMsg]) {
       [self handleMessage:std::move(esMsg)

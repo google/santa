@@ -53,6 +53,7 @@ enum class FileAccessMetricStatus {
 
 using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
 using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
+using EventStatsTuple = std::tuple<Processor, es_event_type_t>;
 using FileAccessMetricsPolicyVersion = std::string;
 using FileAccessMetricsPolicyName = std::string;
 using FileAccessEventCountTuple =
@@ -65,8 +66,9 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
   Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
           SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
-          SNTMetricCounter *rate_limit_counts, SNTMetricCounter *faa_event_counts,
-          SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *));
+          SNTMetricCounter *rate_limit_counts, SNTMetricCounter *drop_counts,
+          SNTMetricCounter *faa_event_counts, SNTMetricSet *metric_set,
+          void (^run_on_first_start)(Metrics *));
 
   ~Metrics();
 
@@ -77,6 +79,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
   // Force an immediate flush and export of metrics
   void Export();
+
+  void UpdateEventStats(Processor processor, const es_message_t *msg);
 
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
                        EventDisposition disposition, int64_t nanos);
@@ -90,6 +94,11 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   friend class santa::santad::MetricsPeer;
 
  private:
+  struct SequenceStats {
+    uint64_t seq_num = 0;
+    int64_t drops = 0;
+  };
+
   void FlushMetrics();
   void ExportLocked(SNTMetricSet *metric_set);
 
@@ -101,6 +110,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   SNTMetricCounter *event_counts_;
   SNTMetricCounter *rate_limit_counts_;
   SNTMetricCounter *faa_event_counts_;
+  SNTMetricCounter *drop_counts_;
   SNTMetricSet *metric_set_;
   // Tracks whether or not the timer_source should be running.
   // This helps manage dispatch source state to ensure the source is not
@@ -117,6 +127,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   std::map<EventTimesTuple, int64_t> event_times_cache_;
   std::map<Processor, int64_t> rate_limit_counts_cache_;
   std::map<FileAccessEventCountTuple, int64_t> faa_event_counts_cache_;
+  std::map<EventStatsTuple, SequenceStats> drop_cache_;
 };
 
 }  // namespace santa::santad
