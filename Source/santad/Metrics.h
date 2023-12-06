@@ -80,6 +80,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   // Force an immediate flush and export of metrics
   void Export();
 
+  // Used for tracking event sequence numbers to determine if drops occured
   void UpdateEventStats(Processor processor, const es_message_t *msg);
 
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
