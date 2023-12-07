@@ -683,6 +683,7 @@ objc_library(
     hdrs = ["Metrics.h"],
     deps = [
         ":SNTApplicationCoreMetrics",
+        "//Source/common:BranchPrediction",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
