@@ -244,7 +244,7 @@
                         <constraints>
                             <constraint firstAttribute="width" priority="900" constant="112" id="Pec-Pa-4aZ"/>
                         </constraints>
-                        <buttonCell key="cell" type="push" title="Open Event..." bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="X1b-TF-1TL">
+                        <buttonCell key="cell" type="push" title="Open..." bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="X1b-TF-1TL">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                             <string key="keyEquivalent" base64-UTF8="YES">
