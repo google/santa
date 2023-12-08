@@ -48,7 +48,8 @@ external dependencies written in Rust.
 Adding new Rust libraries requires some extra steps:
 
 * Each Rust library must have both a `rust_static_library` BUILD target and a
-  `Cargo.toml` file listing its dependencies.
+  `Cargo.toml` file listing its dependencies. (`Cargo.toml` helps rust-analyzer
+  and VSCode Rust extensions.)
 * Each new `Cargo.toml` file must be added to the list in the root `Cargo.toml`
   file AND the `workspace.members` key in the root `WORKSPACE` file.
 * Each `rust_static_library` should be wrapped in a `cc_library`, rather than

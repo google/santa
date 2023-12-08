@@ -1,6 +1,6 @@
 load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@rules_rust//rust:defs.bzl", "rust_static_library")
+load("@rules_rust//rust:defs.bzl", "rust_static_library", "rust_test")
 load("//:helper.bzl", "santa_unit_test", "rust_cxx_bridge")
 
 rust_static_library(
@@ -13,6 +13,11 @@ rust_static_library(
     deps = all_crate_deps(
         normal = True,
     ),
+)
+
+rust_test(
+    name="parquet_logger_test",
+    crate=":parquet_logger",
 )
 
 rust_cxx_bridge(
