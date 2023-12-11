@@ -1,10 +1,10 @@
 #import <XCTest/XCTest.h>
 #import "ParquetLogger.h"
 
-@interface PrefixTreeTest : XCTestCase
+@interface ParquetLoggerTest : XCTestCase
 @end
 
-@implementation PrefixTreeTest
+@implementation ParquetLoggerTest
 
 // Currently, this just demonstrates that Rust code can be called into.
 - (void)testBasic {

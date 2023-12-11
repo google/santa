@@ -3,56 +3,71 @@ use parquet2::{
     compression::CompressionOptions,
     encoding::Encoding,
     error::{Error, Result},
-    metadata::{ColumnDescriptor, Descriptor},
+    metadata::{ Descriptor, SchemaDescriptor},
     page::{CompressedPage, DataPage, DataPageHeader, DataPageHeaderV1, Page},
-    statistics::{serialize_statistics, PrimitiveStatistics, Statistics},
+    statistics::{serialize_statistics, PrimitiveStatistics},
     types::NativeType,
     write::{Compressor, DynIter, DynStreamingIterator, FileWriter, WriteOptions},
 };
 use std::{cmp::PartialOrd, io::Write};
 
-// The size of this type is efficiently known.
-// This typically means fixed width or string.
-trait DynSized {
-    fn dyn_size(&self) -> usize;
-}
-
-// NativeTypes as defined by parquet are all fixed width.
-impl<T> DynSized for T
-where
-    T: Sized + NativeType,
-{
-    fn dyn_size(&self) -> usize {
-        std::mem::size_of::<T>()
-    }
-}
-
-// Strings have an efficient length. This is the only dynamically sized type in
-// Parquet (technically called a byte array).
-impl DynSized for str {
-    fn dyn_size(&self) -> usize {
-        self.len()
+#[cxx::bridge(namespace = "pedro::wire")]
+mod ffi {
+    extern "Rust" {
     }
 }
 
 // A value can be written to a page in a column chunk in a row group in a
 // parquet file in the house that Jack built.
-trait Value: DynSized + PartialOrd + Send + Sync {}
+//
+// Not much is required of a value - it must have a known size and be
+// async-save. The list of supported value types matches NativeType + string.
+trait Value: PartialOrd + Send + Sync {
+    // The size of this type is efficiently known.
+    // This typically means fixed width or string.
+    fn dyn_size(&self) -> usize;
+}
+
+impl Value for String {
+    fn dyn_size(&self) -> usize {
+        self.len()
+    }
+}
+
+impl Value for &[u8] {
+    fn dyn_size(&self) -> usize {
+        self.len()
+    }
+}
+
+trait Number: Sized + PartialOrd + Send + Sync {}
+
+// These are the only numeric types supported by parquet. (There is also int96,
+// but we don't worry about that.)
+impl Number for i32 {}
+impl Number for i64 {}
+impl Number for f32 {}
+impl Number for f64 {}
 
 // NativeTypes are all values.
-impl<T> Value for T where T: NativeType + PartialOrd {}
-
-// Strings are also values.
-impl Value for str {}
+impl<T: Number> Value for T {
+    fn dyn_size(&self) -> usize {
+        std::mem::size_of::<T>()
+    }
+}
 
 // A column chunk is a collection of pages. It can be drained to get compressed
 // pages out. After the compressed pages are written to a file, the column chunk
 // can be reused.
 trait ColumnChunk: Send + Sync {
     fn drain<'a>(&'a mut self) -> DynStreamingIterator<'a, CompressedPage, Error>;
+    // fn push(&mut self, value: Box<dyn Value>);
+    // fn page_builder<T: Value, P:PageBuilder<T>>(&mut self, size_hint: usize) -> &mut P;
+
+    // fn page_builder_i32(&mut self, size_hint: usize) -> &mut NativePageBuilder<i32>;
 }
 
-fn write<W: Write>(
+fn write_row_group<W: Write>(
     writer: &mut FileWriter<W>,
     mut columns: Vec<Box<dyn ColumnChunk>>,
     _compression_options: CompressionOptions,
@@ -87,6 +102,10 @@ impl<T: Value, P: PageBuilder<T>> ColumnBuilder<T, P> {
     }
 
     fn push(&mut self, value: T) {
+        self.page_builder(value.dyn_size()).push(value);
+    }
+
+    fn page_builder(&mut self, size_hint: usize) -> &mut P {
         let last_page = match self.pages.last_mut() {
             Some(page) => page,
             None => {
@@ -97,12 +116,13 @@ impl<T: Value, P: PageBuilder<T>> ColumnBuilder<T, P> {
             }
         };
 
-        if last_page.size() + value.dyn_size() > self.page_size {
+        if last_page.size() + size_hint > self.page_size {
             let mut buffer = vec![];
             buffer.reserve(self.page_size);
             self.pages.push(P::new(buffer, self.descriptor.clone()));
         }
-        self.pages.last_mut().unwrap().push(value);
+
+        self.pages.last_mut().unwrap()
     }
 }
 
@@ -123,23 +143,66 @@ impl<T: Value, P: PageBuilder<T>> ColumnChunk for ColumnBuilder<T, P> {
 }
 
 // A page builder serializes primitive values into bytes and appends them to a
-// page (buffer). Implementations exist for NativeType and str.
+// page (buffer). Implementations are provided for NativeType and &[u8] (byte
+// array).
 trait PageBuilder<T: Value>: Send + Sync {
     fn new(buffer: Vec<u8>, descriptor: Descriptor) -> Self;
+    // Serialize and append a value to the page.
     fn push(&mut self, value: T);
+    // The size of the page in bytes.
     fn size(&self) -> usize;
+    // Finalize and return the page.
     fn into_page(self) -> Page;
 }
 
-// TODO(adam): Serialize strings.
-struct StringPageBuilder {
+// Builds a page of variable length by arrays. Used for strings and other blobs.
+struct ByteArrayPageBuilder {
     buffer: Vec<u8>,
     count: usize,
     descriptor: Descriptor,
 }
 
+impl PageBuilder<&[u8]> for ByteArrayPageBuilder {
+    fn new(mut buffer: Vec<u8>, descriptor: Descriptor) -> Self {
+        buffer.clear();
+        Self {
+            buffer: buffer,
+            count: 0,
+            descriptor: descriptor,
+        }
+    }
+
+    fn push(&mut self, value: &[u8]) {
+        self.buffer
+            .extend_from_slice((value.len() as i32).to_le_bytes().as_ref());
+        self.buffer.extend_from_slice(value);
+        self.count += 1;
+    }
+
+    fn size(&self) -> usize {
+        self.buffer.len()
+    }
+
+    fn into_page(self) -> Page {
+        let header = DataPageHeaderV1 {
+            num_values: self.count as i32,
+            encoding: Encoding::Plain.into(),
+            definition_level_encoding: Encoding::Rle.into(),
+            repetition_level_encoding: Encoding::Rle.into(),
+            statistics: None,
+        };
+
+        Page::Data(DataPage::new(
+            DataPageHeader::V1(header),
+            self.buffer,
+            self.descriptor,
+            Some(self.count),
+        ))
+    }
+}
+
 // A page of numbers using plain encoding. This is implemented (and fast) for
-// most native numeric types. (Int96 could be added, but it seems pointless.)
+// most native numeric types. (Int96 isn't used at the moment.)
 struct NativePageBuilder<T: NativeType + PartialOrd> {
     buffer: Vec<u8>,
     count: usize,
@@ -147,7 +210,7 @@ struct NativePageBuilder<T: NativeType + PartialOrd> {
     descriptor: Descriptor,
 }
 
-impl<T: NativeType + PartialOrd> PageBuilder<T> for NativePageBuilder<T> {
+impl<T: NativeType + Value + PartialOrd> PageBuilder<T> for NativePageBuilder<T> {
     fn new(mut buffer: Vec<u8>, descriptor: Descriptor) -> Self {
         buffer.clear();
         Self {
@@ -199,80 +262,17 @@ struct Options {
     pub page_size: usize,
 }
 
-pub fn array_to_page_v1<T: NativeType>(
-    array: &[T],
-    options: &WriteOptions,
-    descriptor: &Descriptor,
-) -> Result<Page> {
-    if array.is_empty() {
-        return Err(Error::InvalidParameter("no empty arrays".to_string()));
-    }
-    let mut buffer = vec![];
-    buffer.reserve(std::mem::size_of_val(&[array[0]]));
-    let _iter = array.iter().map(|value| {
-        buffer.extend_from_slice(value.to_le_bytes().as_ref());
-    });
-
-    let statistics = if options.write_statistics {
-        let statistics = &PrimitiveStatistics {
-            primitive_type: descriptor.primitive_type.clone(),
-            null_count: Some(0), // All fields are required.
-            distinct_count: None,
-            max_value: array.iter().max_by(|x, y| x.ord(y)).copied(),
-            min_value: array.iter().min_by(|x, y| x.ord(y)).copied(),
-        } as &dyn Statistics;
-        Some(serialize_statistics(statistics))
-    } else {
-        None
-    };
-
-    let header = DataPageHeaderV1 {
-        num_values: array.len() as i32,
-        encoding: Encoding::Plain.into(),
-        definition_level_encoding: Encoding::Rle.into(),
-        repetition_level_encoding: Encoding::Rle.into(),
-        statistics,
-    };
-
-    Ok(Page::Data(DataPage::new(
-        DataPageHeader::V1(header),
-        buffer,
-        descriptor.clone(),
-        Some(array.len()),
-    )))
-}
-
-fn column_to_pages<'a, T: NativeType>(
-    options: &'a Options,
-    column: &'a ColumnDescriptor,
-    data: &'a [T],
-) -> Result<DynStreamingIterator<'a, CompressedPage, parquet2::error::Error>> {
-    let per_page = options.page_size / std::mem::size_of::<T>();
-    let pages = data.chunks(per_page);
-    let pages =
-        pages.map(|page| array_to_page_v1::<T>(page, &options.write_options, &column.descriptor));
-    // TODO(adam): Reuse the buffer between calls. (It requires care,
-    // because this function is called from an iterator.)
-    let pages = DynStreamingIterator::new(Compressor::new(
-        DynIter::new(pages.into_iter()),
-        options.compression_options,
-        vec![],
-    ));
-
-    Ok(pages)
-}
-
-
 #[cfg(test)]
 mod test {
-    use crate::ColumnChunk;
-    use parquet2::compression::CompressionOptions;
-    use parquet2::metadata::SchemaDescriptor;
-    use parquet2::schema::types::{ParquetType, PhysicalType};
-    use parquet2::write::WriteOptions;
-    use parquet2::write::{FileWriter, Version};
+    use super::{write_row_group, Options};
+    use crate::{ByteArrayPageBuilder, ColumnChunk, PageBuilder};
+    use parquet2::{
+        compression::CompressionOptions,
+        metadata::SchemaDescriptor,
+        schema::types::{ParquetType, PhysicalType},
+        write::{FileWriter, Version, WriteOptions},
+    };
     use std::io::Cursor;
-    use super::{write, Options};
 
     #[test]
     fn test_write() {
@@ -291,38 +291,52 @@ mod test {
             vec![
                 ParquetType::from_physical("a".to_string(), PhysicalType::Int32),
                 ParquetType::from_physical("b".to_string(), PhysicalType::Int64),
+                ParquetType::from_physical("c".to_string(), PhysicalType::ByteArray),
             ],
         );
 
         let cursor: Cursor<Vec<u8>> = Cursor::new(vec![]);
         let mut writer = FileWriter::new(cursor, schema.clone(), options.write_options, None);
 
-        let mut builder_a: super::ColumnBuilder<i32, super::NativePageBuilder<i32>> =
-            super::ColumnBuilder::<i32, super::NativePageBuilder<i32>>::new(
-                options.page_size,
-                schema.columns()[0].descriptor.clone(),
-                options.compression_options,
-            );
+        let mut builder_a = super::ColumnBuilder::<i32, super::NativePageBuilder<i32>>::new(
+            options.page_size,
+            schema.columns()[0].descriptor.clone(),
+            options.compression_options,
+        );
 
-        let mut builder_b: super::ColumnBuilder<i64, super::NativePageBuilder<i64>> =
-            super::ColumnBuilder::<i64, super::NativePageBuilder<i64>>::new(
-                options.page_size,
-                schema.columns()[1].descriptor.clone(),
-                options.compression_options,
-            );
+        let mut builder_b = super::ColumnBuilder::<i64, super::NativePageBuilder<i64>>::new(
+            options.page_size,
+            schema.columns()[1].descriptor.clone(),
+            options.compression_options,
+        );
+
+        let mut builder_c = super::ColumnBuilder::<&[u8], ByteArrayPageBuilder>::new(
+            options.page_size,
+            schema.columns()[2].descriptor.clone(),
+            options.compression_options,
+        );
 
         for i in 0..1000 {
             builder_a.push(i);
             builder_b.push((i * 2).into());
+
+            let s = format!("integer_{}", i);
+            // Can't do builder_c.push(s.as_bytes()), because rust wrongly
+            // infers that the lifetime of s.as_bytes() needs to be the same as
+            // builder_c. However, borrowing the page_builder first lets the
+            // checker follow along.
+            let p = builder_c.page_builder(s.len()).push(s.as_bytes());
         }
 
         let mut columns: Vec<Box<dyn ColumnChunk>> = vec![];
         let column_a: Box<dyn ColumnChunk> = Box::new(builder_a);
         let column_b: Box<dyn ColumnChunk> = Box::new(builder_b);
+        let column_c: Box<dyn ColumnChunk> = Box::new(builder_c);
         columns.push(column_a);
         columns.push(column_b);
+        columns.push(column_c);
 
-        write(&mut writer, columns, options.compression_options).unwrap();
+        write_row_group(&mut writer, columns, options.compression_options).unwrap();
 
         let result = writer.into_inner().into_inner();
         assert!(!result.is_empty());
@@ -338,17 +352,3 @@ pub extern "C" fn parquet2_1337_bloom_filter_contains(x: i64) -> bool {
     bloom_filter::insert(&mut bits, bloom_filter::hash_native::<i64>(1337));
     bloom_filter::is_in_set(&bits, bloom_filter::hash_native(x))
 }
-
-#[cxx::bridge(namespace = "pedro::wire")]
-mod ffi {
-    extern "Rust" {
-        type EventHeader;
-        fn log_event(hdr: &EventHeader);
-    }
-}
-
-struct EventHeader {
-    unix_timestamp: i64,
-}
-
-fn log_event(_hdr: &EventHeader) {}

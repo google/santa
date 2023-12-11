@@ -67,6 +67,9 @@ Additionally, please follow these guidelines:
 * Have C++ call into Rust, not the other way around.
 * Don't use cxx to return `Result` types across the FFI. (It might throw a C++
   exception.)
+* Run `cargo fix && cargo fmt` before submitting code for review. You may need to run the
+  nightly to support all options in `rustfmt.toml`: `rustup run nightly cargo
+  fmt`.
 
 ### The small print
 Contributions made by corporations are covered by a different agreement than

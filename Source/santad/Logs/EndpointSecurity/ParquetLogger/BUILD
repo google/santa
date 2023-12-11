@@ -1,7 +1,7 @@
 load("@crate_index//:defs.bzl", "aliases", "all_crate_deps")
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@rules_rust//rust:defs.bzl", "rust_static_library", "rust_test")
-load("//:helper.bzl", "santa_unit_test", "rust_cxx_bridge")
+load("//:helper.bzl", "rust_cxx_bridge", "santa_unit_test")
 
 rust_static_library(
     name = "parquet_logger",
@@ -15,9 +15,18 @@ rust_static_library(
     ),
 )
 
+cc_binary(
+    name = "write_test_file",
+    srcs = [
+        "gen/parquet_logger.rs.h",
+        "write_test_file.cc",
+    ],
+    deps = [":parquet_logger"],
+)
+
 rust_test(
-    name="parquet_logger_test",
-    crate=":parquet_logger",
+    name = "parquet_logger_test",
+    crate = ":parquet_logger",
 )
 
 rust_cxx_bridge(
