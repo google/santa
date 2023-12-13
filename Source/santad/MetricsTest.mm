@@ -342,9 +342,9 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
 
   // After the first update, 2 entries exist, one for the event, and one for global
   XCTAssertEqual(2, metrics->drop_cache_.size());
-  XCTAssertEqual(0, metrics->drop_cache_[eventStats].seq_num);
+  XCTAssertEqual(1, metrics->drop_cache_[eventStats].next_seq_num);
   XCTAssertEqual(0, metrics->drop_cache_[eventStats].drops);
-  XCTAssertEqual(0, metrics->drop_cache_[globalStats].seq_num);
+  XCTAssertEqual(1, metrics->drop_cache_[globalStats].next_seq_num);
   XCTAssertEqual(0, metrics->drop_cache_[globalStats].drops);
 
   // Increment sequence numbers by 1 and check that no drop was detected
@@ -354,9 +354,9 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   metrics->UpdateEventStats(Processor::kRecorder, &esMsg);
 
   XCTAssertEqual(2, metrics->drop_cache_.size());
-  XCTAssertEqual(1, metrics->drop_cache_[eventStats].seq_num);
+  XCTAssertEqual(2, metrics->drop_cache_[eventStats].next_seq_num);
   XCTAssertEqual(0, metrics->drop_cache_[eventStats].drops);
-  XCTAssertEqual(1, metrics->drop_cache_[globalStats].seq_num);
+  XCTAssertEqual(2, metrics->drop_cache_[globalStats].next_seq_num);
   XCTAssertEqual(0, metrics->drop_cache_[globalStats].drops);
 
   // Now incremenet sequence numbers by a large amount to trigger drop detection
@@ -366,9 +366,9 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   metrics->UpdateEventStats(Processor::kRecorder, &esMsg);
 
   XCTAssertEqual(2, metrics->drop_cache_.size());
-  XCTAssertEqual(11, metrics->drop_cache_[eventStats].seq_num);
+  XCTAssertEqual(12, metrics->drop_cache_[eventStats].next_seq_num);
   XCTAssertEqual(9, metrics->drop_cache_[eventStats].drops);
-  XCTAssertEqual(11, metrics->drop_cache_[globalStats].seq_num);
+  XCTAssertEqual(12, metrics->drop_cache_[globalStats].next_seq_num);
   XCTAssertEqual(9, metrics->drop_cache_[globalStats].drops);
 }
 
@@ -418,6 +418,13 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 1);
   XCTAssertEqual(metrics->drop_cache_.size(), 2);
 
+  EventStatsTuple eventStats{Processor::kRecorder, esMsgWithDrops.event_type};
+  EventStatsTuple globalStats{Processor::kRecorder, ES_EVENT_TYPE_LAST};
+  XCTAssertEqual(metrics->drop_cache_[eventStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[eventStats].drops, 123);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].drops, 123);
+
   metrics->FlushMetrics();
 
   // Expected call count is 8:
@@ -436,7 +443,13 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   XCTAssertEqual(metrics->event_times_cache_.size(), 0);
   XCTAssertEqual(metrics->rate_limit_counts_cache_.size(), 0);
   XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 0);
-  XCTAssertEqual(metrics->drop_cache_.size(), 0);
+  // Note: The drop_cache_ should not be reset back to size 0. Instead, each
+  // entry has the sequence number left intact, but drop counts reset to 0.
+  XCTAssertEqual(metrics->drop_cache_.size(), 2);
+  XCTAssertEqual(metrics->drop_cache_[eventStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[eventStats].drops, 0);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].drops, 0);
 }
 
 @end
