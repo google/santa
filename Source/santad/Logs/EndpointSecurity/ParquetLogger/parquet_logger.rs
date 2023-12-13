@@ -2,21 +2,14 @@ mod column_builder;
 mod page_builder;
 mod value;
 
-use column_builder::{ColumnBuilder, ColumnChunk};
-use page_builder::{ByteArrayPageBuilder, NativePageBuilder, PageBuilder};
+use column_builder::ColumnBuilder;
 use parquet2::{
     bloom_filter,
     compression::CompressionOptions,
-    encoding::Encoding,
-    error::{Error, Result},
-    metadata::{Descriptor, SchemaDescriptor},
-    page::{CompressedPage, DataPage, DataPageHeader, DataPageHeaderV1, Page},
-    statistics::{serialize_statistics, PrimitiveStatistics},
-    types::NativeType,
-    write::{Compressor, DynIter, DynStreamingIterator, FileWriter, WriteOptions},
+    error::Result,
+    write::{DynIter, FileWriter, WriteOptions},
 };
-use std::{cmp::PartialOrd, io::Write};
-use value::Value;
+use std::io::Write;
 
 #[cxx::bridge(namespace = "pedro::wire")]
 mod ffi {
@@ -34,7 +27,7 @@ pub extern "C" fn parquet2_1337_bloom_filter_contains(x: i64) -> bool {
 
 fn write_row_group<W: Write>(
     writer: &mut FileWriter<W>,
-    mut columns: Vec<Box<dyn ColumnChunk>>,
+    mut columns: Vec<ColumnBuilder>,
     _compression_options: CompressionOptions,
 ) -> Result<()> {
     let row_group = columns.iter_mut().map(|column| Ok(column.drain()));
@@ -52,9 +45,9 @@ struct Options {
 #[cfg(test)]
 mod test {
     use super::{write_row_group, Options};
-    use crate::{ByteArrayPageBuilder, ColumnChunk, PageBuilder};
+    use crate::{column_builder::ColumnBuilder, value::Value};
     use parquet2::{
-        compression::CompressionOptions,
+        compression::{BrotliLevel, CompressionOptions},
         metadata::SchemaDescriptor,
         schema::types::{ParquetType, PhysicalType},
         write::{FileWriter, Version, WriteOptions},
@@ -68,8 +61,8 @@ mod test {
                 write_statistics: true,
                 version: Version::V1,
             },
-            // compression_options: CompressionOptions::Brotli(Some(BrotliLevel::try_new(5).unwrap())),
-            compression_options: CompressionOptions::Uncompressed,
+            compression_options: CompressionOptions::Brotli(Some(BrotliLevel::try_new(5).unwrap())),
+            // compression_options: CompressionOptions::Uncompressed,
             page_size: 1024,
         };
 
@@ -85,44 +78,29 @@ mod test {
         let cursor: Cursor<Vec<u8>> = Cursor::new(vec![]);
         let mut writer = FileWriter::new(cursor, schema.clone(), options.write_options, None);
 
-        let mut builder_a = super::ColumnBuilder::<i32, super::NativePageBuilder<i32>>::new(
-            options.page_size,
-            schema.columns()[0].descriptor.clone(),
-            options.compression_options,
-        );
-
-        let mut builder_b = super::ColumnBuilder::<i64, super::NativePageBuilder<i64>>::new(
-            options.page_size,
-            schema.columns()[1].descriptor.clone(),
-            options.compression_options,
-        );
-
-        let mut builder_c = super::ColumnBuilder::<&[u8], ByteArrayPageBuilder>::new(
-            options.page_size,
-            schema.columns()[2].descriptor.clone(),
-            options.compression_options,
-        );
+        let mut columns = schema
+            .columns()
+            .iter()
+            .map(|column| {
+                ColumnBuilder::new(
+                    options.page_size,
+                    column.descriptor.clone(),
+                    options.compression_options,
+                )
+            })
+            .collect::<Vec<_>>();
 
         for i in 0..1000 {
-            builder_a.push(i);
-            builder_b.push((i * 2).into());
+            columns[0].push(Value::I32(i)).expect("push failed");
+            columns[1]
+                .push(Value::I64((i * 2).into()))
+                .expect("push failed");
 
             let s = format!("integer_{}", i);
-            // Can't do builder_c.push(s.as_bytes()), because rust wrongly
-            // infers that the lifetime of s.as_bytes() needs to be the same as
-            // builder_c. However, borrowing the page_builder first lets the
-            // checker follow along.
-            let p = builder_c.page_builder(s.len()).push(s.as_bytes());
+            columns[2]
+                .push(Value::Bytes(s.as_bytes()))
+                .expect("push failed");
         }
-
-        let mut columns: Vec<Box<dyn ColumnChunk>> = vec![];
-        let column_a: Box<dyn ColumnChunk> = Box::new(builder_a);
-        let column_b: Box<dyn ColumnChunk> = Box::new(builder_b);
-        let column_c: Box<dyn ColumnChunk> = Box::new(builder_c);
-        columns.push(column_a);
-        columns.push(column_b);
-        columns.push(column_c);
-
         write_row_group(&mut writer, columns, options.compression_options).unwrap();
 
         let result = writer.into_inner().into_inner();
