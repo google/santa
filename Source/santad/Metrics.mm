@@ -17,7 +17,6 @@
 
 #include <memory>
 
-#include "Source/common/BranchPrediction.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/santad/SNTApplicationCoreMetrics.h"
@@ -295,21 +294,26 @@ void Metrics::FlushMetrics() {
         ]];
     }
 
-    for (const auto &kv : drop_cache_) {
-      if (kv.second.drops > 0) {
-        NSString *processorName = ProcessorToString(std::get<Processor>(kv.first));
-        NSString *eventName = EventTypeToString(std::get<es_event_type_t>(kv.first));
+    for (auto &[key, stats] : drop_cache_) {
+      if (stats.drops > 0) {
+        NSString *processorName = ProcessorToString(std::get<Processor>(key));
+        NSString *eventName = EventTypeToString(std::get<es_event_type_t>(key));
 
-        [drop_counts_ incrementBy:kv.second.drops forFieldValues:@[ processorName, eventName ]];
+        [drop_counts_ incrementBy:stats.drops forFieldValues:@[ processorName, eventName ]];
+
+        // Reset drops to 0, but leave sequence number intact. Sequence numbers
+        // must persist so that accurate drops can be counted.
+        stats.drops = 0;
       }
     }
 
     // Reset the maps so the next cycle begins with a clean state
+    // IMPORTANT: Do not reset drop_cache_, the sequence numbers must persist
+    // for accurate accounting
     event_counts_cache_ = {};
     event_times_cache_ = {};
     rate_limit_counts_cache_ = {};
     faa_event_counts_cache_ = {};
-    drop_cache_ = {};
   });
 }
 
@@ -370,11 +374,10 @@ void Metrics::UpdateEventStats(Processor processor, const es_message_t *msg) {
     SequenceStats old_global_stats = drop_cache_[global_stats_key];
 
     // Sequence number should always increment by 1.
-    // Drops detected if the difference between sequence numbers is ever more than 1.
-    int64_t new_event_drops =
-      unlikely(msg->seq_num == 0) ? 0 : (msg->seq_num - old_event_stats.seq_num - 1);
-    int64_t new_global_drops =
-      unlikely(msg->global_seq_num == 0) ? 0 : (msg->global_seq_num - old_global_stats.seq_num - 1);
+    // Drops detected if there is a difference between the current sequence
+    // number and the expected sequence number
+    int64_t new_event_drops = msg->seq_num - old_event_stats.next_seq_num;
+    int64_t new_global_drops = msg->global_seq_num - old_global_stats.next_seq_num;
 
     // Only log one or the other, prefer the event specific log.
     // For higher volume event types, we'll normally see the event-specific log eventually
@@ -387,11 +390,11 @@ void Metrics::UpdateEventStats(Processor processor, const es_message_t *msg) {
            new_global_drops);
     }
 
-    drop_cache_[event_stats_key] =
-      SequenceStats{.seq_num = msg->seq_num, .drops = old_event_stats.drops + new_event_drops};
+    drop_cache_[event_stats_key] = SequenceStats{.next_seq_num = msg->seq_num + 1,
+                                                 .drops = old_event_stats.drops + new_event_drops};
 
     drop_cache_[global_stats_key] = SequenceStats{
-      .seq_num = msg->global_seq_num, .drops = old_global_stats.drops + new_global_drops};
+      .next_seq_num = msg->global_seq_num + 1, .drops = old_global_stats.drops + new_global_drops};
   });
 }
 

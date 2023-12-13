@@ -96,7 +96,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
  private:
   struct SequenceStats {
-    uint64_t seq_num = 0;
+    uint64_t next_seq_num = 0;
     int64_t drops = 0;
   };
 
