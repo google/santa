@@ -1,19 +1,16 @@
 mod column_builder;
 mod page_builder;
+mod table;
 mod value;
 
-use column_builder::ColumnBuilder;
-use parquet2::{
-    bloom_filter,
-    compression::CompressionOptions,
-    error::Result,
-    write::{DynIter, FileWriter, WriteOptions},
-};
-use std::io::Write;
+use parquet2::bloom_filter;
+use table::{write_row_group, Options, Table};
 
 #[cxx::bridge(namespace = "pedro::wire")]
 mod ffi {
-    extern "Rust" {}
+    extern "Rust" {
+        type Table;
+    }
 }
 
 // This is just some POC code for CXX that'll be removed later.
@@ -23,23 +20,6 @@ pub extern "C" fn parquet2_1337_bloom_filter_contains(x: i64) -> bool {
     let mut bits = vec![0; 32];
     bloom_filter::insert(&mut bits, bloom_filter::hash_native::<i64>(1337));
     bloom_filter::is_in_set(&bits, bloom_filter::hash_native(x))
-}
-
-fn write_row_group<W: Write>(
-    writer: &mut FileWriter<W>,
-    mut columns: Vec<ColumnBuilder>,
-    _compression_options: CompressionOptions,
-) -> Result<()> {
-    let row_group = columns.iter_mut().map(|column| Ok(column.drain()));
-    let row_group = DynIter::new(row_group);
-    writer.write(row_group)
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-struct Options {
-    pub write_options: WriteOptions,
-    pub compression_options: CompressionOptions,
-    pub page_size: usize,
 }
 
 #[cfg(test)]
@@ -101,7 +81,7 @@ mod test {
                 .push(Value::Bytes(s.as_bytes()))
                 .expect("push failed");
         }
-        write_row_group(&mut writer, columns, options.compression_options).unwrap();
+        write_row_group(&mut writer, &mut columns).unwrap();
 
         let result = writer.into_inner().into_inner();
         assert!(!result.is_empty());

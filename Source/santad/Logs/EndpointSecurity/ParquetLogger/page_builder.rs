@@ -43,16 +43,6 @@ impl PageBuilder {
         }
     }
 
-    pub fn dyn_size(&self) -> usize {
-        match self.page_builder {
-            InnerBuilder::ByteArray(ref builder) => builder.size(),
-            InnerBuilder::I32(ref builder) => builder.size(),
-            InnerBuilder::I64(ref builder) => builder.size(),
-            InnerBuilder::F32(ref builder) => builder.size(),
-            InnerBuilder::F64(ref builder) => builder.size(),
-        }
-    }
-
     pub fn push(&mut self, value: Value) -> Result<()> {
         match self.page_builder {
             InnerBuilder::ByteArray(ref mut builder) => builder.push(value.as_bytes()?),
@@ -71,6 +61,16 @@ impl PageBuilder {
             InnerBuilder::I64(ref builder) => builder.size(),
             InnerBuilder::F32(ref builder) => builder.size(),
             InnerBuilder::F64(ref builder) => builder.size(),
+        }
+    }
+
+    pub fn count(&self) -> usize {
+        match self.page_builder {
+            InnerBuilder::ByteArray(ref builder) => builder.count,
+            InnerBuilder::I32(ref builder) => builder.count,
+            InnerBuilder::I64(ref builder) => builder.count,
+            InnerBuilder::F32(ref builder) => builder.count,
+            InnerBuilder::F64(ref builder) => builder.count,
         }
     }
 

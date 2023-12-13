@@ -70,4 +70,12 @@ impl ColumnBuilder {
 
         Ok(self.pages.last_mut().unwrap())
     }
+
+    pub fn size(&self) -> usize {
+        self.pages.iter().map(|page| page.size()).sum()
+    }
+
+    pub fn count(&self) -> usize {
+        self.pages.iter().map(|page| page.count()).sum()
+    }
 }
