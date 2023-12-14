@@ -6,7 +6,7 @@ use parquet2::{
     metadata::Descriptor,
     page::{DataPage, DataPageHeader, DataPageHeaderV1, Page},
     schema::types::PhysicalType,
-    statistics::{serialize_statistics, PrimitiveStatistics},
+    statistics::{serialize_statistics, BinaryStatistics, PrimitiveStatistics},
     types::NativeType,
 };
 use std::cmp::PartialOrd;
@@ -126,12 +126,20 @@ impl ByteArrayPage {
     }
 
     fn into_page(self) -> Page {
+        let statistics = BinaryStatistics {
+            primitive_type: self.descriptor.primitive_type.clone(),
+            null_count: Some(0),  // No NULLs allowed.
+            distinct_count: None, // Not worth the cost of counting.
+            max_value: None,
+            min_value: None,
+        };
+
         let header = DataPageHeaderV1 {
             num_values: self.count as i32,
             encoding: Encoding::Plain.into(),
             definition_level_encoding: Encoding::Rle.into(),
             repetition_level_encoding: Encoding::Rle.into(),
-            statistics: None,
+            statistics: Some(serialize_statistics(&statistics)),
         };
 
         Page::Data(DataPage::new(

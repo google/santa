@@ -66,6 +66,7 @@ mod test {
                 .expect("push failed");
         }
         table.flush().expect("flush failed");
+        table.end().expect("end failed");
 
         let (schema, writer, options) = table.into_inner();
         let writer = if let Writer::Memory(w) = writer {

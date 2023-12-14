@@ -71,11 +71,11 @@ fn table_args_new(name: &CxxString, path: &CxxString) -> Box<TableArgs> {
     Box::new(TableArgs {
         options: Options {
             write_options: WriteOptions {
-                // TODO(adam): Enable this once all pages reliably generate them.
-                write_statistics: false,
+                write_statistics: true,
                 version: parquet2::write::Version::V1,
             },
             compression_options: CompressionOptions::Brotli(Some(BrotliLevel::try_new(5).unwrap())),
+            // compression_options: CompressionOptions::Uncompressed,
             page_size: 1024,
         },
         name: name.to_string(),
