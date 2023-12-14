@@ -5,7 +5,7 @@ use parquet2::{
     compression::{BrotliLevel, CompressionOptions},
     error::Error,
     metadata::SchemaDescriptor,
-    schema::types::{ParquetType, PhysicalType},
+    schema::{types::{ParquetType, PhysicalType, PrimitiveType}, Repetition},
     write::WriteOptions,
 };
 
@@ -92,8 +92,10 @@ fn table_args_add_column(
     match cxx_column_type_to_physical_type(column_type) {
         None => Err(Error::InvalidParameter("invalid column type".to_string())),
         Some(physical_type) => {
+            let mut field = PrimitiveType::from_physical(name.to_string(), physical_type);
+            field.field_info.repetition = Repetition::Required;
             args.fields
-                .push(ParquetType::from_physical(name.to_string(), physical_type));
+                .push(ParquetType::PrimitiveType(field));
             Ok(())
         }
     }
