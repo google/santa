@@ -4,11 +4,7 @@ use crate::{
     writer::{write_row_group, Writer},
 };
 use parquet2::{
-    compression::{BrotliLevel, CompressionOptions},
-    error::Result,
-    metadata::SchemaDescriptor,
-    schema::types::{ParquetType, PhysicalType},
-    write::WriteOptions,
+    compression::CompressionOptions, error::Result, metadata::SchemaDescriptor, write::WriteOptions,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -72,13 +68,15 @@ impl Table {
         Ok(())
     }
 
-    pub fn validate(&self) -> Result<()> {
+    // Checks that the table is well-formed and returns the number of rows in
+    // the buffer.
+    pub fn validate(&self) -> Result<(usize)> {
         match self.columns.len() {
             0 => Err(parquet2::error::Error::OutOfSpec("No columns".to_string())),
             _ => {
                 let n = self.columns[0].count();
                 if self.columns.iter().all(|column| column.count() == n) {
-                    Ok(())
+                    Ok((n))
                 } else {
                     Err(parquet2::error::Error::OutOfSpec(
                         "Column counts don't match".to_string(),
@@ -88,14 +86,21 @@ impl Table {
         }
     }
 
-    pub fn flush(&mut self) -> Result<()> {
-        self.validate()?;
-        write_row_group(&mut self.writer, &mut self.columns)
+    // Flushes a rowg group to the writer and returns the number of rows
+    // flushed. Does nothing if no rows are buffered.
+    pub fn flush(&mut self) -> Result<(usize)> {
+        match self.validate() {
+            Ok(0) => Ok((0)),
+            Ok(n) => {
+                write_row_group(&mut self.writer, &mut self.columns)?;
+                Ok((n))
+            }
+            Err(e) => Err(e),
+        }
     }
 
     pub fn end(&mut self) -> Result<u64> {
-        // TODO(adam): Flush, but only if non-empty.
-        // self.flush()?;
+        self.flush()?;
         self.writer.end()
     }
 

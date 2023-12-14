@@ -42,7 +42,7 @@ mod test {
             page_size: 1024,
         };
 
-        let mut schema = SchemaDescriptor::new(
+        let schema = SchemaDescriptor::new(
             "schema".to_string(),
             vec![
                 ParquetType::from_physical("a".to_string(), PhysicalType::Int32),
@@ -68,7 +68,7 @@ mod test {
         table.flush().expect("flush failed");
         table.end().expect("end failed");
 
-        let (schema, writer, options) = table.into_inner();
+        let (_schema, writer, _options) = table.into_inner();
         let writer = if let Writer::Memory(w) = writer {
             w
         } else {

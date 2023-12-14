@@ -38,7 +38,7 @@ impl Writer {
             Self::File(writer) => writer.write(row_group),
         }
     }
-    
+
     pub fn end(&mut self) -> Result<u64> {
         match self {
             Self::Memory(writer) => writer.end(None),

@@ -1,11 +1,12 @@
-use std::fs::File;
-
 use cxx::CxxString;
 use parquet2::{
     compression::{BrotliLevel, CompressionOptions},
     error::Error,
     metadata::SchemaDescriptor,
-    schema::{types::{ParquetType, PhysicalType, PrimitiveType}, Repetition},
+    schema::{
+        types::{ParquetType, PhysicalType, PrimitiveType},
+        Repetition,
+    },
     write::WriteOptions,
 };
 
@@ -44,7 +45,7 @@ mod ffi {
         fn table_push_f64(table: &mut Table, column_no: usize, value: f64) -> Result<()>;
         fn table_push_bytes(table: &mut Table, column_no: usize, value: &[u8]) -> Result<()>;
         fn table_push_string(table: &mut Table, column_no: usize, value: &CxxString) -> Result<()>;
-        fn table_flush(table: &mut Table) -> Result<()>;
+        fn table_flush(table: &mut Table) -> Result<usize>;
         fn table_end(table: Box<Table>) -> Result<u64>;
     }
 }
@@ -94,8 +95,7 @@ fn table_args_add_column(
         Some(physical_type) => {
             let mut field = PrimitiveType::from_physical(name.to_string(), physical_type);
             field.field_info.repetition = Repetition::Required;
-            args.fields
-                .push(ParquetType::PrimitiveType(field));
+            args.fields.push(ParquetType::PrimitiveType(field));
             Ok(())
         }
     }
@@ -131,7 +131,7 @@ fn table_push_string(table: &mut Table, column_no: usize, value: &CxxString) -> 
     table.push(column_no, Value::Bytes(value.as_bytes()))
 }
 
-fn table_flush(table: &mut Table) -> Result<(), Error> {
+fn table_flush(table: &mut Table) -> Result<(usize), Error> {
     table.flush()
 }
 
