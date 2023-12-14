@@ -11,6 +11,7 @@ rust_static_library(
         "parquet_logger.rs",
         "table.rs",
         "value.rs",
+        "writer.rs",
     ],
     aliases = aliases(),
     proc_macro_deps = all_crate_deps(

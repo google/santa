@@ -1,11 +1,11 @@
-use crate::{column_builder::ColumnBuilder, value::Value};
-use parquet2::{
-    compression::CompressionOptions,
-    error::Result,
-    metadata::SchemaDescriptor,
-    write::{DynIter, FileWriter, WriteOptions},
+use crate::{
+    column_builder::ColumnBuilder,
+    value::Value,
+    writer::{write_row_group, Writer},
 };
-use std::io::Write;
+use parquet2::{
+    compression::CompressionOptions, error::Result, metadata::SchemaDescriptor, write::WriteOptions,
+};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Options {
@@ -18,10 +18,11 @@ pub struct Table {
     columns: Vec<ColumnBuilder>,
     schema: SchemaDescriptor,
     options: Options,
+    writer: Writer,
 }
 
 impl Table {
-    pub fn new(schema: SchemaDescriptor, options: Options) -> Self {
+    pub fn new(schema: SchemaDescriptor, options: Options, writer: Writer) -> Self {
         let columns = schema
             .columns()
             .iter()
@@ -37,6 +38,7 @@ impl Table {
             columns,
             schema,
             options,
+            writer,
         }
     }
 
@@ -80,16 +82,12 @@ impl Table {
         }
     }
 
-    pub fn flush_to<W: Write>(&mut self, writer: &mut FileWriter<W>) -> Result<()> {
-        write_row_group(writer, &mut self.columns)
+    pub fn flush(&mut self) -> Result<()> {
+        self.validate()?;
+        write_row_group(&mut self.writer, &mut self.columns)
     }
-}
 
-pub fn write_row_group<W: Write>(
-    writer: &mut FileWriter<W>,
-    columns: &mut Vec<ColumnBuilder>,
-) -> Result<()> {
-    let row_group = columns.iter_mut().map(|column| Ok(column.drain()));
-    let row_group = DynIter::new(row_group);
-    writer.write(row_group)
+    pub fn into_inner(self) -> (SchemaDescriptor, Writer, Options) {
+        (self.schema, self.writer, self.options)
+    }
 }

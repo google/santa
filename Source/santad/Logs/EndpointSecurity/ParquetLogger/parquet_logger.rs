@@ -2,9 +2,10 @@ mod column_builder;
 mod page_builder;
 mod table;
 mod value;
+mod writer;
 
 use parquet2::bloom_filter;
-use table::{write_row_group, Options, Table};
+use table::Table;
 
 #[cxx::bridge(namespace = "pedro::wire")]
 mod ffi {
@@ -24,15 +25,17 @@ pub extern "C" fn parquet2_1337_bloom_filter_contains(x: i64) -> bool {
 
 #[cfg(test)]
 mod test {
-    use super::{write_row_group, Options};
-    use crate::{column_builder::ColumnBuilder, value::Value};
+    use crate::{
+        table::{Options, Table},
+        value::Value,
+        writer::Writer,
+    };
     use parquet2::{
         compression::{BrotliLevel, CompressionOptions},
         metadata::SchemaDescriptor,
         schema::types::{ParquetType, PhysicalType},
-        write::{FileWriter, Version, WriteOptions},
+        write::{Version, WriteOptions},
     };
-    use std::io::Cursor;
 
     #[test]
     fn test_write() {
@@ -55,35 +58,29 @@ mod test {
             ],
         );
 
-        let cursor: Cursor<Vec<u8>> = Cursor::new(vec![]);
-        let mut writer = FileWriter::new(cursor, schema.clone(), options.write_options, None);
-
-        let mut columns = schema
-            .columns()
-            .iter()
-            .map(|column| {
-                ColumnBuilder::new(
-                    options.page_size,
-                    column.descriptor.clone(),
-                    options.compression_options,
-                )
-            })
-            .collect::<Vec<_>>();
+        let writer = Writer::from_memory(schema.clone(), options.write_options, vec![]);
+        let mut table = Table::new(schema, options, writer);
 
         for i in 0..1000 {
-            columns[0].push(Value::I32(i)).expect("push failed");
-            columns[1]
-                .push(Value::I64((i * 2).into()))
+            table.push(0, Value::I32(i)).expect("push failed");
+            table
+                .push(1, Value::I64((i * 2).into()))
                 .expect("push failed");
 
             let s = format!("integer_{}", i);
-            columns[2]
-                .push(Value::Bytes(s.as_bytes()))
+            table
+                .push(2, Value::Bytes(s.as_bytes()))
                 .expect("push failed");
         }
-        write_row_group(&mut writer, &mut columns).unwrap();
+        table.flush().expect("flush failed");
 
-        let result = writer.into_inner().into_inner();
+        let (schema, writer, options) = table.into_inner();
+        let writer = if let Writer::Memory(w) = writer {
+            w
+        } else {
+            panic!("Expected Writer::Memory");
+        };
+        let result = writer.into_inner();
         assert!(!result.is_empty());
         println!("{:?}", result);
     }
