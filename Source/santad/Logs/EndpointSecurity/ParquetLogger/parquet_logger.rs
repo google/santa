@@ -46,6 +46,8 @@
 //! * Support fixed-length byte arrays.
 //! * Reimplement FileWriter to use an arena-style buffer instead of nested
 //!   iterators.
+//! * More work on code size - the build size (in opt) is about 3.5 MiB, which
+//!   could be reduced further by stripping unused compression code.
 
 mod column_builder;
 mod cpp_api;
