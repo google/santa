@@ -11,9 +11,9 @@ use parquet2::{
 };
 use std::cmp::PartialOrd;
 
-// A page builder serializes primitive values into bytes and appends them to a
-// page (buffer). Implementations are provided for NativeType and &[u8] (byte
-// array).
+/// A page builder serializes primitive values into bytes and appends them to a
+/// page (buffer). Implementations are provided for NativeType and &[u8] (byte
+/// array).
 pub struct PageBuilder {
     page_builder: InnerBuilder,
 }
@@ -93,11 +93,8 @@ enum InnerBuilder {
     F64(NativePage<f64>),
 }
 
-// A page builder serializes primitive values into bytes and appends them to a
-// page (buffer). Implementations are provided for NativeType and &[u8] (byte
-// array).
-
-// Builds a page of variable length by arrays. Used for strings and other blobs.
+/// Builds a page of variable length by arrays. Used for strings and other
+/// blobs.
 pub struct ByteArrayPage {
     buffer: Vec<u8>,
     count: usize,
@@ -151,8 +148,8 @@ impl ByteArrayPage {
     }
 }
 
-// A page of numbers using plain encoding. This is implemented (and fast) for
-// most native numeric types. (Int96 isn't used at the moment.)
+/// A page of numbers using plain encoding. This is implemented (and fast) for
+/// most native numeric types. (Int96 isn't used at the moment.)
 pub struct NativePage<T: NativeType + PartialOrd> {
     buffer: Vec<u8>,
     count: usize,

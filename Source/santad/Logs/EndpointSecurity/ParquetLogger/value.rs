@@ -1,11 +1,11 @@
 use parquet2::error::Result;
 
-// A value can be written to a page in a column chunk in a row group in a
-// parquet file in the house that Jack built.
-//
-// Parquet only supports a handful of physical types. In addition to what's
-// listed in this enum, parquet supports int96 and fixed length arrays, which
-// are not yet implemented here.
+/// A value can be written to a page in a column chunk in a row group in a
+/// parquet file in the house that Jack built.
+///
+/// Parquet only supports a handful of physical types. In addition to what's
+/// listed in this enum, parquet supports int96 and fixed length arrays, which
+/// are not yet implemented here.
 pub enum Value<'a> {
     I32(i32),
     I64(i64),

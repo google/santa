@@ -18,8 +18,6 @@ pub struct Options {
 /// easy to construct.)
 pub struct Table {
     columns: Vec<ColumnBuilder>,
-    schema: SchemaDescriptor,
-    options: Options,
     writer: Writer,
 }
 
@@ -36,18 +34,22 @@ impl Table {
                 )
             })
             .collect::<Vec<_>>();
-        Self {
-            columns,
-            schema,
-            options,
-            writer,
-        }
+        Self { columns, writer }
     }
 
+    /// Pushes a value to the column. The column number is the index the column
+    /// had in the schema. The type of Value must match the type of the column
+    /// as specified in new.
+    ///
+    /// It is not necessary to push values in order of column number. It is also
+    /// not required to push one row at a time (it's fine to write column by
+    /// column). However, the same number of values must be pushed to each
+    /// column by the time flush is called.
     pub fn push(&mut self, column_no: usize, value: Value) -> Result<()> {
         self.columns[column_no].push(value)
     }
 
+    /// Convenience method for pushing a row of values at a time. See push.
     pub fn push_row<'a, I>(&mut self, values: I) -> Result<()>
     where
         I: Iterator<Item = Value<'a>>,
@@ -58,6 +60,7 @@ impl Table {
         Ok(())
     }
 
+    /// Convenience method for pushing a column of values at a time. See push
     pub fn push_column<'a, I>(&mut self, column_no: usize, values: I) -> Result<()>
     where
         I: Iterator<Item = Value<'a>>,
@@ -68,15 +71,15 @@ impl Table {
         Ok(())
     }
 
-    // Checks that the table is well-formed and returns the number of rows in
-    // the buffer.
-    pub fn validate(&self) -> Result<(usize)> {
+    /// Checks that the table is well-formed and returns the number of rows in
+    /// the buffer.
+    pub fn validate(&self) -> Result<usize> {
         match self.columns.len() {
             0 => Err(parquet2::error::Error::OutOfSpec("No columns".to_string())),
             _ => {
                 let n = self.columns[0].count();
                 if self.columns.iter().all(|column| column.count() == n) {
-                    Ok((n))
+                    Ok(n)
                 } else {
                     Err(parquet2::error::Error::OutOfSpec(
                         "Column counts don't match".to_string(),
@@ -86,25 +89,30 @@ impl Table {
         }
     }
 
-    // Flushes a rowg group to the writer and returns the number of rows
-    // flushed. Does nothing if no rows are buffered.
-    pub fn flush(&mut self) -> Result<(usize)> {
+    /// Flushes a rowg group to the writer and returns the number of rows
+    /// flushed. Does nothing if no rows are buffered.
+    pub fn flush(&mut self) -> Result<usize> {
         match self.validate() {
-            Ok(0) => Ok((0)),
+            Ok(0) => Ok(0),
             Ok(n) => {
                 write_row_group(&mut self.writer, &mut self.columns)?;
-                Ok((n))
+                Ok(n)
             }
             Err(e) => Err(e),
         }
     }
 
-    pub fn end(&mut self) -> Result<u64> {
+    /// Flushes all buffered data and ends the file, writing the footer.
+    pub fn end(mut self) -> Result<(u64, Writer)> {
         self.flush()?;
-        self.writer.end()
+        let n = self.writer.end()?;
+        Ok((n, self.writer))
     }
 
-    pub fn into_inner(self) -> (SchemaDescriptor, Writer, Options) {
-        (self.schema, self.writer, self.options)
+    /// Return the total buffered size of the table in bytes. This does not
+    /// count bytes already written to disk, or any metadata and header and
+    /// footer.
+    pub fn size(&self) -> usize {
+        self.columns.iter().map(|column| column.size()).sum()
     }
 }

@@ -135,10 +135,11 @@ fn table_push_string(table: &mut Table, column_no: usize, value: &CxxString) -> 
     table.push(column_no, Value::Bytes(value.as_bytes()))
 }
 
-fn table_flush(table: &mut Table) -> Result<(usize), Error> {
+fn table_flush(table: &mut Table) -> Result<usize, Error> {
     table.flush()
 }
 
-fn table_end(mut table: Box<Table>) -> Result<u64, Error> {
-    table.end()
+fn table_end(table: Box<Table>) -> Result<u64, Error> {
+    let (n, _writer) = table.end()?;
+    Ok(n)
 }

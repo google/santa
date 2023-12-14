@@ -9,8 +9,8 @@ use parquet2::{
 
 use crate::column_builder::ColumnBuilder;
 
-// Wraps the FileWriter for Table to allow constructing the latter from C++.
-// (FileWriter is generic, but Table cannot be.)
+/// Wraps the FileWriter for Table to allow constructing the latter from C++.
+/// (FileWriter is generic, but Table cannot be.)
 pub enum Writer {
     Memory(FileWriter<Vec<u8>>),
     File(FileWriter<File>),
