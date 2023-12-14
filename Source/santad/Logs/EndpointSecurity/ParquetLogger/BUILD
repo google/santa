@@ -25,12 +25,8 @@ rust_static_library(
 
 cc_binary(
     name = "write_test_file",
-    srcs = [
-        "gen/cpp_api.rs.h",
-        "gen/cpp_api.rs.cc",
-        "write_test_file.cc",
-    ],
-    deps = [":parquet_logger"],
+    srcs = ["write_test_file.cc"],
+    deps = [":parquet_bridge"],
 )
 
 rust_test(

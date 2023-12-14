@@ -7,9 +7,9 @@ use parquet2::{
     write::{Compressor, DynIter, DynStreamingIterator},
 };
 
-// A column is a collection of pages. It can be drained to get compressed pages
-// out. After the compressed pages are written to a file, the column chunk can
-// be reused.
+/// A column is a collection of pages. It can be drained to get compressed pages
+/// out. After the compressed pages are written to a file, the column chunk can
+/// be reused.
 pub struct ColumnBuilder {
     pages: Vec<PageBuilder>,
     page_size: usize,

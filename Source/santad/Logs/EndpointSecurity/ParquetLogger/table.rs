@@ -14,8 +14,8 @@ pub struct Options {
     pub page_size: usize,
 }
 
-// Wraps the API in a type that's easy to expose to C++. (Is not generic and is
-// easy to construct.)
+/// Wraps the API in a type that's easy to expose to C++. (Is not generic and is
+/// easy to construct.)
 pub struct Table {
     columns: Vec<ColumnBuilder>,
     schema: SchemaDescriptor,

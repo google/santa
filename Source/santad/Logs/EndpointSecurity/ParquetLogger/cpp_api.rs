@@ -1,3 +1,5 @@
+//! C++ API for the ParquetLogger. This is a thin wrapper around the Table type.
+
 use cxx::CxxString;
 use parquet2::{
     compression::{BrotliLevel, CompressionOptions},
@@ -18,7 +20,7 @@ use crate::{
 
 #[cxx::bridge(namespace = "pedro::wire")]
 mod ffi {
-    // Types  supported by the C++ API.
+    /// Parquet types supported by the C++ API.
     enum CxxColumnType {
         Int32,
         Int64,
@@ -50,6 +52,8 @@ mod ffi {
     }
 }
 
+/// A collection of arguments to construct a Table. Used by the C++ API for a
+/// builder pattern.
 struct TableArgs {
     options: Options,
     name: String,
