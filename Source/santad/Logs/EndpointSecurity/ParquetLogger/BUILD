@@ -7,6 +7,7 @@ rust_static_library(
     name = "parquet_logger",
     srcs = [
         "column_builder.rs",
+        "cpp_api.rs",
         "page_builder.rs",
         "parquet_logger.rs",
         "table.rs",
@@ -25,7 +26,8 @@ rust_static_library(
 cc_binary(
     name = "write_test_file",
     srcs = [
-        "gen/parquet_logger.rs.h",
+        "gen/cpp_api.rs.h",
+        "gen/cpp_api.rs.cc",
         "write_test_file.cc",
     ],
     deps = [":parquet_logger"],
@@ -38,7 +40,7 @@ rust_test(
 
 rust_cxx_bridge(
     name = "parquet_bridge",
-    src = "parquet_logger.rs",
+    src = "cpp_api.rs",
     deps = [":parquet_logger"],
 )
 

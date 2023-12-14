@@ -1,18 +1,11 @@
 mod column_builder;
+mod cpp_api;
 mod page_builder;
 mod table;
 mod value;
 mod writer;
 
 use parquet2::bloom_filter;
-use table::Table;
-
-#[cxx::bridge(namespace = "pedro::wire")]
-mod ffi {
-    extern "Rust" {
-        type Table;
-    }
-}
 
 // This is just some POC code for CXX that'll be removed later.
 // DONOTSUBMIT: Remove this before finishing the PR.
@@ -49,7 +42,7 @@ mod test {
             page_size: 1024,
         };
 
-        let schema = SchemaDescriptor::new(
+        let mut schema = SchemaDescriptor::new(
             "schema".to_string(),
             vec![
                 ParquetType::from_physical("a".to_string(), PhysicalType::Int32),
