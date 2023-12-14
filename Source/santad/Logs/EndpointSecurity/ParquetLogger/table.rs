@@ -93,6 +93,12 @@ impl Table {
         write_row_group(&mut self.writer, &mut self.columns)
     }
 
+    pub fn end(&mut self) -> Result<u64> {
+        // TODO(adam): Flush, but only if non-empty.
+        // self.flush()?;
+        self.writer.end()
+    }
+
     pub fn into_inner(self) -> (SchemaDescriptor, Writer, Options) {
         (self.schema, self.writer, self.options)
     }
