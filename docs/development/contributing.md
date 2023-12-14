@@ -65,11 +65,13 @@ Additionally, please follow these guidelines:
 * Keep the Rust code to the leaves.
 * Don't hand over control between Rust and C++ more than absolutely necessary.
 * Have C++ call into Rust, not the other way around.
-* Don't use cxx to return `Result` types across the FFI. (It might throw a C++
-  exception.)
-* Run `cargo fix && cargo fmt` before submitting code for review. You may need to run the
-  nightly to support all options in `rustfmt.toml`: `rustup run nightly cargo
-  fmt`.
+* Use of `Result` types across the FFI is permitted, because it is the only enum
+  (variant) type Cxx supports and the only good way to indicate failures. If you
+  do return `Result`, **you MUST wrap the C++ call site in a `try-catch`
+  block.**
+* Run `cargo fix && cargo fmt` before submitting code for review. You may need
+  to run the nightly to support all options in `rustfmt.toml`: `rustup run
+  nightly cargo fmt`.
 
 ### The small print
 Contributions made by corporations are covered by a different agreement than
