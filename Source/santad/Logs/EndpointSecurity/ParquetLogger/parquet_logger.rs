@@ -56,17 +56,6 @@ mod table;
 mod value;
 mod writer;
 
-use parquet2::bloom_filter;
-
-// This is just some POC code for CXX that'll be removed later.
-// DONOTSUBMIT: Remove this before finishing the PR.
-#[no_mangle]
-pub extern "C" fn parquet2_1337_bloom_filter_contains(x: i64) -> bool {
-    let mut bits = vec![0; 32];
-    bloom_filter::insert(&mut bits, bloom_filter::hash_native::<i64>(1337));
-    bloom_filter::is_in_set(&bits, bloom_filter::hash_native(x))
-}
-
 // This is the main public API.
 pub use crate::table::Table;
 

@@ -1,8 +1,6 @@
-#include <stdint.h>
+#include "Source/santad/Logs/EndpointSecurity/ParquetLogger/gen/cpp_api.rs.h"
 
 #ifndef SANTA__SANTAD__LOGS_ENDPOINTSECURITY_PARQUETLOGGER_PARQUETLOGGER_H
 #define SANTA__SANTAD__LOGS_ENDPOINTSECURITY_PARQUETLOGGER_PARQUETLOGGER_H
-
-bool FilterContains(int64_t x);
 
 #endif

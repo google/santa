@@ -5,7 +5,10 @@
 // This demonstrates the use of the C++ API for parquet_logger, which is
 // implemented in Rust. The C++ API uses an opaque type called Table, which is
 // returned as a Box (effectively a unique_ptr).
-
+//
+// To easily check that the file is valid, load it into Pandas:
+//
+// import pandas as pd; pd.read_parquet("./test_table.parquet")
 int main(int argc, char* argv[]) {
   try {
     if (argc < 2) {
