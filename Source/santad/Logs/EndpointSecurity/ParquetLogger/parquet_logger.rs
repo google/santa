@@ -48,6 +48,16 @@
 //!   iterators.
 //! * More work on code size - the build size (in opt) is about 3.5 MiB, which
 //!   could be reduced further by stripping unused compression code.
+//! 
+//! # References
+//! 
+//! * Parquet format thrift specification:
+//!   https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift
+//! * Parquet format docs: https://parquet.apache.org/docs/overview/
+//! * parquet2 crate: https://github.com/jorgecarleitao/parquet2
+//! * Pedro's parquet code using C++ Arrow:
+//!   https://github.com/wowsignal-io/pedro/blob/master/pedro/output/parquet.h
+//! * Arrow (mainline parquet code): https://github.com/apache/arrow
 
 mod column_builder;
 mod cpp_api;
