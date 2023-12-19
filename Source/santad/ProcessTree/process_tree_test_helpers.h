@@ -21,6 +21,7 @@ namespace santa::santad::process_tree {
 
 class ProcessTreeTestPeer : public ProcessTree {
  public:
+  explicit ProcessTreeTestPeer(std::vector<std::unique_ptr<Annotator>> &&annotators) : ProcessTree(std::move(annotators)) {}
   std::shared_ptr<const Process> InsertInit();
 };
 

@@ -73,7 +73,8 @@ using namespace santa::santad::process_tree;
 @implementation ProcessTreeTest
 
 - (void)setUp {
-  self.tree = std::make_shared<ProcessTreeTestPeer>();
+  std::vector<std::unique_ptr<Annotator>> annotators{};
+  self.tree = std::make_shared<ProcessTreeTestPeer>(std::move(annotators));
   self.init_proc = self.tree->InsertInit();
 }
 
@@ -107,9 +108,13 @@ using namespace santa::santad::process_tree;
 }
 
 - (void)testAnnotation {
+  std::vector<std::unique_ptr<Annotator>> annotators{};
+  annotators.emplace_back(std::make_unique<TestAnnotator>());
+  self.tree = std::make_shared<ProcessTreeTestPeer>(std::move(annotators));
+  self.init_proc = self.tree->InsertInit();
+
   uint64_t event_id = 1;
   const struct Cred cred = {.uid = 0, .gid = 0};
-  self.tree->RegisterAnnotator(std::make_unique<TestAnnotator>());
 
   // PID 1.1: fork() -> PID 2.2
   const struct Pid login_pid = {.pid = 2, .pidversion = 2};

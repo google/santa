@@ -34,15 +34,11 @@ class ProcessTreeTestPeer;
 
 class ProcessTree {
  public:
-  explicit ProcessTree() : seen_timestamps_({}) {}
+  explicit ProcessTree(std::vector<std::unique_ptr<Annotator>> &&annotators) : annotators_(std::move(annotators)), seen_timestamps_({}) {}
   ProcessTree(const ProcessTree &) = delete;
   ProcessTree& operator=(const ProcessTree &) = delete;
   ProcessTree(ProcessTree &&) = delete;
   ProcessTree& operator=(ProcessTree &&) = delete;
-
-  // Register an Annotator class to be automatically processed on process
-  // lifecycle events.
-  void RegisterAnnotator(std::unique_ptr<Annotator> a);
 
   // Initialize the tree with the processes currently running on the system.
   absl::Status Backfill();

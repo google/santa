@@ -176,10 +176,6 @@ Annotation get/set
 ---
 */
 
-void ProcessTree::RegisterAnnotator(std::unique_ptr<Annotator> a) {
-  annotators_.push_back(std::move(a));
-}
-
 void ProcessTree::AnnotateProcess(const Process &p,
                                   std::shared_ptr<const Annotator> a) {
   absl::MutexLock lock(&mtx_);
