@@ -25,6 +25,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
+#include "Source/santad/ProcessTree/tree.h"
 
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
@@ -44,10 +45,12 @@ using santa::santad::event_providers::endpoint_security::Message;
                       metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
                execController:(SNTExecutionController *)execController
            compilerController:(SNTCompilerController *)compilerController
-              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
+              authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
+                  processTree:(std::shared_ptr<process_tree::ProcessTree>)processTree {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
-                    processor:santa::santad::Processor::kAuthorizer];
+                    processor:santa::santad::Processor::kAuthorizer
+                  processTree:std::move(processTree)];
   if (self) {
     _execController = execController;
     _compilerController = compilerController;

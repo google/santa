@@ -17,15 +17,17 @@
 #import "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
-#import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityTreeAwareClient.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #import "Source/santad/Metrics.h"
+#include "Source/santad/ProcessTree/tree.h"
 #import "Source/santad/SNTCompilerController.h"
 
 /// ES Client focused on subscribing to NOTIFY event variants with the intention of enriching
 /// received messages and logging the information.
-@interface SNTEndpointSecurityRecorder : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
+@interface SNTEndpointSecurityRecorder
+    : SNTEndpointSecurityTreeAwareClient <SNTEndpointSecurityEventHandler>
 
 - (instancetype)
        initWithESAPI:
@@ -38,6 +40,7 @@
   compilerController:(SNTCompilerController *)compilerController
      authResultCache:
        (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
-          prefixTree:(std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>)prefixTree;
+          prefixTree:(std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>)prefixTree
+         processTree:(std::shared_ptr<process_tree::ProcessTree>)processTree;
 
 @end

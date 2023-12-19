@@ -16,8 +16,8 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 
 #import "Source/santad/EventProviders/AuthResultCache.h"
-#import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityEventHandler.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityTreeAwareClient.h"
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
@@ -25,7 +25,7 @@
 /// ES Client focused on subscribing to AUTH variants and authorizing the events
 /// based on configured policy.
 @interface SNTEndpointSecurityAuthorizer
-    : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
+    : SNTEndpointSecurityTreeAwareClient <SNTEndpointSecurityEventHandler>
 
 - (instancetype)
        initWithESAPI:
@@ -35,6 +35,7 @@
       execController:(SNTExecutionController *)execController
   compilerController:(SNTCompilerController *)compilerController
      authResultCache:
-       (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
+       (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+         processTree:(std::shared_ptr<process_tree::ProcessTree>)processTree;
 
 @end
