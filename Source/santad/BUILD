@@ -775,7 +775,6 @@ objc_library(
         "//Source/common:SNTXPCUnprivilegedControlInterface",
         "//Source/common:Unit",
         "//Source/santad/ProcessTree:process_tree",
-        "//Source/santad/ProcessTree/Annotations:all_annotations",
         "@MOLXPCConnection",
     ],
 )
