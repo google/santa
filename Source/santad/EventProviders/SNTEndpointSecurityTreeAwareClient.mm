@@ -18,8 +18,8 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
-#include "Source/santad/ProcessTree/tree.h"
-#include "Source/santad/ProcessTree/tree_darwin.h"
+#include "Source/santad/ProcessTree/process_tree.h"
+#include "Source/santad/ProcessTree/process_tree_macos.h"
 #include "Source/santad/ProcessTree/EndpointSecurityAdapter.h"
 #include "Source/santad/Metrics.h"
 
@@ -30,18 +30,16 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
 
 @implementation SNTEndpointSecurityTreeAwareClient {
-  int _processTreeClient;
   std::vector<bool> _addedEvents;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                       metrics:(std::shared_ptr<Metrics>)metrics
                     processor:(Processor)processor
-  processTree:(std::shared_ptr<process_tree::ProcessTree>)processTree {
+  processTree:(std::shared_ptr<santa::santad::process_tree::ProcessTree>)processTree {
   self = [super initWithESAPI:std::move(esApi) metrics:std::move(metrics) processor:processor];
   if (self) {
     _processTree = std::move(processTree);
-    _processTreeClient = _processTree->RegisterClient();
     _addedEvents.resize(ES_EVENT_TYPE_LAST, false);
   }
   return self;
@@ -72,29 +70,29 @@ using santa::santad::event_providers::endpoint_security::Message;
     case ES_EVENT_TYPE_NOTIFY_EXEC:
     case ES_EVENT_TYPE_AUTH_EXEC:
     case ES_EVENT_TYPE_NOTIFY_EXIT:
-      process_tree::InformFromESEvent(_processTreeClient, *_processTree, &*esMsg);
+      santa::santad::process_tree::InformFromESEvent(*_processTree, &*esMsg);
       break;
     default:
       break;
   }
 
   // Now enumerate the processes that processing this event might require access to...
-  std::vector<struct process_tree::pid> pids;
-  pids.emplace_back(process_tree::PidFromAuditToken(esMsg->process->audit_token));
+  std::vector<struct santa::santad::process_tree::Pid> pids;
+  pids.emplace_back(santa::santad::process_tree::PidFromAuditToken(esMsg->process->audit_token));
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_AUTH_EXEC:
     case ES_EVENT_TYPE_NOTIFY_EXEC:
-      pids.emplace_back(process_tree::PidFromAuditToken(esMsg->event.exec.target->audit_token));
+      pids.emplace_back(santa::santad::process_tree::PidFromAuditToken(esMsg->event.exec.target->audit_token));
       break;
     case ES_EVENT_TYPE_NOTIFY_FORK:
-      pids.emplace_back(process_tree::PidFromAuditToken(esMsg->event.fork.child->audit_token));
+      pids.emplace_back(santa::santad::process_tree::PidFromAuditToken(esMsg->event.fork.child->audit_token));
       break;
     default:
       break;
   }
 
   // ...and create the token for those.
-  esMsg.SetProcessToken(process_tree::ProcessToken(_processTree, std::move(pids)));
+  esMsg.SetProcessToken(santa::santad::process_tree::ProcessToken(_processTree, std::move(pids)));
 
   return _addedEvents[esMsg->event_type];
 }

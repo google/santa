@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include "Source/santad/ProcessTree/tree.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 
 namespace santa::santad::event_providers::endpoint_security {
 

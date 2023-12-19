@@ -16,17 +16,18 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Metrics.h"
-#include "Source/santad/ProcessTree/tree.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 
 using santa::santad::Metrics;
 using santa::santad::Processor;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::santad::process_tree::ProcessTree;
 
 @interface SNTEndpointSecurityTreeAwareClient : SNTEndpointSecurityClient
-@property std::shared_ptr<process_tree::ProcessTree> processTree;
+@property std::shared_ptr<ProcessTree> processTree;
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
                       metrics:(std::shared_ptr<Metrics>)metrics
                     processor:(Processor)processor
-                  processTree:(std::shared_ptr<process_tree::ProcessTree>)processTree;
+                  processTree:(std::shared_ptr<ProcessTree>)processTree;
 @end

@@ -23,7 +23,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
-#include "Source/santad/ProcessTree/tree.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 
 using santa::common::PrefixTree;
 using santa::common::Unit;
@@ -34,6 +34,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::Logger;
+using santa::santad::process_tree::ProcessTree;
 
 es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   switch (msg->event_type) {
@@ -64,7 +65,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
            compilerController:(SNTCompilerController *)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
                    prefixTree:(std::shared_ptr<PrefixTree<Unit>>)prefixTree
-                  processTree:(std::shared_ptr<process_tree::ProcessTree>)processTree {
+                  processTree:(std::shared_ptr<ProcessTree>)processTree {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
                     processor:santa::santad::Processor::kRecorder

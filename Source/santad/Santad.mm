@@ -83,7 +83,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                 SNTExecutionController *exec_controller,
                 std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree,
                 std::shared_ptr<TTYWriter> tty_writer,
-                std::shared_ptr<process_tree::ProcessTree> process_tree) {
+                std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTDaemonControlController *dc =
@@ -132,8 +132,7 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                                  metrics:metrics
                                           execController:exec_controller
                                       compilerController:compiler_controller
-                                         authResultCache:auth_result_cache
-                                             processTree:process_tree];
+                                         authResultCache:auth_result_cache];
 
   SNTEndpointSecurityTamperResistance *tamper_client =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:esapi metrics:metrics logger:logger];

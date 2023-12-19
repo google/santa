@@ -21,7 +21,7 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTreeAwareClient.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #import "Source/santad/Metrics.h"
-#include "Source/santad/ProcessTree/tree.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 #import "Source/santad/SNTCompilerController.h"
 
 /// ES Client focused on subscribing to NOTIFY event variants with the intention of enriching
@@ -41,6 +41,6 @@
      authResultCache:
        (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
           prefixTree:(std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>)prefixTree
-         processTree:(std::shared_ptr<process_tree::ProcessTree>)processTree;
+         processTree:(std::shared_ptr<santa::santad::process_tree::ProcessTree>)processTree;
 
 @end

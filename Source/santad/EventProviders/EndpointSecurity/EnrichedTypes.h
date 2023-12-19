@@ -28,6 +28,8 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
 
+namespace ptpb = santa::pb::v1::process_tree;
+
 namespace santa::santad::event_providers::endpoint_security {
 
 class EnrichedFile {
@@ -80,7 +82,7 @@ class EnrichedProcess {
                   std::optional<std::shared_ptr<std::string>> &&real_user,
                   std::optional<std::shared_ptr<std::string>> &&real_group,
                   EnrichedFile &&executable,
-                  std::optional<process_tree::pb::Annotations> &&annotations)
+                  std::optional<ptpb::Annotations> &&annotations)
       : effective_user_(std::move(effective_user)),
         effective_group_(std::move(effective_group)),
         real_user_(std::move(real_user)),
@@ -115,7 +117,7 @@ class EnrichedProcess {
     return real_group_;
   }
   const EnrichedFile &executable() const { return executable_; }
-  const std::optional<process_tree::pb::Annotations> &annotations() const {
+  const std::optional<ptpb::Annotations> &annotations() const {
     return annotations_;
   }
 
@@ -125,7 +127,7 @@ class EnrichedProcess {
   std::optional<std::shared_ptr<std::string>> real_user_;
   std::optional<std::shared_ptr<std::string>> real_group_;
   EnrichedFile executable_;
-  std::optional<process_tree::pb::Annotations> annotations_;
+  std::optional<ptpb::Annotations> annotations_;
 };
 
 class EnrichedEventType {
