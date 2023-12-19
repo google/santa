@@ -24,6 +24,8 @@
 #include "Source/santad/ProcessTree/process_tree_test_helpers.h"
 #include "absl/synchronization/mutex.h"
 
+namespace ptpb = ::santa::pb::v1::process_tree;
+
 namespace santa::santad::process_tree {
 
 static constexpr std::string_view kAnnotatedExecutable = "/usr/bin/login";
@@ -34,7 +36,7 @@ class TestAnnotator : public Annotator {
   void AnnotateFork(ProcessTree &tree, const Process &parent, const Process &child) override;
   void AnnotateExec(ProcessTree &tree, const Process &orig_process,
                     const Process &new_process) override;
-  std::optional<pb::Annotations> Proto() const override;
+  std::optional<::ptpb::Annotations> Proto() const override;
 };
 
 void TestAnnotator::AnnotateFork(ProcessTree &tree, const Process &parent, const Process &child) {
@@ -56,7 +58,7 @@ void TestAnnotator::AnnotateExec(ProcessTree &tree, const Process &orig_process,
   }
 }
 
-std::optional<pb::Annotations> TestAnnotator::Proto() const {
+std::optional<::ptpb::Annotations> TestAnnotator::Proto() const {
   return std::nullopt;
 }
 }  // namespace santa::santad::process_tree

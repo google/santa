@@ -31,7 +31,7 @@ class Annotator {
                             const Process &child) = 0;
   virtual void AnnotateExec(ProcessTree &tree, const Process &orig_process,
                             const Process &new_process) = 0;
-  virtual std::optional<pb::Annotations> Proto() const = 0;
+  virtual std::optional<::santa::pb::v1::process_tree::Annotations> Proto() const = 0;
 };
 
 }  // namespace santa::santad::process_tree

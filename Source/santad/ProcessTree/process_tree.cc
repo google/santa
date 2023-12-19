@@ -183,12 +183,12 @@ void ProcessTree::AnnotateProcess(const Process &p,
   map_[p.pid_]->annotations_.emplace(std::type_index(typeid(x)), std::move(a));
 }
 
-std::optional<pb::Annotations> ProcessTree::GetAnnotations(const Pid p) {
+std::optional<::santa::pb::v1::process_tree::Annotations> ProcessTree::ExportAnnotations(const Pid p) {
   auto proc = Get(p);
   if (!proc || (*proc)->annotations_.size() == 0) {
     return std::nullopt;
   }
-  pb::Annotations a;
+  ::santa::pb::v1::process_tree::Annotations a;
   for (const auto &[_, annotation] : (*proc)->annotations_) {
     if (auto x = annotation->Proto(); x) a.MergeFrom(*x);
   }
