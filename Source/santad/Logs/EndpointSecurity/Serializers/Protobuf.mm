@@ -205,6 +205,11 @@ static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info
                   enriched_proc.real_group());
 
   EncodeFileInfoLight(pb_proc_info->mutable_executable(), es_proc->executable);
+
+  if (std::optional<process_tree::pb::Annotations> annotations = enriched_proc.annotations();
+      annotations) {
+    *(pb_proc_info->mutable_annotations()) = *annotations;
+  }
 }
 
 static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t message_version,
@@ -255,6 +260,11 @@ static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t
 
   if (message_version >= 3) {
     EncodeTimestamp(pb_proc_info->mutable_start_time(), es_proc->start_time);
+  }
+
+  if (std::optional<process_tree::pb::Annotations> annotations = enriched_proc.annotations();
+      annotations) {
+    *(pb_proc_info->mutable_annotations()) = *annotations;
   }
 }
 
