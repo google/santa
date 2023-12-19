@@ -35,6 +35,10 @@ class ProcessTreeTestPeer;
 class ProcessTree {
  public:
   explicit ProcessTree() : seen_timestamps_({}) {}
+  ProcessTree(const ProcessTree &) = delete;
+  ProcessTree& operator=(const ProcessTree &) = delete;
+  ProcessTree(ProcessTree &&) = delete;
+  ProcessTree& operator=(ProcessTree &&) = delete;
 
   // Register an Annotator class to be automatically processed on process
   // lifecycle events.
@@ -50,6 +54,9 @@ class ProcessTree {
 
   // Inform the tree of an exec event, in which the program and potentially cred
   // of a Process change.
+  // p is the process performing the exec (running the "old" program),
+  // and new_pid, prog, and cred are the new pid, program, and credentials
+  // after the exec.
   // N.B. new_pid is required as the "pid version" will have changed.
   // It is a programming error to pass a new_pid such that
   // p.pid_.pid != new_pid.pid.
@@ -100,8 +107,10 @@ class ProcessTree {
   // Traverse the tree from the given Process to its parent.
   std::shared_ptr<const Process> GetParent(const Process &p) const;
 
+#if SANTA_PROCESS_TREE_DEBUG
   // Dump the tree in a human readable form to the given ostream.
   void DebugDump(std::ostream &stream) const;
+#endif
 
  private:
   friend class ProcessTreeTestPeer;

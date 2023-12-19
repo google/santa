@@ -113,10 +113,14 @@ bool ProcessTree::Step(uint64_t timestamp) {
     return false;
   }
 
-  for (const auto seen_ts : seen_timestamps_) {
-    if (seen_ts == timestamp) {
-      // Event seen, signal it should not be reprocessed.
-      return false;
+  // seen_timestamps_ is sorted, so only look for the value if it's possibly within the array.
+  if (timestamp < seen_timestamps_.back()) {
+    // TODO(nickmg): If array is made bigger, replace with a binary search.
+    for (const auto seen_ts : seen_timestamps_) {
+      if (seen_ts == timestamp) {
+        // Event seen, signal it should not be reprocessed.
+        return false;
+      }
     }
   }
 
@@ -246,6 +250,7 @@ std::shared_ptr<const Process> ProcessTree::GetParent(const Process &p) const {
   return p.parent_;
 }
 
+#if SANTA_PROCESS_TREE_DEBUG
 void ProcessTree::DebugDump(std::ostream &stream) const {
   absl::ReaderMutexLock lock(&mtx_);
   stream << map_.size() << " processes" << std::endl;
@@ -264,6 +269,7 @@ void ProcessTree::DebugDumpLocked(std::ostream &stream, int depth,
     }
   }
 }
+#endif
 
 /*
 ----
