@@ -23,6 +23,7 @@
 #include "Source/santad/ProcessTree/annotations/annotator.h"
 #include "Source/santad/ProcessTree/process.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 
@@ -266,6 +267,21 @@ void ProcessTree::DebugDumpLocked(std::ostream &stream, int depth,
   }
 }
 #endif
+
+absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(std::vector<std::unique_ptr<Annotator>> &&annotations) {
+  absl::flat_hash_set<std::type_index> seen;
+  for (const auto &annotator : annotations) {
+    if (seen.count(std::type_index(typeid(annotator)))) {
+        return absl::InvalidArgumentError("Multiple annotators of the same class");
+    }
+    seen.emplace(std::type_index(typeid(annotator)));
+  }
+  auto tree = std::make_shared<ProcessTree>(std::move(annotations));
+  if (auto status = tree->Backfill(); !status.ok()) {
+    return status;
+  }
+  return tree;
+}
 
 /*
 ----

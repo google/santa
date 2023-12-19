@@ -30,6 +30,7 @@ objc_library(
         ":process",
         "//Source/santad/ProcessTree/annotations:annotator",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ],
