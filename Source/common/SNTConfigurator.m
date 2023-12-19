@@ -139,6 +139,13 @@ static NSString *const kFCMAPIKey = @"FCMAPIKey";
 static NSString *const kEntitlementsPrefixFilterKey = @"EntitlementsPrefixFilter";
 static NSString *const kEntitlementsTeamIDFilterKey = @"EntitlementsTeamIDFilter";
 
+static NSString *const kEnabledProcessAnnotations = @"EnabledProcessAnnotations";
+
+// The keys managed by a sync server or mobileconfig.
+static NSString *const kClientModeKey = @"ClientMode";
+static NSString *const kFailClosedKey = @"FailClosed";
+static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
+static NSString *const kRemountUSBModeKey = @"RemountUSBMode";
 static NSString *const kOnStartUSBOptions = @"OnStartUSBOptions";
 
 static NSString *const kMetricFormat = @"MetricFormat";
@@ -275,6 +282,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
       kOverrideFileAccessActionKey : string,
       kEntitlementsPrefixFilterKey : array,
       kEntitlementsTeamIDFilterKey : array,
+      kEnabledProcessAnnotations: array,
     };
 
     _syncStateFilePath = syncStateFilePath;
@@ -1103,6 +1111,16 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 
 - (NSDictionary *)extraMetricLabels {
   return self.configState[kMetricExtraLabels];
+}
+
+- (NSArray<NSString *> *)enabledProcessAnnotations {
+  NSArray<NSString *> *annotations = self.configState[kEnabledProcessAnnotations];
+  for (id annotation in annotations) {
+    if (![annotation isKindOfClass:[NSString class]]) {
+      return nil;
+    }
+  }
+  return annotations;
 }
 
 #pragma mark Private

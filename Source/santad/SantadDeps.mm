@@ -155,7 +155,17 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<process_tree::ProcessTree> process_tree = std::make_shared<process_tree::ProcessTree>();
+  std::shared_ptr<process_tree::ProcessTree> process_tree;
+  std::vector<std::unique_ptr<process_tree::Annotator>> annotators;
+
+  for (NSString *annotation in [configurator enabledProcessAnnotations]) {
+    // TODO(nickmg): add annotation name switch
+    (void)annotation;
+  }
+
+  if (!annotators.empty()) {
+    process_tree = std::make_shared<process_tree::ProcessTree>(std::move(annotators));
+  }
 
   return std::make_unique<SantadDeps>(
     esapi, std::move(logger), std::move(metrics), std::move(watch_items),

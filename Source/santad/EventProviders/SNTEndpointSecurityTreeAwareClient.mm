@@ -64,6 +64,10 @@ using santa::santad::event_providers::endpoint_security::Message;
 }
 
 - (bool)handleContextMessage:(Message &)esMsg {
+  if (!_processTree) {
+    return false;
+  }
+
   // Inform the tree
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_FORK:
