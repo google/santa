@@ -58,7 +58,7 @@ REGISTER_COMMAND_NAME(@"rule")
           @"    --export {path}: export rules to a JSON file\n"
           @"\n"
           @"  One of:\n"
-          @"    --path {path}: path of binary/bundle to add/remove.\n"
+          @"    --path {path}: path of binary/bundle ao add/remove.\n"
           @"                   Will add the hash of the file currently at that path.\n"
           @"                   Does not work with --check. Use the fileinfo verb to check.\n"
           @"                   the rule state of a file.\n"

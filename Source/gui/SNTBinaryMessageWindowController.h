@@ -21,7 +21,7 @@
 ///
 ///  Controller for a single message window.
 ///
-@interface SNTBinaryMessageWindowController : SNTMessageWindowController
+@interface SNTBinaryMessageWindowController : SNTMessageWindowController <NSWindowDelegate>
 
 - (instancetype)initWithEvent:(SNTStoredEvent *)event
                     customMsg:(NSString *)message
