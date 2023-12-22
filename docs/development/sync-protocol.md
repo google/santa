@@ -319,7 +319,7 @@ If a clean sync was not requested by either the client or the sync service, then
 
 Santa applies rules idempotently and is designed to receive rules multiple times without issue.
 
-One caveat to be aware of is that when a clean sync is requested in the `preflight` stage, the client expects that at least one rule will be sent by the sync service in the `ruledownload` stage. If no rules are sent then the client is expected to keep its old set of rules prior to the client or server requesting a clean sync.
+One caveat to be aware of is that when a clean sync is requested in the `preflight` stage, the client expects that at least one rule will be sent by the sync service in the `ruledownload` stage. If no rules are sent then the client is expected to keep its old set of rules prior to the client or server requesting a clean sync and the client will continue to request a clean sync on all subsequent syncs until a successful sync completes that includes at least one rule.
 
 #### `ruledownload` Request
 
