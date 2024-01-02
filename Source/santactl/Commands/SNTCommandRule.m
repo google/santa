@@ -293,66 +293,97 @@ REGISTER_COMMAND_NAME(@"rule")
   NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil;
   NSString *signingID = (rule.type == SNTRuleTypeSigningID) ? rule.identifier : nil;
   __block NSMutableString *output;
-  [rop decisionForFilePath:nil
-                fileSHA256:fileSHA256
-         certificateSHA256:certificateSHA256
-                    teamID:teamID
-                 signingID:signingID
-                     reply:^(SNTEventState s) {
-                       output =
-                         (SNTEventStateAllow & s) ? @"Allowed".mutableCopy : @"Blocked".mutableCopy;
-                       switch (s) {
-                         case SNTEventStateAllowUnknown:
-                         case SNTEventStateBlockUnknown: [output appendString:@" (Unknown)"]; break;
-                         case SNTEventStateAllowBinary:
-                         case SNTEventStateBlockBinary: [output appendString:@" (Binary)"]; break;
-                         case SNTEventStateAllowCertificate:
-                         case SNTEventStateBlockCertificate:
-                           [output appendString:@" (Certificate)"];
-                           break;
-                         case SNTEventStateAllowScope:
-                         case SNTEventStateBlockScope: [output appendString:@" (Scope)"]; break;
-                         case SNTEventStateAllowCompiler:
-                           [output appendString:@" (Compiler)"];
-                           break;
-                         case SNTEventStateAllowTransitive:
-                           [output appendString:@" (Transitive)"];
-                           break;
-                         case SNTEventStateAllowTeamID:
-                         case SNTEventStateBlockTeamID: [output appendString:@" (TeamID)"]; break;
-                         case SNTEventStateAllowSigningID:
-                         case SNTEventStateBlockSigningID:
-                           [output appendString:@" (SigningID)"];
-                           break;
-                         default: output = @"None".mutableCopy; break;
-                       }
-                       if (isatty(STDOUT_FILENO)) {
-                         if ((SNTEventStateAllow & s)) {
-                           [output insertString:@"\033[32m" atIndex:0];
-                           [output appendString:@"\033[0m"];
-                         } else if ((SNTEventStateBlock & s)) {
-                           [output insertString:@"\033[31m" atIndex:0];
-                           [output appendString:@"\033[0m"];
-                         } else {
-                           [output insertString:@"\033[33m" atIndex:0];
-                           [output appendString:@"\033[0m"];
-                         }
-                       }
-                     }];
 
-  [rop databaseRuleForBinarySHA256:fileSHA256
-                 certificateSHA256:certificateSHA256
-                            teamID:teamID
-                         signingID:signingID
-                             reply:^(SNTRule *r) {
-                               if (r.state == SNTRuleStateAllowTransitive) {
-                                 NSDate *date =
-                                   [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
-                                 [output appendString:[NSString
-                                                        stringWithFormat:@"\nlast access date: %@",
-                                                                         [date description]]];
-                               }
-                             }];
+  [rop
+    databaseRuleForBinarySHA256:fileSHA256
+              certificateSHA256:certificateSHA256
+                         teamID:teamID
+                      signingID:signingID
+                          reply:^(SNTRule *r) {
+                            // Rule state is saved as eventState for output colorization down below
+                            SNTEventState eventState = SNTEventStateUnknown;
+
+                            switch (r.state) {
+                              case SNTRuleStateUnknown:
+                                output = [@"No rule exists with the given parameters" mutableCopy];
+                                break;
+                              case SNTRuleStateAllow: OS_FALLTHROUGH;
+                              case SNTRuleStateAllowCompiler: OS_FALLTHROUGH;
+                              case SNTRuleStateAllowTransitive:
+                                output = [@"Allowed" mutableCopy];
+                                eventState = SNTEventStateAllow;
+                                break;
+                              case SNTRuleStateBlock: OS_FALLTHROUGH;
+                              case SNTRuleStateSilentBlock:
+                                output = [@"Blocked" mutableCopy];
+                                eventState = SNTEventStateBlock;
+                                break;
+                              case SNTRuleStateRemove: OS_FALLTHROUGH;
+                              default:
+                                output = [NSMutableString
+                                  stringWithFormat:@"Unexpected rule state: %ld", r.state];
+                                break;
+                            }
+
+                            if (r.state == SNTRuleStateUnknown) {
+                              // No more output to append
+                              return;
+                            }
+
+                            [output appendString:@" ("];
+
+                            switch (r.type) {
+                              case SNTRuleTypeUnknown: [output appendString:@"Unknown"]; break;
+                              case SNTRuleTypeBinary: [output appendString:@"Binary"]; break;
+                              case SNTRuleTypeSigningID: [output appendString:@"SigningID"]; break;
+                              case SNTRuleTypeCertificate:
+                                [output appendString:@"Certificate"];
+                                break;
+                              case SNTRuleTypeTeamID: [output appendString:@"TeamID"]; break;
+                              default:
+                                output = [NSMutableString
+                                  stringWithFormat:@"Unexpected rule type: %ld", r.type];
+                                break;
+                            }
+
+                            // Add additional attributes
+                            switch (r.state) {
+                              case SNTRuleStateAllowCompiler:
+                                [output appendString:@", Compiler"];
+                                break;
+                              case SNTRuleStateAllowTransitive:
+                                [output appendString:@", Transitive"];
+                                break;
+                              case SNTRuleStateSilentBlock:
+                                [output appendString:@", Silent"];
+                                break;
+                              default: break;
+                            }
+
+                            [output appendString:@")"];
+
+                            // Colorize
+                            if (isatty(STDOUT_FILENO)) {
+                              if ((SNTEventStateAllow & eventState)) {
+                                [output insertString:@"\033[32m" atIndex:0];
+                                [output appendString:@"\033[0m"];
+                              } else if ((SNTEventStateBlock & eventState)) {
+                                [output insertString:@"\033[31m" atIndex:0];
+                                [output appendString:@"\033[0m"];
+                              } else {
+                                [output insertString:@"\033[33m" atIndex:0];
+                                [output appendString:@"\033[0m"];
+                              }
+                            }
+
+                            if (r.state == SNTRuleStateAllowTransitive) {
+                              NSDate *date =
+                                [NSDate dateWithTimeIntervalSinceReferenceDate:r.timestamp];
+                              [output
+                                appendString:[NSString stringWithFormat:@"\nlast access date: %@",
+                                                                        [date description]]];
+                            }
+                          }];
 
   printf("%s\n", output.UTF8String);
   exit(0);
