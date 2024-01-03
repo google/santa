@@ -151,6 +151,7 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTCommandRuleTest",
     srcs = ["Commands/SNTCommandRuleTest.mm"],
+    visibility = ["//:santa_package_group"],
     deps = [
         ":santactl_lib",
         "//Source/common:SNTCommonEnums",
