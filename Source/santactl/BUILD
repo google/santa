@@ -41,6 +41,7 @@ objc_library(
         "Commands/SNTCommandFileInfo.m",
         "Commands/SNTCommandMetrics.h",
         "Commands/SNTCommandMetrics.m",
+        "Commands/SNTCommandRule.h",
         "Commands/SNTCommandRule.m",
         "Commands/SNTCommandStatus.m",
         "Commands/SNTCommandSync.m",
@@ -147,11 +148,27 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTCommandRuleTest",
+    srcs = [
+        "Commands/SNTCommandRule.h",
+        "Commands/SNTCommandRuleTest.mm",
+        "SNTCommand.h",
+        "SNTCommandController.h",
+    ],
+    deps = [
+        ":santactl_lib",
+        "//Source/common:SNTCommonEnums",
+        "//Source/common:SNTRule",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":SNTCommandFileInfoTest",
         ":SNTCommandMetricsTest",
+        ":SNTCommandRuleTest",
     ],
     visibility = ["//:santa_package_group"],
 )
