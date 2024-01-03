@@ -151,10 +151,10 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTCommandRuleTest",
     srcs = [
-        "Commands/SNTCommand.h",
-        "Commands/SNTCommandController.h",
         "Commands/SNTCommandRule.h",
         "Commands/SNTCommandRuleTest.mm",
+        "SNTCommand.h",
+        "SNTCommandController.h",
     ],
     deps = [
         ":santactl_lib",
