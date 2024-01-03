@@ -150,7 +150,12 @@ santa_unit_test(
 
 santa_unit_test(
     name = "SNTCommandRuleTest",
-    srcs = ["Commands/SNTCommandRuleTest.mm"],
+    srcs = [
+        "Commands/SNTCommand.h",
+        "Commands/SNTCommandController.h",
+        "Commands/SNTCommandRule.h",
+        "Commands/SNTCommandRuleTest.mm",
+    ],
     deps = [
         ":santactl_lib",
         "//Source/common:SNTCommonEnums",
