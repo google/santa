@@ -103,6 +103,8 @@ static NSString *const kModeNotificationLockdown = @"ModeNotificationLockdown";
 
 static NSString *const kEnablePageZeroProtectionKey = @"EnablePageZeroProtection";
 static NSString *const kEnableBadSignatureProtectionKey = @"EnableBadSignatureProtection";
+static NSString *const kFailClosedKey = @"FailClosed";
+static NSString *const kDisableUnknownEventUploadKey = @"DisableUnknownEventUpload";
 
 static NSString *const kFileChangesRegexKey = @"FileChangesRegex";
 static NSString *const kFileChangesPrefixFiltersKey = @"FileChangesPrefixFilters";
@@ -134,12 +136,18 @@ static NSString *const kFCMAPIKey = @"FCMAPIKey";
 static NSString *const kEntitlementsPrefixFilterKey = @"EntitlementsPrefixFilter";
 static NSString *const kEntitlementsTeamIDFilterKey = @"EntitlementsTeamIDFilter";
 
+static NSString *const kOnStartUSBOptions = @"OnStartUSBOptions";
+
+static NSString *const kMetricFormat = @"MetricFormat";
+static NSString *const kMetricURL = @"MetricURL";
+static NSString *const kMetricExportInterval = @"MetricExportInterval";
+static NSString *const kMetricExportTimeout = @"MetricExportTimeout";
+static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
-static NSString *const kFailClosedKey = @"FailClosed";
 static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
 static NSString *const kRemountUSBModeKey = @"RemountUSBMode";
-static NSString *const kOnStartUSBOptions = @"OnStartUSBOptions";
 static NSString *const kEnableTransitiveRulesKey = @"EnableTransitiveRules";
 static NSString *const kEnableTransitiveRulesKeyDeprecated = @"EnableTransitiveWhitelisting";
 static NSString *const kAllowedPathRegexKey = @"AllowedPathRegex";
@@ -147,14 +155,7 @@ static NSString *const kAllowedPathRegexKeyDeprecated = @"WhitelistRegex";
 static NSString *const kBlockedPathRegexKey = @"BlockedPathRegex";
 static NSString *const kBlockedPathRegexKeyDeprecated = @"BlacklistRegex";
 static NSString *const kEnableAllEventUploadKey = @"EnableAllEventUpload";
-static NSString *const kDisableUnknownEventUploadKey = @"DisableUnknownEventUpload";
 static NSString *const kOverrideFileAccessActionKey = @"OverrideFileAccessAction";
-
-static NSString *const kMetricFormat = @"MetricFormat";
-static NSString *const kMetricURL = @"MetricURL";
-static NSString *const kMetricExportInterval = @"MetricExportInterval";
-static NSString *const kMetricExportTimeout = @"MetricExportTimeout";
-static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
 
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
