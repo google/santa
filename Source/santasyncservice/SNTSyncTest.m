@@ -155,7 +155,7 @@
                                                     OCMOCK_VALUE(0),  // teamID
                                                     OCMOCK_VALUE(0),  // signingID
                                                     nil])]);
-  OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@NO, nil])]);
+  OCMStub([self.daemonConnRop syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeNormal), nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
 }
@@ -391,7 +391,7 @@
                                                     nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
-  OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@YES, nil])]);
+  OCMStub([self.daemonConnRop syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeClean), nil])]);
 
   NSData *respData = [self dataFromDict:@{kCleanSyncDeprecated : @YES}];
   [self stubRequestBody:respData
@@ -405,7 +405,7 @@
 
   [sut sync];
 
-  XCTAssertEqual(self.syncState.cleanSync, YES);
+  XCTAssertEqual(self.syncState.syncType, SNTSyncTypeClean);
 }
 
 - (void)testPreflightLockdown {
@@ -614,9 +614,15 @@
   XCTAssertTrue([sut sync]);
   OCMVerify([self.daemonConnRop setClientMode:SNTClientModeMonitor reply:OCMOCK_ANY]);
 
-  self.syncState.cleanSync = YES;
+  // For Clean syncs, the sync type required should be reset to normal
+  self.syncState.syncType = SNTSyncTypeClean;
   XCTAssertTrue([sut sync]);
-  OCMVerify([self.daemonConnRop setSyncCleanRequired:NO reply:OCMOCK_ANY]);
+  OCMVerify([self.daemonConnRop setSyncTypeRequired:SNTSyncTypeNormal reply:OCMOCK_ANY]);
+
+  // For Clean All syncs, the sync type required should be reset to normal
+  self.syncState.syncType = SNTSyncTypeCleanAll;
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setSyncTypeRequired:SNTSyncTypeNormal reply:OCMOCK_ANY]);
 
   self.syncState.allowlistRegex = @"^horse$";
   self.syncState.blocklistRegex = @"^donkey$";
