@@ -13,10 +13,10 @@
 ///    limitations under the License.
 
 #import "Source/santasyncservice/SNTSyncStage.h"
-#include "Source/common/SNTCommonEnums.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTSyncConstants.h"

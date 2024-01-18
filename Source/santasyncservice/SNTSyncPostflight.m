@@ -42,11 +42,11 @@
                  }];
   }
 
-  // Remove clean sync flag if we did a clean sync
-  if (self.syncState.cleanSync) {
-    [rop setSyncCleanRequired:NO
-                        reply:^{
-                        }];
+  // Remove clean sync flag if we did a clean or clean all sync
+  if (self.syncState.syncType != SNTSyncTypeNormal) {
+    [rop setSyncTypeRequired:SNTSyncTypeNormal
+                       reply:^{
+                       }];
   }
 
   // Update allowlist/blocklist regexes

@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santasyncservice/SNTSyncPreflight.h"
+#include "Source/common/SNTCommonEnums.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -75,15 +76,18 @@ static id EnsureType(id val, Class c) {
     }
   }];
 
-  __block BOOL syncClean = NO;
-  [rop syncCleanRequired:^(BOOL clean) {
-    syncClean = clean;
+  __block SNTSyncType requestSyncType = SNTSyncTypeNormal;
+  [rop syncTypeRequired:^(SNTSyncType syncTypeRequired) {
+    requestSyncType = syncTypeRequired;
   }];
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
-  if (syncClean) {
+  if (requestSyncType == SNTSyncTypeClean) {
     SLOGD(@"Clean sync requested by user");
     requestDict[kRequestCleanSync] = @YES;
+  } else if (requestSyncType == SNTSyncTypeCleanAll) {
+    SLOGD(@"Clean All sync requested by user");
+    requestDict[kRequestCleanAllSync] = @YES;
   }
 
   NSURLRequest *req = [self requestWithDictionary:requestDict];
@@ -137,9 +141,25 @@ static id EnsureType(id val, Class c) {
   self.syncState.overrideFileAccessAction =
     EnsureType(resp[kOverrideFileAccessAction], [NSString class]);
 
-  if ([EnsureType(resp[kCleanSync], [NSNumber class]) boolValue]) {
+  // Default sync type is SNTSyncTypeNormal
+  self.syncState.syncType = SNTSyncTypeNormal;
+
+  if ([EnsureType(resp[kCleanSyncDeprecated], [NSNumber class]) boolValue]) {
+    self.syncState.syncType = SNTSyncTypeClean;
+  }
+
+  // If kSyncType response key exists, it overrides the kCleanSyncDeprecated value
+  NSString *responseSyncType = [EnsureType(resp[kSyncType], [NSString class]) lowercaseString];
+  if ([responseSyncType isEqualToString:@"clean"]) {
+    self.syncState.syncType = SNTSyncTypeClean;
+  } else if ([responseSyncType isEqualToString:@"clean_all"]) {
+    self.syncState.syncType = SNTSyncTypeCleanAll;
+  }
+
+  if (self.syncState.syncType != SNTSyncTypeClean) {
     SLOGD(@"Clean sync requested by server");
-    self.syncState.cleanSync = YES;
+  } else if (self.syncState.syncType != SNTSyncTypeCleanAll) {
+    SLOGD(@"Clean All sync requested by server");
   }
 
   return YES;

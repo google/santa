@@ -18,6 +18,7 @@
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "SNTCommandController.h"
+#import "SNTCommonEnums.h"
 #import "SNTRule.h"
 #import "SNTXPCControlInterface.h"
 
@@ -58,7 +59,7 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
   [daemonConn resume];
   [[daemonConn remoteObjectProxy]
     databaseRuleAddRules:@[ newRule ]
-              cleanSlate:NO
+             ruleCleanup:SNTRuleCleanupNone
                    reply:^(NSError *error) {
                      if (!error) {
                        if (newRule.state == SNTRuleStateRemove) {

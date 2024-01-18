@@ -393,7 +393,7 @@
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
   OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@YES, nil])]);
 
-  NSData *respData = [self dataFromDict:@{kCleanSync : @YES}];
+  NSData *respData = [self dataFromDict:@{kCleanSyncDeprecated : @YES}];
   [self stubRequestBody:respData
                response:nil
                   error:nil
@@ -568,7 +568,7 @@
   // Stub out the call to invoke the block, verification of the input is later
   OCMStub([self.daemonConnRop
     databaseRuleAddRules:OCMOCK_ANY
-              cleanSlate:NO
+             ruleCleanup:SNTRuleCleanupNone
                    reply:([OCMArg invokeBlockWithArgs:[NSNull null], nil])]);
   [sut sync];
 
@@ -594,7 +594,9 @@
                               customMsg:@"Banned team ID"],
   ];
 
-  OCMVerify([self.daemonConnRop databaseRuleAddRules:rules cleanSlate:NO reply:OCMOCK_ANY]);
+  OCMVerify([self.daemonConnRop databaseRuleAddRules:rules
+                                         ruleCleanup:SNTRuleCleanupNone
+                                               reply:OCMOCK_ANY]);
 }
 
 #pragma mark - SNTSyncPostflight Tests

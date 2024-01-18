@@ -47,8 +47,10 @@ REGISTER_COMMAND_NAME(@"sync")
   return (@"If Santa is configured to synchronize with a server, "
           @"this is the command used for syncing.\n\n"
           @"Options:\n"
-          @"  --clean: Perform a clean sync, erasing all existing rules and requesting a\n"
-          @"           clean sync from the server.");
+          @"  --clean: Perform a clean sync, erasing all existing non-transitive rules and\n"
+          @"           requesting a clean sync from the server.\n"
+          @"  --clean-all: Perform a clean sync, erasing all existing rules and requesting a\n"
+          @"               clean sync from the server.");
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
@@ -75,10 +77,17 @@ REGISTER_COMMAND_NAME(@"sync")
   lr.unprivilegedInterface =
     [NSXPCInterface interfaceWithProtocol:@protocol(SNTSyncServiceLogReceiverXPC)];
   [lr resume];
-  BOOL isClean = [NSProcessInfo.processInfo.arguments containsObject:@"--clean"];
+
+  SNTSyncType syncType = SNTSyncTypeNormal;
+  if ([NSProcessInfo.processInfo.arguments containsObject:@"--clean-all"]) {
+    syncType = SNTSyncTypeCleanAll;
+  } else if ([NSProcessInfo.processInfo.arguments containsObject:@"--clean"]) {
+    syncType = SNTSyncTypeClean;
+  }
+
   [[ss remoteObjectProxy]
     syncWithLogListener:logListener.endpoint
-                isClean:isClean
+               syncType:syncType
                   reply:^(SNTSyncStatusType status) {
                     if (status == SNTSyncStatusTypeTooManySyncsInProgress) {
                       [self didReceiveLog:@"Too many syncs in progress, try again later."];

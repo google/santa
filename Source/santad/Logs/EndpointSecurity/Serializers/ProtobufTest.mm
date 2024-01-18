@@ -28,7 +28,7 @@
 #include <cstring>
 
 #import "Source/common/SNTCachedDecision.h"
-#include "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/common/TestUtils.h"

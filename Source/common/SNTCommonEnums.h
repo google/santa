@@ -166,6 +166,18 @@ typedef NS_ENUM(NSInteger, SNTDeviceManagerStartupPreferences) {
   SNTDeviceManagerStartupPreferencesForceRemount,
 };
 
+typedef NS_ENUM(NSInteger, SNTSyncType) {
+  SNTSyncTypeNormal,
+  SNTSyncTypeClean,
+  SNTSyncTypeCleanAll,
+};
+
+typedef NS_ENUM(NSInteger, SNTRuleCleanup) {
+  SNTRuleCleanupNone,
+  SNTRuleCleanupAll,
+  SNTRuleCleanupNonTransitive,
+};
+
 #ifdef __cplusplus
 enum class FileAccessPolicyDecision {
   kNoPolicy,

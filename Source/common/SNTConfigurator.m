@@ -160,7 +160,8 @@ static NSString *const kOverrideFileAccessActionKey = @"OverrideFileAccessAction
 // The keys managed by a sync server.
 static NSString *const kFullSyncLastSuccess = @"FullSyncLastSuccess";
 static NSString *const kRuleSyncLastSuccess = @"RuleSyncLastSuccess";
-static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
+static NSString *const kSyncCleanRequiredDeprecated = @"SyncCleanRequired";
+static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 
 - (instancetype)init {
   self = [super init];
@@ -184,7 +185,8 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       kRemountUSBModeKey : array,
       kFullSyncLastSuccess : date,
       kRuleSyncLastSuccess : date,
-      kSyncCleanRequired : number,
+      kSyncCleanRequiredDeprecated : number,
+      kSyncTypeRequired : number,
       kEnableAllEventUploadKey : number,
       kOverrideFileAccessActionKey : string,
     };
@@ -266,7 +268,10 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
     [_defaults addSuiteNamed:@"com.google.santa"];
     _configState = [self readForcedConfig];
     [self cacheStaticRules];
+
     _syncState = [self readSyncStateFromDisk] ?: [NSMutableDictionary dictionary];
+    [self migrateDeprecatedSyncStateKeys];
+
     _debugFlag = [[NSProcessInfo processInfo].arguments containsObject:@"--debug"];
     [self startWatchingDefaults];
   }
@@ -432,7 +437,7 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   return [self syncStateSet];
 }
 
-+ (NSSet *)keyPathsForValuesAffectingSyncCleanRequired {
++ (NSSet *)keyPathsForValuesAffectingSyncTypeRequired {
   return [self syncStateSet];
 }
 
@@ -823,12 +828,12 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
   [self updateSyncStateForKey:kRuleSyncLastSuccess value:ruleSyncLastSuccess];
 }
 
-- (BOOL)syncCleanRequired {
-  return [self.syncState[kSyncCleanRequired] boolValue];
+- (SNTSyncType)syncTypeRequired {
+  return (SNTSyncType)[self.syncState[kSyncTypeRequired] integerValue];
 }
 
-- (void)setSyncCleanRequired:(BOOL)syncCleanRequired {
-  [self updateSyncStateForKey:kSyncCleanRequired value:@(syncCleanRequired)];
+- (void)setSyncTypeRequired:(SNTSyncType)syncTypeRequired {
+  [self updateSyncStateForKey:kSyncTypeRequired value:@(syncTypeRequired)];
 }
 
 - (NSString *)machineOwner {
@@ -1099,6 +1104,11 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
 ///
 ///  Read the saved syncState.
 ///
+///  IMPORTANT: Should only be called on the `init` path because this method will
+///  cause the dictionary to be written to disk outside of the dispatch queue used
+///  to serialize access. This is to ensure the operation can happen early at
+///  startup and not interfere with normal operation.
+///
 - (NSMutableDictionary *)readSyncStateFromDisk {
   // Only read the sync state if a sync server is configured.
   if (!self.syncBaseURL) return nil;
@@ -1115,7 +1125,35 @@ static NSString *const kSyncCleanRequired = @"SyncCleanRequired";
       continue;
     }
   }
+
   return syncState;
+}
+
+///
+///  Migrate any deprecated sync state keys/values to alternative keys/values.
+///
+- (void)migrateDeprecatedSyncStateKeys {
+  // Currently only one key to migrate
+  if (!self.syncState[kSyncCleanRequiredDeprecated]) {
+    return;
+  }
+
+  NSMutableDictionary *syncState = self.syncState.mutableCopy;
+
+  // If the kSyncTypeRequired key exists, its current value will take precedence.
+  // Otherwise, migrate the old value to be compatible with the new logic.
+  if (!self.syncState[kSyncTypeRequired]) {
+    syncState[kSyncTypeRequired] = [self.syncState[kSyncCleanRequiredDeprecated] boolValue]
+                                     ? @(SNTSyncTypeClean)
+                                     : @(SNTSyncTypeNormal);
+  }
+
+  // Delete the deprecated key
+  syncState[kSyncCleanRequiredDeprecated] = nil;
+
+  self.syncState = syncState;
+
+  [self saveSyncStateToDisk];
 }
 
 ///

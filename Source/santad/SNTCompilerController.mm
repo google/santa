@@ -158,7 +158,7 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 
       // Add the new rule to the rules database.
       NSError *err;
-      if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
+      if (![ruleTable addRules:@[ rule ] ruleCleanup:SNTRuleCleanupNone error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
         logger->LogAllowlist(esMsg, [fi.SHA256 UTF8String]);

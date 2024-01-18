@@ -28,7 +28,7 @@
 ///  Database ops
 ///
 - (void)databaseRuleAddRules:(NSArray *)rules
-                  cleanSlate:(BOOL)cleanSlate
+                 ruleCleanup:(SNTRuleCleanup)cleanupType
                        reply:(void (^)(NSError *error))reply;
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply;
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
@@ -45,7 +45,7 @@
 - (void)setClientMode:(SNTClientMode)mode reply:(void (^)(void))reply;
 - (void)setFullSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
 - (void)setRuleSyncLastSuccess:(NSDate *)date reply:(void (^)(void))reply;
-- (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)(void))reply;
+- (void)setSyncTypeRequired:(SNTSyncType)syncType reply:(void (^)(void))reply;
 - (void)setAllowedPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
 - (void)setBlockedPathRegex:(NSString *)pattern reply:(void (^)(void))reply;
 - (void)setBlockUSBMount:(BOOL)enabled reply:(void (^)(void))reply;
