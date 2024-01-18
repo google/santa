@@ -284,7 +284,7 @@
 
 ///
 /// Enabling this appends the Santa machine ID to the end of each log line. If nothing
-/// has been overriden, this is the host's UUID.
+/// has been overridden, this is the host's UUID.
 /// Defaults to NO.
 ///
 @property(readonly, nonatomic) BOOL enableMachineIDDecoration;
@@ -449,7 +449,7 @@
 @property(nonatomic) BOOL blockUSBMount;
 
 ///
-/// Comma-seperated `$ mount -o` arguments used for forced remounting of USB devices. Default
+/// Comma-separated `$ mount -o` arguments used for forced remounting of USB devices. Default
 /// to fully allow/deny without remounting if unset.
 ///
 @property(nonatomic) NSArray<NSString *> *remountUSBMode;
