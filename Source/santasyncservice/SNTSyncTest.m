@@ -155,7 +155,8 @@
                                                     OCMOCK_VALUE(0),  // teamID
                                                     OCMOCK_VALUE(0),  // signingID
                                                     nil])]);
-  OCMStub([self.daemonConnRop syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeNormal), nil])]);
+  OCMStub([self.daemonConnRop
+    syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeNormal), nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
 }
@@ -391,9 +392,10 @@
                                                     nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
-  OCMStub([self.daemonConnRop syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeClean), nil])]);
+  OCMStub([self.daemonConnRop
+    syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeClean), nil])]);
 
-  NSData *respData = [self dataFromDict:@{kCleanSyncDeprecated : @YES}];
+  NSData *respData = [self dataFromDict:@{kCleanSync : @YES}];
   [self stubRequestBody:respData
                response:nil
                   error:nil
@@ -406,6 +408,37 @@
   [sut sync];
 
   XCTAssertEqual(self.syncState.syncType, SNTSyncTypeClean);
+}
+
+- (void)testPreflightCleanAllSync {
+  SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
+
+  OCMStub([self.daemonConnRop
+    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(0),  // binary
+                                                    OCMOCK_VALUE(0),  // cert
+                                                    OCMOCK_VALUE(0),  // compiler
+                                                    OCMOCK_VALUE(0),  // transitive
+                                                    OCMOCK_VALUE(0),  // teamID
+                                                    OCMOCK_VALUE(0),  // signingID
+                                                    nil])]);
+  OCMStub([self.daemonConnRop
+    clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
+  OCMStub([self.daemonConnRop
+    syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeCleanAll), nil])]);
+
+  NSData *respData = [self dataFromDict:@{kCleanSync : @YES}];
+  [self stubRequestBody:respData
+               response:nil
+                  error:nil
+          validateBlock:^BOOL(NSURLRequest *req) {
+            NSDictionary *requestDict = [self dictFromRequest:req];
+            XCTAssertEqualObjects(requestDict[kRequestCleanSync], @YES);
+            return YES;
+          }];
+
+  [sut sync];
+
+  XCTAssertEqual(self.syncState.syncType, SNTSyncTypeCleanAll);
 }
 
 - (void)testPreflightLockdown {
