@@ -139,19 +139,49 @@ static id EnsureType(id val, Class c) {
     EnsureType(resp[kOverrideFileAccessAction], [NSString class]);
 
   // Default sync type is SNTSyncTypeNormal
+  //
+  // Logic overview:
+  // The requested sync type (clean or normal) is merely informative. The server
+  // can choose to respond with a normal, clean or clean_all.
+  //
+  // If the server responds that it will perform a clean sync, santa will
+  // treat it as either a clean or clean_all depending on which was requested.
+  //
+  // The server can also "override" the requested clean operation. If a normal
+  // sync was requested, but the server responded that it was doing a clean or
+  // clean_all sync, that will take precedence. Similarly, if only a clean sync
+  // was requested, the server can force a "clean_all" operation to take place.
   self.syncState.syncType = SNTSyncTypeNormal;
 
-  if ([EnsureType(resp[kCleanSync], [NSNumber class]) boolValue]) {
-    // If the server responded that it's doing a clean sync, ensure that the sync type
-    // is stored as either Clean or Clean All based on what was requested.
-    // The syncType must be set appropriately so that it can be propagated during
-    // the Rule Download stage so SNTRuleTable knows which rules to delete.
+  // If kSyncType response key exists, it overrides the kCleanSyncDeprecated value
+  // First check if the kSyncType reponse key exists. If so, it takes precedence
+  // over the kCleanSyncDeprecated key.
+  NSString *responseSyncType = [EnsureType(resp[kSyncType], [NSString class]) lowercaseString];
+  if (responseSyncType) {
+    if ([responseSyncType isEqualToString:@"clean"]) {
+      // If the client wants to Clean All, this takes precedence. The server
+      // cannot override the client wanting to remove all rules.
+      if (requestSyncType == SNTSyncTypeCleanAll) {
+        self.syncState.syncType = SNTSyncTypeCleanAll;
+      } else {
+        self.syncState.syncType = SNTSyncTypeClean;
+      }
+    } else if ([responseSyncType isEqualToString:@"clean_all"]) {
+      self.syncState.syncType = SNTSyncTypeCleanAll;
+    }
+  } else if ([EnsureType(resp[kCleanSyncDeprecated], [NSNumber class]) boolValue]) {
+    // If the deprecated key is set, the type of sync clean performed should be
+    // the type that was requested. This must be set appropriately so that it
+    // can be propagated during the Rule Download stage so SNTRuleTable knows
+    // which rules to delete.
     if (requestSyncType == SNTSyncTypeCleanAll) {
       self.syncState.syncType = SNTSyncTypeCleanAll;
     } else {
       self.syncState.syncType = SNTSyncTypeClean;
     }
+  }
 
+  if (self.syncState.syncType != SNTSyncTypeNormal) {
     SLOGD(@"Clean sync requested by server");
   }
 
