@@ -53,6 +53,9 @@ static NSArray<NSString *> *EnsureArrayOfStrings(id obj) {
 /// Holds the last processed hash of the static rules list.
 @property(atomic) NSDictionary *cachedStaticRules;
 
+@property(readonly, nonatomic) NSString *syncStateFilePath;
+@property(nonatomic, copy) BOOL (^syncStateAccessAuthorizerBlock)();
+
 @end
 
 @implementation SNTConfigurator
@@ -164,6 +167,15 @@ static NSString *const kSyncCleanRequiredDeprecated = @"SyncCleanRequired";
 static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 
 - (instancetype)init {
+  return [self initWithSyncStateFile:kSyncStateFilePath
+           syncStateAccessAuthorizer:^BOOL() {
+             // Only access the sync state if a sync server is configured and running as root
+             return self.syncBaseURL != nil && geteuid() == 0;
+           }];
+}
+
+- (instancetype)initWithSyncStateFile:(NSString *)syncStateFilePath
+            syncStateAccessAuthorizer:(BOOL (^)(void))syncStateAccessAuthorizer {
   self = [super init];
   if (self) {
     Class number = [NSNumber class];
@@ -264,6 +276,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
       kEntitlementsPrefixFilterKey : array,
       kEntitlementsTeamIDFilterKey : array,
     };
+
+    _syncStateFilePath = syncStateFilePath;
+    _syncStateAccessAuthorizerBlock = syncStateAccessAuthorizer;
+
     _defaults = [NSUserDefaults standardUserDefaults];
     [_defaults addSuiteNamed:@"com.google.santa"];
     _configState = [self readForcedConfig];
@@ -1110,12 +1126,12 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 ///  startup and not interfere with normal operation.
 ///
 - (NSMutableDictionary *)readSyncStateFromDisk {
-  // Only read the sync state if a sync server is configured.
-  if (!self.syncBaseURL) return nil;
-  // Only santad should read this file.
-  if (geteuid() != 0) return nil;
+  if (!self.syncStateAccessAuthorizerBlock()) {
+    return nil;
+  }
+
   NSMutableDictionary *syncState =
-    [NSMutableDictionary dictionaryWithContentsOfFile:kSyncStateFilePath];
+    [NSMutableDictionary dictionaryWithContentsOfFile:self.syncStateFilePath];
   for (NSString *key in syncState.allKeys) {
     if (self.syncServerKeyTypes[key] == [NSRegularExpression class]) {
       NSString *pattern = [syncState[key] isKindOfClass:[NSString class]] ? syncState[key] : nil;
@@ -1160,17 +1176,17 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 ///  Saves the current effective syncState to disk.
 ///
 - (void)saveSyncStateToDisk {
-  // Only save the sync state if a sync server is configured.
-  if (!self.syncBaseURL) return;
-  // Only santad should write to this file.
-  if (geteuid() != 0) return;
+  if (!self.syncStateAccessAuthorizerBlock()) {
+    return;
+  }
+
   // Either remove
   NSMutableDictionary *syncState = self.syncState.mutableCopy;
   syncState[kAllowedPathRegexKey] = [syncState[kAllowedPathRegexKey] pattern];
   syncState[kBlockedPathRegexKey] = [syncState[kBlockedPathRegexKey] pattern];
-  [syncState writeToFile:kSyncStateFilePath atomically:YES];
+  [syncState writeToFile:self.syncStateFilePath atomically:YES];
   [[NSFileManager defaultManager] setAttributes:@{NSFilePosixPermissions : @0600}
-                                   ofItemAtPath:kSyncStateFilePath
+                                   ofItemAtPath:self.syncStateFilePath
                                           error:NULL];
 }
 
