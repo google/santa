@@ -14,7 +14,6 @@
 
 #import <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
-#include <os/base.h>
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
@@ -29,15 +28,6 @@ NSString *StartupOptionToString(SNTDeviceManagerStartupPreferences pref) {
     case SNTDeviceManagerStartupPreferencesRemount: return @"Remount";
     case SNTDeviceManagerStartupPreferencesForceRemount: return @"ForceRemount";
     default: return @"None";
-  }
-}
-
-NSString *SyncTypeToString(SNTSyncType syncType) {
-  switch (syncType) {
-    case SNTSyncTypeClean: return @"clean";
-    case SNTSyncTypeCleanAll: return @"clean all";
-    case SNTSyncTypeNormal: OS_FALLTHROUGH;
-    default: return @"normal";
   }
 }
 
@@ -138,9 +128,9 @@ REGISTER_COMMAND_NAME(@"status")
     ruleSyncLastSuccess = date;
   }];
 
-  __block SNTSyncType syncTypeRequired = NO;
+  __block BOOL syncCleanReqd = NO;
   [rop syncTypeRequired:^(SNTSyncType syncType) {
-    syncTypeRequired = syncType;
+    syncCleanReqd = (syncType == SNTSyncTypeClean || syncType == SNTSyncTypeCleanAll);
   }];
 
   __block BOOL pushNotifications = NO;
@@ -235,7 +225,7 @@ REGISTER_COMMAND_NAME(@"status")
       },
       @"sync" : @{
         @"server" : syncURLStr ?: @"null",
-        @"type_required" : SyncTypeToString(syncTypeRequired),
+        @"clean_required" : @(syncCleanReqd),
         @"last_successful_full" : fullSyncLastSuccessStr ?: @"null",
         @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
@@ -319,8 +309,7 @@ REGISTER_COMMAND_NAME(@"status")
     if (syncURLStr) {
       printf(">>> Sync Info\n");
       printf("  %-25s | %s\n", "Sync Server", [syncURLStr UTF8String]);
-      printf("  %-25s | %s\n", "Sync Type Required",
-             [SyncTypeToString(syncTypeRequired) UTF8String]);
+      printf("  %-25s | %s\n", "Clean Sync Required", (syncCleanReqd ? "Yes" : "No"));
       printf("  %-25s | %s\n", "Last Successful Full Sync", [fullSyncLastSuccessStr UTF8String]);
       printf("  %-25s | %s\n", "Last Successful Rule Sync", [ruleSyncLastSuccessStr UTF8String]);
       printf("  %-25s | %s\n", "Push Notifications",
