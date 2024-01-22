@@ -451,7 +451,7 @@ REGISTER_COMMAND_NAME(@"rule")
     NSMutableArray *rulesAsDicts = [[NSMutableArray alloc] init];
 
     for (SNTRule *rule in rules) {
-      // Omit transitive and remove rules as they're not relevan.
+      // Omit transitive and remove rules as they're not relevant.
       if (rule.state == SNTRuleStateAllowTransitive || rule.state == SNTRuleStateRemove) {
         continue;
       }
