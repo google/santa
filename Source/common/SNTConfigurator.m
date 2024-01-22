@@ -286,7 +286,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
     [self cacheStaticRules];
 
     _syncState = [self readSyncStateFromDisk] ?: [NSMutableDictionary dictionary];
-    [self migrateDeprecatedSyncStateKeys];
+    if ([self migrateDeprecatedSyncStateKeys]) {
+      // Save the updated sync state if any keys were migrated.
+      [self saveSyncStateToDisk];
+    }
 
     _debugFlag = [[NSProcessInfo processInfo].arguments containsObject:@"--debug"];
     [self startWatchingDefaults];
@@ -1120,11 +1123,6 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 ///
 ///  Read the saved syncState.
 ///
-///  IMPORTANT: Should only be called on the `init` path because this method will
-///  cause the dictionary to be written to disk outside of the dispatch queue used
-///  to serialize access. This is to ensure the operation can happen early at
-///  startup and not interfere with normal operation.
-///
 - (NSMutableDictionary *)readSyncStateFromDisk {
   if (!self.syncStateAccessAuthorizerBlock()) {
     return nil;
@@ -1148,10 +1146,12 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 ///
 ///  Migrate any deprecated sync state keys/values to alternative keys/values.
 ///
-- (void)migrateDeprecatedSyncStateKeys {
+///  Returns YES if any keys were migrated. Otherwise NO.
+///
+- (BOOL)migrateDeprecatedSyncStateKeys {
   // Currently only one key to migrate
   if (!self.syncState[kSyncCleanRequiredDeprecated]) {
-    return;
+    return NO;
   }
 
   NSMutableDictionary *syncState = self.syncState.mutableCopy;
@@ -1169,7 +1169,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 
   self.syncState = syncState;
 
-  [self saveSyncStateToDisk];
+  return YES;
 }
 
 ///
