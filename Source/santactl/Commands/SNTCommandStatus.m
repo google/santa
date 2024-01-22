@@ -200,6 +200,7 @@ REGISTER_COMMAND_NAME(@"status")
       @"daemon" : @{
         @"driver_connected" : @(YES),
         @"mode" : clientMode ?: @"null",
+        @"transitive_rules" : @(enableTransitiveRules),
         @"log_type" : eventLogType,
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
@@ -229,7 +230,6 @@ REGISTER_COMMAND_NAME(@"status")
         @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
         @"bundle_scanning" : @(enableBundles),
-        @"transitive_rules" : @(enableTransitiveRules),
       },
     } mutableCopy];
 
