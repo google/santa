@@ -200,6 +200,7 @@ REGISTER_COMMAND_NAME(@"status")
       @"daemon" : @{
         @"driver_connected" : @(YES),
         @"mode" : clientMode ?: @"null",
+        @"transitive_rules" : @(enableTransitiveRules),
         @"log_type" : eventLogType,
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
@@ -229,7 +230,6 @@ REGISTER_COMMAND_NAME(@"status")
         @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
         @"bundle_scanning" : @(enableBundles),
-        @"transitive_rules" : @(enableTransitiveRules),
       },
     } mutableCopy];
 
@@ -262,6 +262,11 @@ REGISTER_COMMAND_NAME(@"status")
   } else {
     printf(">>> Daemon Info\n");
     printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
+
+    if (enableTransitiveRules) {
+      printf("  %-25s | %s\n", "Transitive Rules", (enableTransitiveRules ? "Yes" : "No"));
+    }
+
     printf("  %-25s | %s\n", "Log Type", [eventLogType UTF8String]);
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
     printf("  %-25s | %s\n", "USB Blocking", (blockUSBMount ? "Yes" : "No"));
@@ -310,7 +315,6 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
       printf("  %-25s | %s\n", "Bundle Scanning", (enableBundles ? "Yes" : "No"));
-      printf("  %-25s | %s\n", "Transitive Rules", (enableTransitiveRules ? "Yes" : "No"));
     }
 
     if (exportMetrics) {
