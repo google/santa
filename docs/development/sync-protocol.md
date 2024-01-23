@@ -139,7 +139,7 @@ The JSON object has the following keys:
 | blocked_path_regex | NO | string | Regular expression to block a binary from executing by path | "/tmp/" |
 | block_usb_mount | NO | boolean | Block USB mass storage devices | true |
 | remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  |
-| sync_type | NO | string | If set, the type of sync that the client should perform. Must be one of:<br />1.) `clean` Instructs the client to drop all non-transitive rules. The server intends to entirely sync all rules.<br />2.) `clean_all` Instructs the client to drop all rules. The server intends to entirely sync all rules.<br />3.) `normal` (or not set) The server intends only to send new rules. The client will not drop any existing rules.<br />See [Clean Syncs](#clean-syncs) for more info.  | `clean` or `clean_all` or `normal` |
+| sync_type | NO | string | If set, the type of sync that the client should perform. Must be one of:<br />1.) `normal` (or not set) The server intends only to send new rules. The client will not drop any existing rules.<br />2.) `clean` Instructs the client to drop all non-transitive rules. The server intends to entirely sync all rules.<br />3.) `clean_all` Instructs the client to drop all rules. The server intends to entirely sync all rules.<br />See [Clean Syncs](#clean-syncs) for more info.  | `normal`, `clean` or `clean_all` |
 | override_file_access_action | NO | string | Override file access config policy action. Must be:<br />1.) "Disable" to not log or block any rule violations.<br />2.) "AuditOnly" to only log violations, not block anything.<br />3.) "" (empty string) or "None" to not override the config | "Disable", or "AuditOnly", or "" (empty string) |
 
 
@@ -170,7 +170,7 @@ The rules for resolving the type of sync that will be performed are as follows:
 2. If the server responded that it is performing a `clean_all` sync, a `clean all` is performed (regardless of whether or not it was requested by the client)
 3. Otherwise, a normal sync is performed
 
-A client that has a `clean` or `clean_all` sync type state set will continue to request a clean sync until it is satisfied by the server. A clean sync is never performed until the server indicates it is prepared to send the entire set of rules.
+A client that has a `clean` or `clean_all` sync type state set will continue to request a clean sync until it is satisfied by the server. If a client has requested a clean sync, but the server has not responded that it will perform a clean sync, then the client will not delete any rules before applying the new rules received from the server.
 
 If the deprecated [Preflight Response](#preflight-response) key `clean_sync` is set, it is treated as if the `sync_type` key were set to `clean`. This is a change in behavior to what was previously performed in that not all rules are dropped anymore, only non-transitive rules. Servers should stop using the `clean_sync` key and migrate to using the `sync_type` key.
 
