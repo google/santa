@@ -33,6 +33,39 @@ static id EnsureType(id val, Class c) {
   }
 }
 
+/*
+
+Clean Sync Implementation Notes
+
+The clean sync implementation seems a bit complex at first glance, but boils
+down to the following rules:
+
+1. If the server says to do a "clean" sync, a "clean" sync is performed, unless the
+   client specified a "clean all" sync, in which case "clean all" is performed.
+2. If the server responded that it is performing a "clean all" sync, a "clean all" is performed.
+3. All other server responses result in a "normal" sync.
+
+The following table expands upon the above logic to list most of the permutations:
+
+| Client Sync State | Clean Sync Request? | Server Response    | Sync Type Performed |
+| ----------------- | ------------------- | ------------------ | ------------------- |
+| normal            | No                  | normal OR <empty>  | normal              |
+| normal            | No                  | clean              | clean               |
+| normal            | No                  | clean_all          | clean_all           |
+| normal            | No                  | clean_sync (dep)   | clean               |
+| normal            | Yes                 | New AND Dep Key    | Dep key ignored     |
+| clean             | Yes                 | normal OR <empty>  | normal              |
+| clean             | Yes                 | clean              | clean               |
+| clean             | Yes                 | clean_all          | clean_all           |
+| clean             | Yes                 | clean_sync (dep)   | clean               |
+| clean             | Yes                 | New AND Dep Key    | Dep key ignored     |
+| clean_all         | Yes                 | normal OR <empty>  | normal              |
+| clean_all         | Yes                 | clean              | clean_all           |
+| clean_all         | Yes                 | clean_all          | clean_all           |
+| clean_all         | Yes                 | clean_sync (dep)   | clean_all           |
+| clean_all         | Yes                 | New AND Dep Key    | Dep key ignored     |
+
+*/
 @implementation SNTSyncPreflight
 
 - (NSURL *)stageURL {

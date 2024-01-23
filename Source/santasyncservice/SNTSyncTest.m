@@ -419,94 +419,119 @@
   XCTAssertEqual(self.syncState.syncType, expectedSyncType);
 }
 
-- (void)testPreflightCleanSyncNone {
+- (void)testPreflightStateNormalRequestEmptyResponseEmpty {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
                     expectcleanSyncRequest:NO
                           expectedSyncType:SNTSyncTypeNormal
                                   response:@{}];
 }
 
-- (void)testPreflightCleanSyncDeprecatedForced {
+- (void)testPreflightStateNormalRequestEmptyResponseNormal {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
                     expectcleanSyncRequest:NO
-                          expectedSyncType:SNTSyncTypeClean
-                                  response:@{kCleanSyncDeprecated : @YES}];
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"normal"}];
 }
 
-- (void)testPreflightCleanSyncCleanReqCleanDeprecatedResponse {
-  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
-                    expectcleanSyncRequest:YES
-                          expectedSyncType:SNTSyncTypeClean
-                                  response:@{kCleanSyncDeprecated : @YES}];
-}
-
-- (void)testPreflightCleanSyncCleanAllReqCleanDeprecatedResponse {
-  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
-                    expectcleanSyncRequest:YES
-                          expectedSyncType:SNTSyncTypeCleanAll
-                                  response:@{kCleanSyncDeprecated : @YES}];
-}
-
-- (void)testPreflightCleanSyncCleanAllReqCleanResponse {
-  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
-                    expectcleanSyncRequest:YES
-                          expectedSyncType:SNTSyncTypeCleanAll
-                                  response:@{kSyncType : @"clean"}];
-}
-
-- (void)testPreflightCleanSyncCleanReqCleanResponse {
-  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
-                    expectcleanSyncRequest:YES
-                          expectedSyncType:SNTSyncTypeClean
-                                  response:@{kSyncType : @"clean"}];
-}
-
-- (void)testPreflightCleanSyncCleanAllReqCleanAllResponse {
-  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
-                    expectcleanSyncRequest:YES
-                          expectedSyncType:SNTSyncTypeCleanAll
-                                  response:@{kSyncType : @"clean_all"}];
-}
-
-- (void)testPreflightCleanSyncCleanReqCleanAllResponse {
-  // Note: The server can override the clean/clean all operation
-  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
-                    expectcleanSyncRequest:YES
-                          expectedSyncType:SNTSyncTypeCleanAll
-                                  response:@{kSyncType : @"clean_all"}];
-}
-
-- (void)testPreflightCleanSyncForcedCleanResponse {
-  // Note: The server can override the clean/clean all operation
+- (void)testPreflightStateNormalRequestEmptyResponseClean {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
                     expectcleanSyncRequest:NO
                           expectedSyncType:SNTSyncTypeClean
                                   response:@{kSyncType : @"clean"}];
 }
 
-- (void)testPreflightCleanSyncForcedCleanAllResponse {
-  // Note: The server can override the clean/clean all operation
+- (void)testPreflightStateNormalRequestEmptyResponseCleanAll {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
                     expectcleanSyncRequest:NO
                           expectedSyncType:SNTSyncTypeCleanAll
                                   response:@{kSyncType : @"clean_all"}];
 }
 
-- (void)testPreflightCleanSyncCleanAllReqNormalResponse {
+- (void)testPreflightStateNormalRequestEmptyResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kCleanSyncDeprecated : @YES}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseEmpty {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseNormal {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"normal"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kSyncType : @"clean"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kCleanSyncDeprecated : @YES}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseEmpty {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseNormal {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeNormal
                                   response:@{kSyncType : @"normal"}];
 }
 
-- (void)testPreflightCleanSyncCleanAllReqUnknownValueResponse {
+- (void)testPreflightStateCleanAllRequestCleanResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"clean"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kCleanSyncDeprecated : @YES}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseUnknown {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeNormal
                                   response:@{kSyncType : @"foo"}];
 }
 
-- (void)testPreflightCleanSyncCleanAllReqBothMethodsResponse {
+- (void)testPreflightStateCleanAllRequestCleanResponseTypeAndDepMismatch {
   // Note: The kSyncType key takes precedence over kCleanSyncDeprecated if both are set
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
