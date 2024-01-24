@@ -105,17 +105,18 @@ double watchdogRAMPeak = 0;
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules
-                  cleanSlate:(BOOL)cleanSlate
+                 ruleCleanup:(SNTRuleCleanup)cleanupType
                        reply:(void (^)(NSError *error))reply {
   SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
 
   // If any rules are added that are not plain allowlist rules, then flush decision cache.
   // In particular, the addition of allowlist compiler rules should cause a cache flush.
   // We also flush cache if a allowlist compiler rule is replaced with a allowlist rule.
-  BOOL flushCache = (cleanSlate || [ruleTable addedRulesShouldFlushDecisionCache:rules]);
+  BOOL flushCache =
+    ((cleanupType != SNTRuleCleanupNone) || [ruleTable addedRulesShouldFlushDecisionCache:rules]);
 
   NSError *error;
-  [ruleTable addRules:rules cleanSlate:cleanSlate error:&error];
+  [ruleTable addRules:rules ruleCleanup:cleanupType error:&error];
 
   // Whenever we add rules, we can also check for and remove outdated transitive rules.
   [ruleTable removeOutdatedTransitiveRules];
@@ -233,12 +234,12 @@ double watchdogRAMPeak = 0;
   reply();
 }
 
-- (void)syncCleanRequired:(void (^)(BOOL))reply {
-  reply([[SNTConfigurator configurator] syncCleanRequired]);
+- (void)syncTypeRequired:(void (^)(SNTSyncType))reply {
+  reply([[SNTConfigurator configurator] syncTypeRequired]);
 }
 
-- (void)setSyncCleanRequired:(BOOL)cleanReqd reply:(void (^)(void))reply {
-  [[SNTConfigurator configurator] setSyncCleanRequired:cleanReqd];
+- (void)setSyncTypeRequired:(SNTSyncType)syncType reply:(void (^)(void))reply {
+  [[SNTConfigurator configurator] setSyncTypeRequired:syncType];
   reply();
 }
 

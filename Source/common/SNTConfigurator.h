@@ -437,9 +437,9 @@
 @property(nonatomic) NSDate *ruleSyncLastSuccess;
 
 ///
-///  If YES a clean sync is required.
+///  Type of sync required (e.g. normal, clean, etc.).
 ///
-@property(nonatomic) BOOL syncCleanRequired;
+@property(nonatomic) SNTSyncType syncTypeRequired;
 
 #pragma mark - USB Settings
 

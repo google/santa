@@ -129,8 +129,8 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   __block BOOL syncCleanReqd = NO;
-  [rop syncCleanRequired:^(BOOL clean) {
-    syncCleanReqd = clean;
+  [rop syncTypeRequired:^(SNTSyncType syncType) {
+    syncCleanReqd = (syncType == SNTSyncTypeClean || syncType == SNTSyncTypeCleanAll);
   }];
 
   __block BOOL pushNotifications = NO;

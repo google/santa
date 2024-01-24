@@ -24,6 +24,15 @@
 #import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
+SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
+  switch (syncType) {
+    case SNTSyncTypeNormal: return SNTRuleCleanupNone;
+    case SNTSyncTypeClean: return SNTRuleCleanupNonTransitive;
+    case SNTSyncTypeCleanAll: return SNTRuleCleanupAll;
+    default: return SNTRuleCleanupNone;
+  }
+}
+
 @implementation SNTSyncRuleDownload
 
 - (NSURL *)stageURL {
@@ -41,12 +50,13 @@
   // Wait until finished or until 5 minutes pass.
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
   __block NSError *error;
-  [[self.daemonConn remoteObjectProxy] databaseRuleAddRules:newRules
-                                                 cleanSlate:self.syncState.cleanSync
-                                                      reply:^(NSError *e) {
-                                                        error = e;
-                                                        dispatch_semaphore_signal(sema);
-                                                      }];
+  [[self.daemonConn remoteObjectProxy]
+    databaseRuleAddRules:newRules
+             ruleCleanup:SyncTypeToRuleCleanup(self.syncState.syncType)
+                   reply:^(NSError *e) {
+                     error = e;
+                     dispatch_semaphore_signal(sema);
+                   }];
   if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 300 * NSEC_PER_SEC))) {
     SLOGE(@"Failed to add rule(s) to database: timeout sending rules to daemon");
     return NO;

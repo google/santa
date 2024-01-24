@@ -155,7 +155,8 @@
                                                     OCMOCK_VALUE(0),  // teamID
                                                     OCMOCK_VALUE(0),  // signingID
                                                     nil])]);
-  OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@NO, nil])]);
+  OCMStub([self.daemonConnRop
+    syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeNormal), nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
 }
@@ -378,7 +379,12 @@
   [sut sync];
 }
 
-- (void)testPreflightCleanSync {
+// This method is designed to help facilitate easy testing of many different
+// permutations of clean sync request / response values and how syncType gets set.
+- (void)cleanSyncPreflightRequiredSyncType:(SNTSyncType)requestedSyncType
+                    expectcleanSyncRequest:(BOOL)expectcleanSyncRequest
+                          expectedSyncType:(SNTSyncType)expectedSyncType
+                                  response:(NSDictionary *)resp {
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   OCMStub([self.daemonConnRop
@@ -391,21 +397,146 @@
                                                     nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
-  OCMStub([self.daemonConnRop syncCleanRequired:([OCMArg invokeBlockWithArgs:@YES, nil])]);
+  OCMStub([self.daemonConnRop
+    syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(requestedSyncType), nil])]);
 
-  NSData *respData = [self dataFromDict:@{kCleanSync : @YES}];
+  NSData *respData = [self dataFromDict:resp];
   [self stubRequestBody:respData
                response:nil
                   error:nil
           validateBlock:^BOOL(NSURLRequest *req) {
             NSDictionary *requestDict = [self dictFromRequest:req];
-            XCTAssertEqualObjects(requestDict[kRequestCleanSync], @YES);
+            if (expectcleanSyncRequest) {
+              XCTAssertEqualObjects(requestDict[kRequestCleanSync], @YES);
+            } else {
+              XCTAssertNil(requestDict[kRequestCleanSync]);
+            }
             return YES;
           }];
 
   [sut sync];
 
-  XCTAssertEqual(self.syncState.cleanSync, YES);
+  XCTAssertEqual(self.syncState.syncType, expectedSyncType);
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseEmpty {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{}];
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseNormal {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"normal"}];
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kSyncType : @"clean"}];
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kCleanSyncDeprecated : @YES}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseEmpty {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseNormal {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"normal"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kSyncType : @"clean"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kCleanSyncDeprecated : @YES}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseEmpty {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseNormal {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"normal"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"clean"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kCleanSyncDeprecated : @YES}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseUnknown {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"foo"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseTypeAndDepMismatch {
+  // Note: The kSyncType key takes precedence over kCleanSyncDeprecated if both are set
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"normal", kCleanSyncDeprecated : @YES}];
 }
 
 - (void)testPreflightLockdown {
@@ -568,7 +699,7 @@
   // Stub out the call to invoke the block, verification of the input is later
   OCMStub([self.daemonConnRop
     databaseRuleAddRules:OCMOCK_ANY
-              cleanSlate:NO
+             ruleCleanup:SNTRuleCleanupNone
                    reply:([OCMArg invokeBlockWithArgs:[NSNull null], nil])]);
   [sut sync];
 
@@ -594,7 +725,9 @@
                               customMsg:@"Banned team ID"],
   ];
 
-  OCMVerify([self.daemonConnRop databaseRuleAddRules:rules cleanSlate:NO reply:OCMOCK_ANY]);
+  OCMVerify([self.daemonConnRop databaseRuleAddRules:rules
+                                         ruleCleanup:SNTRuleCleanupNone
+                                               reply:OCMOCK_ANY]);
 }
 
 #pragma mark - SNTSyncPostflight Tests
@@ -612,9 +745,15 @@
   XCTAssertTrue([sut sync]);
   OCMVerify([self.daemonConnRop setClientMode:SNTClientModeMonitor reply:OCMOCK_ANY]);
 
-  self.syncState.cleanSync = YES;
+  // For Clean syncs, the sync type required should be reset to normal
+  self.syncState.syncType = SNTSyncTypeClean;
   XCTAssertTrue([sut sync]);
-  OCMVerify([self.daemonConnRop setSyncCleanRequired:NO reply:OCMOCK_ANY]);
+  OCMVerify([self.daemonConnRop setSyncTypeRequired:SNTSyncTypeNormal reply:OCMOCK_ANY]);
+
+  // For Clean All syncs, the sync type required should be reset to normal
+  self.syncState.syncType = SNTSyncTypeCleanAll;
+  XCTAssertTrue([sut sync]);
+  OCMVerify([self.daemonConnRop setSyncTypeRequired:SNTSyncTypeNormal reply:OCMOCK_ANY]);
 
   self.syncState.allowlistRegex = @"^horse$";
   self.syncState.blocklistRegex = @"^donkey$";

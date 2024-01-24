@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTXPCSyncServiceInterface.h"
 
 @class MOLXPCConnection;
@@ -60,7 +61,7 @@
 ///
 ///  Pass true to isClean to perform a clean sync, defaults to false.
 ///
-- (void)syncAndMakeItClean:(BOOL)clean withReply:(void (^)(SNTSyncStatusType))reply;
+- (void)syncType:(SNTSyncType)syncType withReply:(void (^)(SNTSyncStatusType))reply;
 
 ///
 ///  Handle SNTSyncServiceXPC messages forwarded from SNTSyncService.

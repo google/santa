@@ -8,7 +8,7 @@ parent: Development
 
 This document describes the protocol between Santa and the sync server, also known as the sync protocol. Implementors should be able to use this to create their own sync servers.
 
-## Background
+# Background
 
 Santa can be run and configured with a sync server. This allows an admin to
 easily configure and sync rules across a fleet of macOS systems.  In addition to
@@ -57,15 +57,15 @@ Where `<machine_id>` is a unique string identifier for the client. By default
 Santa uses the hardware UUID. It may also be set using the [MachineID, MachineIDPlist, and MachineIDKey options](../deployment/configuration.md) in the
 configuration.
 
-## Authentication
+# Authentication
 
 The protocol expects the client to authenticate the server via SSL/TLS. Additionally, a sync server may support client certificates and use mutual TLS.
 
-## Stages
+# Stages
 
 All URLs are of the form `/<stage_name>/<machine_id>`, e.g. the preflight URL is `/preflight/<machine_id>`.
 
-### Preflight
+## Preflight
 
 The preflight stage is used by the client to report host information to the sync
 server and to retrieve a limited set of configuration settings from the server.
@@ -80,7 +80,7 @@ sequenceDiagram
    server -->> client: preflight response
 ```
 
-#### `preflight` Request
+### `preflight` Request
 The request consists of the following JSON keys:
 
 | Key | Required | Type | Meaning | Example Value |
@@ -101,7 +101,7 @@ The request consists of the following JSON keys:
 | request_clean_sync | NO | bool | The client has requested a clean sync of its rules from the server | true |
 
 
-### Example preflight request JSON Payload:
+#### Example preflight request JSON Payload:
 
 ```json
 {
@@ -122,7 +122,7 @@ The request consists of the following JSON keys:
 }
 ```
 
-#### `preflight` Response
+### `preflight` Response
 
 If all of the data is well formed, the server responds with an HTTP status code of 200 and provides a JSON response.
 
@@ -139,8 +139,9 @@ The JSON object has the following keys:
 | blocked_path_regex | NO | string | Regular expression to block a binary from executing by path | "/tmp/" |
 | block_usb_mount | NO | boolean | Block USB mass storage devices | true |
 | remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  |
-| clean_sync | YES | boolean | Whether or not the rules should be dropped and synced entirely from the server | true |
+| sync_type | NO | string | If set, the type of sync that the client should perform. Must be one of:<br />1.) `normal` (or not set) The server intends only to send new rules. The client will not drop any existing rules.<br />2.) `clean` Instructs the client to drop all non-transitive rules. The server intends to entirely sync all rules.<br />3.) `clean_all` Instructs the client to drop all rules. The server intends to entirely sync all rules.<br />See [Clean Syncs](#clean-syncs) for more info.  | `normal`, `clean` or `clean_all` |
 | override_file_access_action | NO | string | Override file access config policy action. Must be:<br />1.) "Disable" to not log or block any rule violations.<br />2.) "AuditOnly" to only log violations, not block anything.<br />3.) "" (empty string) or "None" to not override the config | "Disable", or "AuditOnly", or "" (empty string) |
+
 
 #### Example Preflight Response Payload
 
@@ -156,7 +157,24 @@ The JSON object has the following keys:
 }
 ```
 
-### EventUpload
+### Clean Syncs
+
+Clean syncs will result in rules being deleted from the host before applying the newly synced rule set from the server. When the server indicates it is performing a clean sync, it means it intends to sync all current rules to the client.
+
+The client maintains a "sync type state" that controls the type of sync it wants to perform (i.e. `normal`, `clean` or `clean_all`). This is typically set by using `santactl sync`, `santactl sync --clean`, or `santactl sync --clean-all` respectively. Either clean sync type state being set will result in the `request_clean_sync` key being set to true in the [Preflight Request](#preflight-request).
+
+There are three types of syncs the server can set: `normal`, `clean`, and `clean_all`. The server indicates the type of sync it wants to perform by setting the `sync_type` key in the [Preflight Response](#preflight-response). When a sever performs a normal sync, it only intends to send new rules to the client. When a server performs either a `clean` or `clean_all` sync, it intends to send all rules and the client should delete appropriate rules (non-transitive, or all). The server should try to honor the `request_clean_sync` key if set to true in the [Preflight Request](#preflight-request) by setting the `sync_type` to `clean` (or possibly `clean_all` if desired).
+
+The rules for resolving the type of sync that will be performed are as follows:
+1. If the server responds with a `sync_type` of `clean`, a clean sync is performed (regardless of whether or not it was requested by the client), unless the client sync type state was `clean_all`, in which case a `clean_all` sync type is performed.
+2. If the server responded that it is performing a `clean_all` sync, a `clean all` is performed (regardless of whether or not it was requested by the client)
+3. Otherwise, a normal sync is performed
+
+A client that has a `clean` or `clean_all` sync type state set will continue to request a clean sync until it is satisfied by the server. If a client has requested a clean sync, but the server has not responded that it will perform a clean sync, then the client will not delete any rules before applying the new rules received from the server.
+
+If the deprecated [Preflight Response](#preflight-response) key `clean_sync` is set, it is treated as if the `sync_type` key were set to `clean`. This is a change in behavior to what was previously performed in that not all rules are dropped anymore, only non-transitive rules. Servers should stop using the `clean_sync` key and migrate to using the `sync_type` key.
+
+## EventUpload
 
 After the `preflight` stage has completed the client then initiates the
 `eventupload` stage if it has any events to upload. If there aren't any events
@@ -170,14 +188,14 @@ sequenceDiagram
    server -->> client: eventupload response
 ```
 
-#### `eventupload` Request
+### `eventupload` Request
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
 | events | YES | list of event objects | list of events to upload | see example payload |
 
 
-##### Event Objects
+#### Event Objects
 
 :information_source: Events are explained in more depth in the [Events page](../concepts/events.md).
 
@@ -211,7 +229,7 @@ sequenceDiagram
 | signing_id | NO | string | Signing ID of the binary that was executed | "EQHXZ8M8AV:com.google.Chrome" |
 | team_id | NO | string | Team ID of the binary that was executed | "EQHXZ8M8AV" |
 
-##### Signing Chain Objects
+#### Signing Chain Objects
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
@@ -223,7 +241,7 @@ sequenceDiagram
 | valid_until | YES | int | Unix timestamp of when the cert expires |  1678983513 |
 
 
-##### `eventupload` Request Example Payload
+#### `eventupload` Request Example Payload
 
 ```json
 {
@@ -283,7 +301,7 @@ sequenceDiagram
 }
 ```
 
-#### `eventupload` Response
+### `eventupload` Response
 
 The server should reply with an HTTP 200 if the request was successfully received and processed.
 
@@ -292,7 +310,7 @@ The server should reply with an HTTP 200 if the request was successfully receive
 |---|---|---|---|---|
 | event_upload_bundle_binaries | NO | list of strings | An array of bundle hashes that the sync server needs to be uploaded | ["8621d92262aef379d3cfe9e099f287be5b996a281995b5cc64932f7d62f3dc85"] |
 
-##### `eventupload` Response Example Payload
+#### `eventupload` Response Example Payload
 
 
 ```json
@@ -301,7 +319,7 @@ The server should reply with an HTTP 200 if the request was successfully receive
 }
 ```
 
-### Rule Download
+## Rule Download
 
 After events have been uploaded to the sync server, the `ruledownload` stage begins in a full sync.
 
@@ -321,7 +339,7 @@ Santa applies rules idempotently and is designed to receive rules multiple times
 
 One caveat to be aware of is that when a clean sync is requested in the `preflight` stage, the client expects that at least one rule will be sent by the sync service in the `ruledownload` stage. If no rules are sent then the client is expected to keep its old set of rules prior to the client or server requesting a clean sync and the client will continue to request a clean sync on all subsequent syncs until a successful sync completes that includes at least one rule.
 
-#### `ruledownload` Request
+### `ruledownload` Request
 
  This stage is initiated via an HTTP POST request to the URL `/ruledownload/<machine_id>`
 
@@ -330,7 +348,7 @@ One caveat to be aware of is that when a clean sync is requested in the `preflig
 | cursor | NO | string | a field used by the sync server to indicate where the next batch of rules should start |
 
 
-##### `ruledownload` Request Example Payload
+#### `ruledownload` Request Example Payload
 
 On the first request the payload is an empty dictionary
 
@@ -346,7 +364,7 @@ On subsequent requests to the server the `cursor` field is sent with the value f
 {"cursor":"CpgBChcKCnVwZGF0ZWRfZHQSCQjh94a58uLlAhJ5ahVzfmdvb2dsZS5jb206YXBwbm90aHJyYAsSCUJsb2NrYWJsZSJAMTczOThkYWQzZDAxZGRmYzllMmEwYjBiMWQxYzQyMjY1OWM2ZjA3YmU1MmY3ZjQ1OTVmNDNlZjRhZWI5MGI4YQwLEgRSdWxlGICA8MvA0tIJDBgAIAA="}
 ```
 
-#### `ruledownload` Response
+### `ruledownload` Response
 
 When a `ruledownload` request is received, the sync server responds with a JSON object
 containing a list of rule objects and a cursor so the client can resume
@@ -357,7 +375,7 @@ downloading if the rules need to be downloaded in multiple batches.
 | cursor | NO | string | Used to continue a rule download in a future request |
 | rules | YES | list of Rule objects | List of rule objects (see next section). |
 
-##### Rules Objects
+#### Rules Objects
 
 
 | Key | Required | Type | Meaning | Example Value |
@@ -372,7 +390,7 @@ downloading if the rules need to be downloaded in multiple batches.
 | file\_bundle\_hash | NO | string | The SHA256 of all binaries in a bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
 
 
-##### Example `ruledownload` Response Payload
+#### Example `ruledownload` Response Payload
 
 ```json
 {
@@ -400,7 +418,7 @@ downloading if the rules need to be downloaded in multiple batches.
 }
 ```
 
-### Postflight
+## Postflight
 
 The postflight stage is used for the client to inform the sync server that it has successfully finished syncing. After sending the request, the client is expected to update its internal state applying any configuration changes sent by the sync server during the preflight step.
 
@@ -412,7 +430,7 @@ sequenceDiagram
    server -->> client: postflight response
 ```
 
-#### `postflight` Request
+### `postflight` Request
 
 The request consists of the following JSON keys:
 
@@ -421,7 +439,7 @@ The request consists of the following JSON keys:
 | rules_received    | YES | int | The number of rules the client received from all ruledownlaod requests. | 211 |
 | rules_processed      | YES | int | The number of rules that were processed from all ruledownload requests. | 212 |
 
-### Example postflight request JSON Payload:
+#### Example postflight request JSON Payload:
 
 ```json
 {
@@ -431,7 +449,7 @@ The request consists of the following JSON keys:
 ```
 
 
-#### `postflight` Response
+### `postflight` Response
 
 The server should reply with an HTTP 200 if the request was successfully received and processed. Any message body is ignored by the client.
 

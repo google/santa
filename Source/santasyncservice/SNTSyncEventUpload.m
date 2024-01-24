@@ -17,6 +17,7 @@
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
@@ -55,7 +56,8 @@
     if (uploadEvents.count >= self.syncState.eventBatchSize) break;
   }
 
-  if (!self.syncState.cleanSync || [[SNTConfigurator configurator] enableCleanSyncEventUpload]) {
+  if (self.syncState.syncType == SNTSyncTypeNormal ||
+      [[SNTConfigurator configurator] enableCleanSyncEventUpload]) {
     NSDictionary *r = [self performRequest:[self requestWithDictionary:@{kEvents : uploadEvents}]];
     if (!r) return NO;
 

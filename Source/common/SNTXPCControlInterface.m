@@ -50,7 +50,7 @@ NSString *const kBundleID = @"com.google.santa.daemon";
           ofReply:YES];
 
   [r setClasses:[NSSet setWithObjects:[NSArray class], [SNTRule class], nil]
-      forSelector:@selector(databaseRuleAddRules:cleanSlate:reply:)
+      forSelector:@selector(databaseRuleAddRules:ruleCleanup:reply:)
     argumentIndex:0
           ofReply:NO];
 

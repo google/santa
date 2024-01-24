@@ -44,7 +44,7 @@
 // Pass true to isClean to perform a clean sync, defaults to false.
 //
 - (void)syncWithLogListener:(NSXPCListenerEndpoint *)logListener
-                    isClean:(BOOL)cleanSync
+                   syncType:(SNTSyncType)syncType
                       reply:(void (^)(SNTSyncStatusType))reply;
 
 // Spindown the syncservice. The syncservice will not automatically start back up.

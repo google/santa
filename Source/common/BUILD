@@ -477,12 +477,23 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTConfiguratorTest",
+    srcs = ["SNTConfiguratorTest.m"],
+    deps = [
+        ":SNTCommonEnums",
+        ":SNTConfigurator",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":PrefixTreeTest",
         ":SNTBlockMessageTest",
         ":SNTCachedDecisionTest",
+        ":SNTConfiguratorTest",
         ":SNTFileInfoTest",
         ":SNTKVOManagerTest",
         ":SNTMetricSetTest",

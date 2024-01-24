@@ -75,11 +75,11 @@
 ///  transaction will abort if any rule fails to add.
 ///
 ///  @param rules Array of SNTRule's to add.
-///  @param cleanSlate If true, remove all rules before adding the new rules.
+///  @param ruleCleanup Rule cleanup type to perform (e.g. all, none, non-transitive).
 ///  @param error When returning NO, will be filled with appropriate error.
 ///  @return YES if adding all rules passed, NO if any were rejected.
 ///
-- (BOOL)addRules:(NSArray *)rules cleanSlate:(BOOL)cleanSlate error:(NSError **)error;
+- (BOOL)addRules:(NSArray *)rules ruleCleanup:(SNTRuleCleanup)cleanupType error:(NSError **)error;
 
 ///
 ///  Checks the given array of rules to see if adding any of them to the rules database would

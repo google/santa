@@ -251,7 +251,7 @@ REGISTER_COMMAND_NAME(@"rule")
 
   [[self.daemonConn remoteObjectProxy]
     databaseRuleAddRules:@[ newRule ]
-              cleanSlate:NO
+             ruleCleanup:SNTRuleCleanupNone
                    reply:^(NSError *error) {
                      if (error) {
                        printf("Failed to modify rules: %s",
@@ -421,7 +421,7 @@ REGISTER_COMMAND_NAME(@"rule")
 
   [[self.daemonConn remoteObjectProxy]
     databaseRuleAddRules:parsedRules
-              cleanSlate:NO
+             ruleCleanup:SNTRuleCleanupNone
                    reply:^(NSError *error) {
                      if (error) {
                        printf("Failed to modify rules: %s",

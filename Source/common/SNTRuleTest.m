@@ -13,7 +13,8 @@
 ///    limitations under the License.
 
 #import <XCTest/XCTest.h>
-#include "Source/common/SNTCommonEnums.h"
+
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTSyncConstants.h"
 
 #import "Source/common/SNTRule.h"
