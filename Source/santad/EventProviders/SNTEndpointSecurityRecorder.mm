@@ -134,6 +134,13 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
 
   [self.compilerController handleEvent:esMsg withLogger:self->_logger];
 
+  if ((esMsg->event_type == ES_EVENT_TYPE_NOTIFY_FORK ||
+       esMsg->event_type == ES_EVENT_TYPE_NOTIFY_EXIT) &&
+      self.configurator.enableForkAndExitLogging == NO) {
+    recordEventMetrics(EventDisposition::kDropped);
+    return;
+  }
+
   // Filter file op events matching the prefix tree.
   es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
   if (targetFile != NULL && self->_prefixTree->HasPrefix(targetFile->path.data)) {

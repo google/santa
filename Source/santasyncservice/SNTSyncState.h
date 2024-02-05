@@ -71,7 +71,7 @@
 @property NSString *overrideFileAccessAction;
 
 /// Clean sync flag, if True, all existing rules should be deleted before inserting any new rules.
-@property BOOL cleanSync;
+@property SNTSyncType syncType;
 
 /// Batch size for uploading events.
 @property NSUInteger eventBatchSize;

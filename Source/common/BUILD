@@ -40,6 +40,12 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "SNTDeepCopy",
+    srcs = ["SNTDeepCopy.m"],
+    hdrs = ["SNTDeepCopy.h"],
+)
+
 cc_library(
     name = "SantaCache",
     hdrs = ["SantaCache.h"],
@@ -51,6 +57,56 @@ santa_unit_test(
     srcs = ["SantaCacheTest.mm"],
     deps = [
         ":SantaCache",
+    ],
+)
+
+# This target shouldn't be used directly.
+# Use a more specific scoped type instead.
+objc_library(
+    name = "ScopedTypeRef",
+    hdrs = ["ScopedTypeRef.h"],
+    visibility = ["//Source/common:__pkg__"],
+)
+
+objc_library(
+    name = "ScopedCFTypeRef",
+    hdrs = ["ScopedCFTypeRef.h"],
+    deps = [
+        ":ScopedTypeRef",
+    ],
+)
+
+santa_unit_test(
+    name = "ScopedCFTypeRefTest",
+    srcs = ["ScopedCFTypeRefTest.mm"],
+    sdk_frameworks = [
+        "Security",
+    ],
+    deps = [
+        ":ScopedCFTypeRef",
+    ],
+)
+
+objc_library(
+    name = "ScopedIOObjectRef",
+    hdrs = ["ScopedIOObjectRef.h"],
+    sdk_frameworks = [
+        "IOKit",
+    ],
+    deps = [
+        ":ScopedTypeRef",
+    ],
+)
+
+santa_unit_test(
+    name = "ScopedIOObjectRefTest",
+    srcs = ["ScopedIOObjectRefTest.mm"],
+    sdk_frameworks = [
+        "IOKit",
+    ],
+    deps = [
+        ":ScopedIOObjectRef",
+        "//Source/santad:EndpointSecuritySerializerUtilities",
     ],
 )
 
@@ -421,17 +477,30 @@ santa_unit_test(
     ],
 )
 
+santa_unit_test(
+    name = "SNTConfiguratorTest",
+    srcs = ["SNTConfiguratorTest.m"],
+    deps = [
+        ":SNTCommonEnums",
+        ":SNTConfigurator",
+        "@OCMock",
+    ],
+)
+
 test_suite(
     name = "unit_tests",
     tests = [
         ":PrefixTreeTest",
         ":SNTBlockMessageTest",
         ":SNTCachedDecisionTest",
+        ":SNTConfiguratorTest",
         ":SNTFileInfoTest",
         ":SNTKVOManagerTest",
         ":SNTMetricSetTest",
         ":SNTRuleTest",
         ":SantaCacheTest",
+        ":ScopedCFTypeRefTest",
+        ":ScopedIOObjectRefTest",
     ],
     visibility = ["//:santa_package_group"],
 )

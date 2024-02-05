@@ -80,7 +80,7 @@ NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
   return [origURL path];
 }
 
-static inline const mach_port_t GetDefaultIOKitCommsPort() {
+const mach_port_t GetDefaultIOKitCommsPort() {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   return kIOMasterPortDefault;

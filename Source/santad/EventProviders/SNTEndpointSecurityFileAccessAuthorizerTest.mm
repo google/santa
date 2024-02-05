@@ -33,7 +33,7 @@
 
 #include "Source/common/Platform.h"
 #include "Source/common/SNTCachedDecision.h"
-#include "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"

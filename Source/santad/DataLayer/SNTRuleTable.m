@@ -194,7 +194,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
                       @")"];
     [db executeUpdate:@"CREATE UNIQUE INDEX rulesunique ON rules (shasum, type)"];
 
-    [[SNTConfigurator configurator] setSyncCleanRequired:YES];
+    [[SNTConfigurator configurator] setSyncTypeRequired:SNTSyncTypeCleanAll];
 
     newVersion = 1;
   }
@@ -403,7 +403,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 #pragma mark Adding
 
 - (BOOL)addRules:(NSArray *)rules
-      cleanSlate:(BOOL)cleanSlate
+     ruleCleanup:(SNTRuleCleanup)cleanupType
            error:(NSError *__autoreleasing *)error {
   if (!rules || rules.count < 1) {
     [self fillError:error code:SNTRuleTableErrorEmptyRuleArray message:nil];
@@ -413,8 +413,10 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   __block BOOL failed = NO;
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
-    if (cleanSlate) {
+    if (cleanupType == SNTRuleCleanupAll) {
       [db executeUpdate:@"DELETE FROM rules"];
+    } else if (cleanupType == SNTRuleCleanupNonTransitive) {
+      [db executeUpdate:@"DELETE FROM rules WHERE state != ?", @(SNTRuleStateAllowTransitive)];
     }
 
     for (SNTRule *rule in rules) {

@@ -68,9 +68,11 @@
 - (void)clientMode:(void (^)(SNTClientMode))reply;
 - (void)fullSyncLastSuccess:(void (^)(NSDate *))reply;
 - (void)ruleSyncLastSuccess:(void (^)(NSDate *))reply;
-- (void)syncCleanRequired:(void (^)(BOOL))reply;
+- (void)syncTypeRequired:(void (^)(SNTSyncType))reply;
 - (void)enableBundles:(void (^)(BOOL))reply;
 - (void)enableTransitiveRules:(void (^)(BOOL))reply;
+- (void)blockUSBMount:(void (^)(BOOL))reply;
+- (void)remountUSBMode:(void (^)(NSArray<NSString *> *))reply;
 
 ///
 /// Metrics ops

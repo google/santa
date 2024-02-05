@@ -40,11 +40,14 @@ NS_ASSUME_NONNULL_BEGIN
   [self.insertedDevices removeAllObjects];
   [self.diskAppearedCallbacks removeAllObjects];
   self.sessionQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-  self.wasRemounted = NO;
 }
 
-- (void)insert:(MockDADisk *)ref bsdName:(NSString *)bsdName {
-  self.insertedDevices[bsdName] = ref;
+- (void)insert:(MockDADisk *)ref {
+  if (!ref.diskDescription[@"DAMediaBSDName"]) {
+    [NSException raise:@"Missing DAMediaBSDName"
+                format:@"The MockDADisk is missing the DAMediaBSDName diskDescription key."];
+  }
+  self.insertedDevices[ref.diskDescription[@"DAMediaBSDName"]] = ref;
 
   for (MockDADiskAppearedCallback callback in self.diskAppearedCallbacks) {
     dispatch_sync(self.sessionQueue, ^{
@@ -110,8 +113,13 @@ void DADiskMountWithArguments(DADiskRef _Nonnull disk, CFURLRef __nullable path,
                               DADiskMountOptions options, DADiskMountCallback __nullable callback,
                               void *__nullable context,
                               CFStringRef __nullable arguments[_Nullable]) {
-  MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
-  mockDA.wasRemounted = YES;
+  MockDADisk *mockDisk = (__bridge MockDADisk *)disk;
+  mockDisk.wasMounted = YES;
+
+  if (context) {
+    dispatch_semaphore_t sema = (__bridge dispatch_semaphore_t)context;
+    dispatch_semaphore_signal(sema);
+  }
 }
 
 DADiskRef __nullable DADiskCreateFromBSDName(CFAllocatorRef __nullable allocator,

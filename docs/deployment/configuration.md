@@ -20,70 +20,80 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 
 ## Local Configuration Profile
 
-| Key                           | Value Type | Description                              |
-| ----------------------------- | ---------- | ---------------------------------------- |
-| ClientMode\*                      | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
-| FailClosed                        | Bool       | If true and the ClientMode is LOCKDOWN: execution will be denied when there is an error reading or processing an executable file. |
-| FileChangesRegex\*                | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
-| AllowedPathRegex\*                | String     | A regex to allow if the binary, certificate, or Team ID scopes did not allow/block execution.  Regexes are specified in ICU format. |
-| BlockedPathRegex\*                | String     | A regex to block if the binary, certificate, or Team ID scopes did not allow/block an execution.  Regexes are specified in ICU format. |
-| EnableBadSignatureProtection      | Bool       | Enable bad signature protection, defaults to NO. If this flag is set to YES, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
-| EnablePageZeroProtection          | Bool       | Enable `__PAGEZERO` protection, defaults to YES. If this flag is set to YES, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. |
-| EnableSilentMode                  | Bool       | If true, Santa will not post any GUI notifications. This can be a very confusing experience for users, use with caution. Defaults to NO. |
-| EnableSilentTTYMode               | Bool       | If true, Santa will not post any TTY notifications. This can be a very confusing experience for users, use with caution. Defaults to NO. |
-| AboutText                         | String     | The text to display when the user opens Santa.app. If unset, the default text will be displayed. |
-| MoreInfoURL                       | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
-| EventDetailURL                    | String     | See the [EventDetailURL](#eventdetailurl) section below. |
-| EventDetailText                   | String     | Related to the above property, this string represents the text to show on the button. |
-| UnknownBlockMessage               | String     | In Lockdown mode this is the message shown to the user when an unknown binary is blocked. If this message is not configured a reasonable default is provided. |
-| BannedBlockMessage                | String     | This is the message shown to the user when a binary is blocked because of a rule if that rule doesn't provide a custom message. If this is not configured a reasonable  default is provided. |
-| ModeNotificationMonitor           | String     | The notification text to display when the client goes into Monitor mode. Defaults to "Switching into Monitor mode". |
-| ModeNotificationLockdown          | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
-| <a name="sync-base-url"></a>SyncBaseURL                       | String     | The base URL of the sync server.         |
-| SyncProxyConfiguration            | Dictionary | The proxy configuration to use when syncing. See the [Apple Documentation](https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants) for details on the keys that can be used in this dictionary. |
-| SyncEnableCleanSyncEventUpload    | Bool       | If true, events will be uploaded to the sync server even if a clean sync is requested. Defaults to false. |
-| ClientAuthCertificateFile         | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
-| ClientAuthCertificatePassword     | String     | Contains the password for the PKCS#12 certificate. |
-| ClientAuthCertificateCN           | String     | If set, this is the Common Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
-| ClientAuthCertificateIssuerCN     | String     | If set, this is the Issuer Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
-| ServerAuthRootsData               | Data       | If set, this is valid PEM containing one or more certificates to be used for certificate pinning. To comply with [ATS](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW57) the certificate chain must also be trusted in the keychain. |
-| ServerAuthRootsFile               | String     | The same as the above but is a path to a file on disk containing the PEM data. |
-| MachineOwner                      | String     | The machine owner.                       |
-| MachineID                         | String     | The machine ID.                          |
-| MachineOwnerPlist                 | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
-| MachineOwnerKey                   | String     | The key to use on MachineOwnerPlist.     |
-| MachineIDPlist                    | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
-| MachineIDKey                      | String     | The key to use on MachineIDPlist.        |
-| EventLogType                      | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ULS. 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. 3) protobuf (BETA): Sent to file on disk using a maildir-like format. 4) json (BETA): Same as file but output is one JSON object per line 5) null: Don't output any event logs. Defaults to filelog.      |
-| EventLogPath                      | String     | If EventLogType is set to filelog or json, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
-| EventLogPath                      | String     | If EventLogType is set to filelog, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path.        |
-| SpoolDirectory                    | String     | If EventLogType is set to protobuf, SpoolDirectory will provide the the base directory used to save files according to a maildir-like format. Defaults to /var/db/santa/spool. |
+| Key                                | Value Type | Description                              |
+| ---------------------------------- | ---------- | ---------------------------------------- |
+| ClientMode\*                       | Integer    | 1 = MONITOR, 2 = LOCKDOWN, defaults to MONITOR |
+| FailClosed                         | Bool       | If true and the ClientMode is LOCKDOWN: execution will be denied when there is an error reading or processing an executable file. Defaults to false. |
+| FileChangesRegex\*                 | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
+| AllowedPathRegex\*                 | String     | A regex to allow if the binary, certificate, or Team ID scopes did not allow/block execution.  Regexes are specified in ICU format. |
+| BlockedPathRegex\*                 | String     | A regex to block if the binary, certificate, or Team ID scopes did not allow/block an execution.  Regexes are specified in ICU format. |
+| FileChangesPrefixFilters           | Array      | Array of path prefix strings. When an event is logged, if the target path (e.g. the file being written/removed/etc ) matches a prefix it will not be loggged. |
+| EnableBadSignatureProtection       | Bool       | If true, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. Defaults to false. |
+| EnablePageZeroProtection           | Bool       | If true, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. Defaults to true. |
+| EnableSilentMode                   | Bool       | If true, Santa will not post any GUI notifications. This can be a very confusing experience for users, use with caution. Defaults to false. |
+| EnableTransitiveRules              | Bool       | If true, Santa will respect compiler rule types and create allow rules for the executables they produce. Defaults to false. |
+| EnableSilentTTYMode                | Bool       | If true, Santa will not post any TTY notifications. This can be a very confusing experience for users, use with caution. Defaults to false. |
+| EnableForkAndExitLogging           | Bool       | If true, Santa will log FORK and EXIT event types. Defaults to false. |
+| IgnoreOtherEndpointSecurityClients | Bool       | If true, Santa will not process events that are generated by other EndpointSecurity clients that may be installed on the system. Defaults to false. |
+| AboutText                          | String     | The text to display when the user opens Santa.app. If unset, the default text will be displayed. |
+| MoreInfoURL                        | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
+| EventDetailURL                     | String     | See the [EventDetailURL](#eventdetailurl) section below. |
+| EventDetailText                    | String     | Related to the above property, this string represents the text to show on the button. |
+| UnknownBlockMessage                | String     | In Lockdown mode this is the message shown to the user when an unknown binary is blocked. If this message is not configured a reasonable default is provided. |
+| BannedBlockMessage                 | String     | This is the message shown to the user when a binary is blocked because of a rule if that rule doesn't provide a custom message. If this is not configured a reasonable default is provided. |
+| ModeNotificationMonitor            | String     | The notification text to display when the client goes into Monitor mode. Defaults to "Switching into Monitor mode". |
+| ModeNotificationLockdown           | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
+| SyncBaseURL                        | String     | The base URL of the sync server. |
+| SyncProxyConfiguration             | Dictionary | The proxy configuration to use when syncing. See the [Apple Documentation](https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants) for details on the keys that can be used in this dictionary. |
+| SyncEnableCleanSyncEventUpload     | Bool       | If true, events will be uploaded to the sync server even if a clean sync is requested. Defaults to false. |
+| ClientAuthCertificateFile          | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
+| ClientAuthCertificatePassword      | String     | Contains the password for the PKCS#12 certificate. |
+| ClientAuthCertificateCN            | String     | If set, this is the Common Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
+| ClientAuthCertificateIssuerCN      | String     | If set, this is the Issuer Name of a certificate in the System keychain to be used for sync authentication. The corresponding private key must also be in the keychain. |
+| ServerAuthRootsData                | Data       | If set, this is valid PEM containing one or more certificates to be used for certificate pinning. To comply with [ATS](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CocoaKeys.html#//apple_ref/doc/uid/TP40009251-SW57) the certificate chain must also be trusted in the keychain. |
+| ServerAuthRootsFile                | String     | The same as the above but is a path to a file on disk containing the PEM data. |
+| MachineOwner                       | String     | The machine owner. |
+| MachineID                          | String     | The machine ID. |
+| MachineOwnerPlist                  | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
+| MachineOwnerKey                    | String     | The key to use on MachineOwnerPlist. |
+| MachineIDPlist                     | String     | The path to a plist that contains the MachineOwnerKey / value pair. |
+| MachineIDKey                       | String     | The key to use on MachineIDPlist. |
+| EventLogType                       | String     | Defines how event logs are stored. Options are 1) syslog: Sent to ULS. 2) filelog: Sent to a file on disk. Use EventLogPath to specify a path. 3) protobuf (BETA): Sent to file on disk using a maildir-like format. 4) json (BETA): Same as file but output is one JSON object per line 5) null: Don't output any event logs. Defaults to filelog. |
+| EventLogPath                       | String     | If EventLogType is set to filelog or json, EventLogPath will provide the path to save logs. Defaults to /var/db/santa/santa.log. If you change this value ensure you also update com.google.santa.newsyslog.conf with the new path. |
+| SpoolDirectory                     | String     | If EventLogType is set to protobuf, SpoolDirectory will provide the base directory used to save files according to a maildir-like format. Defaults to /var/db/santa/spool. |
 | SpoolDirectoryFileSizeThresholdKB  | Integer    | If EventLogType is set to protobuf, SpoolDirectoryFileSizeThresholdKB defines the per-file size limit for files stored in the spool directory. Events are buffered in memory until this threshold would be exceeded (or SpoolDirectoryEventMaxFlushTimeSec is exceeded). Defaults to 100. |
 | SpoolDirectorySizeThresholdMB      | Integer    | If EventLogType is set to protobuf, SpoolDirectorySizeThresholdMB defines the total combined size limit of all files in the spool directory. Once the threshold is met, no more events will be saved. Defaults to 100. |
 | SpoolDirectoryEventMaxFlushTimeSec | Integer    | If EventLogType is set to protobuf, SpoolDirectoryEventMaxFlushTimeSec defines the maximum amount of time events will stay buffered in memory before being flushed to disk, regardless of whether or not SpoolDirectoryFileSizeThresholdKB would be exceeded. Defaults to 10. |
-| EnableMachineIDDecoration         | Bool       | If YES, this appends the MachineID to the end of each log line. Defaults to NO.       |
-| MetricFormat                      | String     | Format to export metrics as, supported formats are "rawjson" for a single JSON blob and "monarchjson" for a format consumable by Google's Monarch tooling. Defaults to "". |
-| MetricURL                         | String     | URL describing where monitoring metrics should be exported.  |
-| MetricExportInterval              | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
-| MetricExportTimeout               | Integer    | Number of seconds to wait before a timeout occurs when exporting metrics. Defaults to 30.  |
-| MetricExtraLabels                 | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
-| EnableAllEventUpload              | Bool       | If YES, the client will upload all execution events to the sync server, including those that were explicitly allowed. |
-| DisableUnknownEventUpload         | Bool       | If YES, the client will *not* upload events for executions of unknown binaries allowed in monitor mode |
-| BlockUSBMount                     | Bool       | If YES, blocking USB Mass storage feature is enabled. Defaults to NO. |
-| RemountUSBMode                    | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j") when forcibly remounting devices. No default. |
-| OnStartUSBOptions                 | String     | If set, defines the action that should be taken on existing USB mounts when Santa starts up. Supported values are "Unmount" and "ForceUnmount". Existing mounts with mount flags that are a superset of RemountUSBMode are unaffected and left mounted. |
-| FileAccessPolicyPlist             | String      | Path to a file access configuration plist. This is ignored if `FileAccessPolicy` is also set. |
-| FileAccessPolicy                  | Dictionary  | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
-| FileAccessPolicyUpdateIntervalSec | Integer     | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
-| SyncClientContentEncoding         | String      | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none" (Defaults to deflate.)  |
-| SyncExtraHeaders                  | Dictionary  | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
-| EnableDebugLogging                | Bool  | If YES, the client will log additional debug messages to the Apple Unified Log.  For example, transitive rule creation logs can be viewed with `log stream --predicate 'sender=="com.google.santa.daemon"'`.  Defaults to NO. |
+| EnableMachineIDDecoration          | Bool       | If true, this appends the MachineID to the end of each log line. Defaults to false. |
+| MetricFormat                       | String     | Format to export metrics as, supported formats are "rawjson" for a single JSON blob and "monarchjson" for a format consumable by Google's Monarch tooling. Defaults to "". |
+| MetricURL                          | String     | URL describing where monitoring metrics should be exported. |
+| MetricExportInterval               | Integer    | Number of seconds to wait between exporting metrics. Defaults to 30.  |
+| MetricExportTimeout                | Integer    | Number of seconds to wait before a timeout occurs when exporting metrics. Defaults to 30.  |
+| MetricExtraLabels                  | Dictionary | A map of key value pairs to add to all metric root labels. (e.g. a=b,c=d) defaults to @{}). If a previously set key (e.g. host_name is set to "" then the key is remove from the metric root labels. Alternatively if a value is set for an existing key then the new value will override the old. |
+| EnableAllEventUpload               | Bool       | If true, the client will upload all execution events to the sync server, including those that were explicitly allowed. Defaults to false. |
+| DisableUnknownEventUpload          | Bool       | If true, the client will *not* upload events for executions of unknown binaries allowed in monitor mode. Defaults to false. |
+| BlockUSBMount                      | Bool       | If true, blocking USB Mass storage feature is enabled. Defaults to false. |
+| RemountUSBMode                     | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j") when forcibly remounting devices. No default. |
+| OnStartUSBOptions                  | String     | If set, defines the action that should be taken on existing USB mounts when Santa starts up. Supported values are "Unmount", "ForceUnmount", "Remount", and "ForceRemount" (note: "remounts" are implemented by first unmounting and then mounting the device again). Existing mounts with mount flags that are a superset of RemountUSBMode are unaffected and left mounted. |
+| BannedUSBBlockMessage              | String     | Message to display when a USB device is prevented from being mounted. |
+| RemountUSBBlockMessage             | String     | Message to display when a USB device is allowed to be mounted with a subset of the requested flags as defined by `RemountUSBMode`. |
+| FileAccessPolicyPlist              | String     | Path to a file access configuration plist. This is ignored if `FileAccessPolicy` is also set. |
+| FileAccessPolicy                   | Dictionary | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
+| FileAccessPolicyUpdateIntervalSec  | Integer    | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
+| FileAccessBlockMessage             | String     | This is the message shown to the user when a access to a file is blocked because of a rule defined by `FileAccessPolicy` if that rule doesn't provide a custom message. If this is not configured a reasonable default is provided. |
+| OverrideFileAccessAction           | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `auditonly` (no access will be blocked, only logged), `disabled` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `none`. |
+| SyncClientContentEncoding          | String     | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none". Defaults to deflate. |
+| SyncExtraHeaders                   | Dictionary | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
+| EnableDebugLogging                 | Bool       | If true, the client will log additional debug messages to the Apple Unified Log.  For example, transitive rule creation logs can be viewed with `log stream --predicate 'sender=="com.google.santa.daemon"'`. Defaults to false. |
+| EntitlementsPrefixFilter           | Array      | Array of strings of entitlement prefixes that should not be logged (for example: `com.apple.private`). No default. |
+| EntitlementsTeamIDFilter           | Array      | Array of TeamID strings. Entitlements from processes with a matching TeamID in the code signature will not be logged. Use the value `platform` to filter entitlements from platform binaries. No default. |
+| [StaticRules](#static-rules)       | Array      | Array of rule dictionaries. The rules defined in this key take precedence over any rules in the rules database. |
 
 
 \*overridable by the sync server: run `santactl status` to check the current
 running config
 
-##### EventDetailURL
+### EventDetailURL
 
 When the user gets a block notification, a button can be displayed which will
 take them to a web page with more information about that event.
@@ -104,7 +114,23 @@ them to. The following sequences will be replaced in the final URL:
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
-##### Example Configuration Profile
+### Static Rules
+
+Static rules are rules that are defined inline in the Santa configuration. These
+rules take precedence over any rules delivered via a sync server or set via
+`santactl`. The relative rule order precedence is the same for the static rule
+types as they are for traditional rules.
+
+The allowed keys/values for defining static rules are the same as for rules that
+are sent via the sync server. Details on this structure are defined in the
+[Sync Protocol](https://santa.dev/development/sync-protocol.html#rules-objects)
+documentation.
+
+Additionally, the
+[example configuration](https://github.com/google/santa/blob/d5195b55d2784776fa078096f59137d22da55b06/docs/deployment/com.google.santa.example.mobileconfig#L45)
+has a demonstration on how to define static rules.
+
+### Example Configuration Profile
 
 Here is an example of a configuration profile that could be set. It was
 generated with Tim Sutton's great
@@ -233,6 +259,7 @@ ways to install configuration profiles:
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
 | block\_usb\_mount                   | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
 | remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
+| override\_file\_access\_action      | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `auditonly` (no access will be blocked, only logged), `disabled` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `none`. |
 
 
 *Held only in memory. Not persistent upon process restart.

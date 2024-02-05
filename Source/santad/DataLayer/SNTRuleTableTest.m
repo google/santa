@@ -65,6 +65,15 @@
   return r;
 }
 
+- (SNTRule *)_exampleTransitiveRule {
+  SNTRule *r = [[SNTRule alloc] init];
+  r.identifier = @"1111e3fd640c5f211c89b02c2c6122f78ce322aa5c56eb0bb54bc422a8f8b111";
+  r.state = SNTRuleStateAllowTransitive;
+  r.type = SNTRuleTypeBinary;
+  r.customMsg = @"Transitive rule";
+  return r;
+}
+
 - (SNTRule *)_exampleCertRule {
   SNTRule *r = [[SNTRule alloc] init];
   r.identifier = @"7ae80b9ab38af0c63a9a81765f434d9a7cd8f720eb6037ef303de39d779bc258";
@@ -78,7 +87,7 @@
   NSUInteger binaryRuleCount = self.sut.binaryRuleCount;
 
   NSError *error;
-  [self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO error:&error];
+  [self.sut addRules:@[ [self _exampleBinaryRule] ] ruleCleanup:SNTRuleCleanupNone error:&error];
 
   XCTAssertEqual(self.sut.ruleCount, ruleCount + 1);
   XCTAssertEqual(self.sut.binaryRuleCount, binaryRuleCount + 1);
@@ -88,13 +97,38 @@
 - (void)testAddRulesClean {
   // Add a binary rule without clean slate
   NSError *error = nil;
-  XCTAssertTrue([self.sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO error:&error]);
+  XCTAssertTrue([self.sut addRules:@[ [self _exampleBinaryRule] ]
+                       ruleCleanup:SNTRuleCleanupNone
+                             error:&error]);
   XCTAssertNil(error);
 
   // Now add a cert rule with a clean slate, assert that the binary rule was removed
   error = nil;
-  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule] ] cleanSlate:YES error:&error]));
+  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule] ]
+                        ruleCleanup:SNTRuleCleanupAll
+                              error:&error]));
   XCTAssertEqual([self.sut binaryRuleCount], 0);
+  XCTAssertNil(error);
+}
+
+- (void)testAddRulesCleanNonTransitive {
+  // Add a multiple binary rules, including a transitive rule
+  NSError *error = nil;
+  XCTAssertTrue(([self.sut addRules:@[
+    [self _exampleBinaryRule], [self _exampleCertRule], [self _exampleTransitiveRule]
+  ]
+                        ruleCleanup:SNTRuleCleanupNone
+                              error:&error]));
+  XCTAssertEqual([self.sut binaryRuleCount], 2);
+  XCTAssertNil(error);
+
+  // Now add a cert rule while cleaning non-transitive rules. Ensure the transitive rule remains
+  error = nil;
+  XCTAssertTrue(([self.sut addRules:@[ [self _exampleCertRule] ]
+                        ruleCleanup:SNTRuleCleanupNonTransitive
+                              error:&error]));
+  XCTAssertEqual([self.sut binaryRuleCount], 1);
+  XCTAssertEqual([self.sut certificateRuleCount], 1);
   XCTAssertNil(error);
 }
 
@@ -103,9 +137,9 @@
 
   NSError *error;
   [self.sut
-      addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule], [self _exampleBinaryRule] ]
-    cleanSlate:NO
-         error:&error];
+       addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule], [self _exampleBinaryRule] ]
+    ruleCleanup:SNTRuleCleanupNone
+          error:&error];
 
   XCTAssertEqual(self.sut.ruleCount, ruleCount + 2);
   XCTAssertNil(error);
@@ -113,13 +147,13 @@
 
 - (void)testAddRulesEmptyArray {
   NSError *error;
-  XCTAssertFalse([self.sut addRules:@[] cleanSlate:YES error:&error]);
+  XCTAssertFalse([self.sut addRules:@[] ruleCleanup:SNTRuleCleanupAll error:&error]);
   XCTAssertEqual(error.code, SNTRuleTableErrorEmptyRuleArray);
 }
 
 - (void)testAddRulesNilArray {
   NSError *error;
-  XCTAssertFalse([self.sut addRules:nil cleanSlate:YES error:&error]);
+  XCTAssertFalse([self.sut addRules:nil ruleCleanup:SNTRuleCleanupAll error:&error]);
   XCTAssertEqual(error.code, SNTRuleTableErrorEmptyRuleArray);
 }
 
@@ -129,13 +163,13 @@
   r.type = SNTRuleTypeCertificate;
 
   NSError *error;
-  XCTAssertFalse([self.sut addRules:@[ r ] cleanSlate:NO error:&error]);
+  XCTAssertFalse([self.sut addRules:@[ r ] ruleCleanup:SNTRuleCleanupNone error:&error]);
   XCTAssertEqual(error.code, SNTRuleTableErrorInvalidRule);
 }
 
 - (void)testFetchBinaryRule {
   [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ]
-          cleanSlate:NO
+         ruleCleanup:SNTRuleCleanupNone
                error:nil];
 
   SNTRule *r = [self.sut
@@ -158,7 +192,7 @@
 
 - (void)testFetchCertificateRule {
   [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleCertRule] ]
-          cleanSlate:NO
+         ruleCleanup:SNTRuleCleanupNone
                error:nil];
 
   SNTRule *r = [self.sut
@@ -181,7 +215,7 @@
 
 - (void)testFetchTeamIDRule {
   [self.sut addRules:@[ [self _exampleBinaryRule], [self _exampleTeamIDRule] ]
-          cleanSlate:NO
+         ruleCleanup:SNTRuleCleanupNone
                error:nil];
 
   SNTRule *r = [self.sut ruleForBinarySHA256:nil
@@ -205,7 +239,7 @@
     [self _exampleBinaryRule], [self _exampleSigningIDRuleIsPlatform:YES],
     [self _exampleSigningIDRuleIsPlatform:NO]
   ]
-          cleanSlate:NO
+         ruleCleanup:SNTRuleCleanupNone
                error:nil];
 
   XCTAssertEqual([self.sut signingIDRuleCount], 2);
@@ -236,7 +270,7 @@
     [self _exampleCertRule], [self _exampleBinaryRule], [self _exampleTeamIDRule],
     [self _exampleSigningIDRuleIsPlatform:NO]
   ]
-          cleanSlate:NO
+         ruleCleanup:SNTRuleCleanupNone
                error:nil];
 
   // This test verifies that the implicit rule ordering we've been abusing is still working.
@@ -295,7 +329,7 @@
   FMDatabaseQueue *dbq = [[FMDatabaseQueue alloc] initWithPath:dbPath];
   SNTRuleTable *sut = [[SNTRuleTable alloc] initWithDatabaseQueue:dbq];
 
-  [sut addRules:@[ [self _exampleBinaryRule] ] cleanSlate:NO error:nil];
+  [sut addRules:@[ [self _exampleBinaryRule] ] ruleCleanup:SNTRuleCleanupNone error:nil];
   XCTAssertGreaterThan(sut.ruleCount, 0);
 
   [[NSFileManager defaultManager] removeItemAtPath:dbPath error:NULL];
@@ -311,7 +345,7 @@
     [self _exampleCertRule], [self _exampleBinaryRule], [self _exampleTeamIDRule],
     [self _exampleSigningIDRuleIsPlatform:NO]
   ]
-          cleanSlate:NO
+         ruleCleanup:SNTRuleCleanupNone
                error:nil];
 
   NSArray<SNTRule *> *rules = [self.sut retrieveAllRules];

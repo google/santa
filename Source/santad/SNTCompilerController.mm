@@ -132,8 +132,9 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
   NSError *error = nil;
   SNTFileInfo *fi = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetFile error:&error];
   if (error) {
-    LOGD(@"Unable to create SNTFileInfo while attempting to create transitive rule. Path: %@",
-         @(targetFile->path.data));
+    LOGD(@"Unable to create SNTFileInfo while attempting to create transitive rule. Event: %d | "
+         @"Path: %@ | Error: %@",
+         (int)esMsg->event_type, @(targetFile->path.data), error);
     return;
   }
 
@@ -157,7 +158,7 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 
       // Add the new rule to the rules database.
       NSError *err;
-      if (![ruleTable addRules:@[ rule ] cleanSlate:NO error:&err]) {
+      if (![ruleTable addRules:@[ rule ] ruleCleanup:SNTRuleCleanupNone error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
         logger->LogAllowlist(esMsg, [fi.SHA256 UTF8String]);

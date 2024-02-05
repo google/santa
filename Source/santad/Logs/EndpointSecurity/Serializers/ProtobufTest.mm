@@ -28,7 +28,7 @@
 #include <cstring>
 
 #import "Source/common/SNTCachedDecision.h"
-#include "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTStoredEvent.h"
 #include "Source/common/TestUtils.h"
@@ -60,6 +60,7 @@ namespace pbv1 = ::santa::pb::v1;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 extern void EncodeExitStatus(::pbv1::Exit *pbExit, int exitStatus);
+extern void EncodeEntitlements(::pbv1::Execution *pb_exec, SNTCachedDecision *cd);
 extern ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Reason GetReasonEnum(SNTEventState event_state);
 extern ::pbv1::Execution::Mode GetModeEnum(SNTClientMode mode);
@@ -68,6 +69,7 @@ extern ::pbv1::FileAccess::AccessType GetAccessType(es_event_type_t event_type);
 extern ::pbv1::FileAccess::PolicyDecision GetPolicyDecision(FileAccessPolicyDecision decision);
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
+using santa::santad::logs::endpoint_security::serializers::EncodeEntitlements;
 using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
 using santa::santad::logs::endpoint_security::serializers::GetAccessType;
 using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
@@ -110,6 +112,7 @@ NSString *EventTypeToFilename(es_event_type_t eventType) {
     case ES_EVENT_TYPE_NOTIFY_LINK: return @"link.json";
     case ES_EVENT_TYPE_NOTIFY_RENAME: return @"rename.json";
     case ES_EVENT_TYPE_NOTIFY_UNLINK: return @"unlink.json";
+    case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED: return @"cs_invalidated.json";
     default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
   }
 }
@@ -145,6 +148,7 @@ const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &s
     case ::pbv1::SantaMessage::kBundle: return santaMsg.bundle();
     case ::pbv1::SantaMessage::kAllowlist: return santaMsg.allowlist();
     case ::pbv1::SantaMessage::kFileAccess: return santaMsg.file_access();
+    case ::pbv1::SantaMessage::kCodesigningInvalidated: return santaMsg.codesigning_invalidated();
     case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
@@ -164,28 +168,35 @@ std::string ConvertMessageToJsonString(const ::pbv1::SantaMessage &santaMsg) {
   return json;
 }
 
-NSDictionary *findDelta(NSDictionary *a, NSDictionary *b) {
-  NSMutableDictionary *delta = NSMutableDictionary.dictionary;
+NSDictionary *FindDelta(NSDictionary *want, NSDictionary *got) {
+  NSMutableDictionary *delta = [NSMutableDictionary dictionary];
+  delta[@"want"] = [NSMutableDictionary dictionary];
+  delta[@"got"] = [NSMutableDictionary dictionary];
 
-  // Find objects in a that don't exist or are different in b.
-  [a enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
-    id otherObj = b[key];
+  // Find objects in `want` that don't exist or are different in `got`.
+  [want enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+    id otherObj = got[key];
 
-    if (![obj isEqual:otherObj]) {
-      delta[key] = obj;
+    if (!otherObj) {
+      delta[@"want"][key] = obj;
+      delta[@"got"][key] = @"Key missing";
+    } else if (![obj isEqual:otherObj]) {
+      delta[@"want"][key] = obj;
+      delta[@"got"][key] = otherObj;
     }
   }];
 
-  // Find objects in the other dictionary that don't exist in self
-  [b enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
-    id aObj = a[key];
+  // Find objects in `got` that don't exist in `want`
+  [got enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+    id aObj = want[key];
 
     if (!aObj) {
-      delta[key] = obj;
+      delta[@"want"][key] = @"Key missing";
+      delta[@"got"][key] = obj;
     }
   }];
 
-  return delta;
+  return [delta[@"want"] count] > 0 ? delta : nil;
 }
 
 void SerializeAndCheck(es_event_type_t eventType,
@@ -266,9 +277,9 @@ void SerializeAndCheck(es_event_type_t eventType,
                    error:&jsonError];
     XCTAssertNil(jsonError, @"failed to parse got data as JSON");
 
+    XCTAssertNil(FindDelta(wantJSONDict, gotJSONDict));
+    // Note: Uncomment this line to help create testfile JSON when the assert above fails
     // XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
-    NSDictionary *delta = findDelta(wantJSONDict, gotJSONDict);
-    XCTAssertEqualObjects(@{}, delta);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -336,6 +347,22 @@ void SerializeAndCheckNonESEvents(
   self.testCachedDecision.quarantineURL = @"google.com";
   self.testCachedDecision.certSHA256 = @"5678_cert_hash";
   self.testCachedDecision.decisionClientMode = SNTClientModeLockdown;
+  self.testCachedDecision.entitlements = @{
+    @"key_with_str_val" : @"bar",
+    @"key_with_num_val" : @(1234),
+    @"key_with_date_val" : [NSDate dateWithTimeIntervalSince1970:1699376402],
+    @"key_with_data_val" : [@"Hello World" dataUsingEncoding:NSUTF8StringEncoding],
+    @"key_with_arr_val" : @[ @"v1", @"v2", @"v3" ],
+    @"key_with_arr_val_nested" : @[ @"v1", @"v2", @"v3", @[ @"nv1", @"nv2" ] ],
+    @"key_with_arr_val_multitype" :
+      @[ @"v1", @"v2", @"v3", @(123), [NSDate dateWithTimeIntervalSince1970:1699376402] ],
+    @"key_with_dict_val" : @{@"k1" : @"v1", @"k2" : @"v2"},
+    @"key_with_dict_val_nested" : @{
+      @"k1" : @"v1",
+      @"k2" : @"v2",
+      @"k3" : @{@"nk1" : @"nv1", @"nk2" : [NSDate dateWithTimeIntervalSince1970:1699376402]}
+    },
+  };
 
   self.mockDecisionCache = OCMClassMock([SNTDecisionCache class]);
   OCMStub([self.mockDecisionCache sharedCache]).andReturn(self.mockDecisionCache);
@@ -571,6 +598,70 @@ void SerializeAndCheckNonESEvents(
                           json:YES];
 }
 
+- (void)testEncodeEntitlements {
+  int kMaxEncodeObjectEntries = 64;  // From Protobuf.mm
+  // Test basic encoding without filtered entitlements
+  {
+    ::pbv1::Execution pbExec;
+
+    SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+    cd.entitlements = @{@"com.google.test" : @(YES)};
+
+    XCTAssertEqual(0, pbExec.entitlement_info().entitlements_size());
+    XCTAssertFalse(cd.entitlementsFiltered);
+    XCTAssertEqual(1, cd.entitlements.count);
+
+    EncodeEntitlements(&pbExec, cd);
+
+    XCTAssertEqual(1, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(pbExec.entitlement_info().has_entitlements_filtered());
+    XCTAssertFalse(pbExec.entitlement_info().entitlements_filtered());
+  }
+
+  // Test basic encoding with filtered entitlements
+  {
+    ::pbv1::Execution pbExec;
+
+    SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+    cd.entitlements = @{@"com.google.test" : @(YES), @"com.google.test2" : @(NO)};
+    cd.entitlementsFiltered = YES;
+
+    XCTAssertEqual(0, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(cd.entitlementsFiltered);
+    XCTAssertEqual(2, cd.entitlements.count);
+
+    EncodeEntitlements(&pbExec, cd);
+
+    XCTAssertEqual(2, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(pbExec.entitlement_info().has_entitlements_filtered());
+    XCTAssertTrue(pbExec.entitlement_info().entitlements_filtered());
+  }
+
+  // Test max number of entitlements logged
+  // When entitlements are clipped, `entitlements_filtered` is set to true
+  {
+    ::pbv1::Execution pbExec;
+    NSMutableDictionary *ents = [NSMutableDictionary dictionary];
+
+    for (int i = 0; i < 100; i++) {
+      ents[[NSString stringWithFormat:@"k%d", i]] = @(i);
+    }
+
+    SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+    cd.entitlements = ents;
+
+    XCTAssertEqual(0, pbExec.entitlement_info().entitlements_size());
+    XCTAssertFalse(cd.entitlementsFiltered);
+    XCTAssertGreaterThan(cd.entitlements.count, kMaxEncodeObjectEntries);
+
+    EncodeEntitlements(&pbExec, cd);
+
+    XCTAssertEqual(kMaxEncodeObjectEntries, pbExec.entitlement_info().entitlements_size());
+    XCTAssertTrue(pbExec.entitlement_info().has_entitlements_filtered());
+    XCTAssertTrue(pbExec.entitlement_info().entitlements_filtered());
+  }
+}
+
 - (void)testSerializeMessageExit {
   [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_EXIT
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
@@ -664,6 +755,14 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.unlink.target = &fileTarget;
                     esMsg->event.unlink.parent_dir = &fileTargetParent;
+                  }
+                          json:NO];
+}
+
+- (void)testSerializeMessageCodesigningInvalidated {
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
                   }
                           json:NO];
 }

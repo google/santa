@@ -13,15 +13,18 @@
 ///    limitations under the License.
 
 #import "Source/santad/SNTPolicyProcessor.h"
+#include <Foundation/Foundation.h>
 
+#include <Kernel/kern/cs_blobs.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <Security/SecCode.h>
-
-#include "Source/common/SNTLogging.h"
+#import <Security/Security.h>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SNTDeepCopy.h"
 #import "Source/common/SNTFileInfo.h"
+#import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 
@@ -45,7 +48,11 @@
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256
                                             teamID:(nullable NSString *)teamID
-                                         signingID:(nullable NSString *)signingID {
+                                         signingID:(nullable NSString *)signingID
+                              isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nullable)(
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.teamID = teamID;
@@ -92,9 +99,33 @@
           cd.signingID = nil;
         }
       }
+
+      NSDictionary *entitlements =
+        csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict];
+
+      if (entitlementsFilterCallback) {
+        cd.entitlements = entitlementsFilterCallback(entitlements);
+        cd.entitlementsFiltered = (cd.entitlements.count == entitlements.count);
+      } else {
+        cd.entitlements = [entitlements sntDeepCopy];
+        cd.entitlementsFiltered = NO;
+      }
     }
   }
   cd.quarantineURL = fileInfo.quarantineDataURL;
+
+  // Do not evaluate TeamID/SigningID rules for dev-signed code based on the
+  // assumption that orgs are generally more relaxed about dev signed cert
+  // protections and users can more easily produce dev-signed code that
+  // would otherwise be inadvertently allowed.
+  // Note: Only perform the check if the SigningID is still set, otherwise
+  // it is unsigned or had issues above that already cleared the values.
+  if (cd.signingID && !isProdSignedCallback()) {
+    LOGD(@"Ignoring TeamID and SigningID rules for code not signed with production cert: %@",
+         cd.signingID);
+    cd.teamID = nil;
+    cd.signingID = nil;
+  }
 
   SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
                                             signingID:cd.signingID
@@ -221,17 +252,25 @@
 }
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                     targetProcess:(nonnull const es_process_t *)targetProc {
+                                     targetProcess:(nonnull const es_process_t *)targetProc
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nonnull)(
+                            const char *_Nullable teamID,
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   NSString *signingID;
   NSString *teamID;
 
+  const char *entitlementsFilterTeamID = NULL;
+
   if (targetProc->signing_id.length > 0) {
     if (targetProc->team_id.length > 0) {
+      entitlementsFilterTeamID = targetProc->team_id.data;
       teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
       signingID =
         [NSString stringWithFormat:@"%@:%@", teamID,
                                    [NSString stringWithUTF8String:targetProc->signing_id.data]];
     } else if (targetProc->is_platform_binary) {
+      entitlementsFilterTeamID = "platform";
       signingID =
         [NSString stringWithFormat:@"platform:%@",
                                    [NSString stringWithUTF8String:targetProc->signing_id.data]];
@@ -239,10 +278,16 @@
   }
 
   return [self decisionForFileInfo:fileInfo
-                        fileSHA256:nil
-                 certificateSHA256:nil
-                            teamID:teamID
-                         signingID:signingID];
+    fileSHA256:nil
+    certificateSHA256:nil
+    teamID:teamID
+    signingID:signingID
+    isProdSignedCallback:^BOOL {
+      return ((targetProc->codesigning_flags & CS_DEV_CODE) == 0);
+    }
+    entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
+      return entitlementsFilterCallback(entitlementsFilterTeamID, entitlements);
+    }];
 }
 
 // Used by `$ santactl fileinfo`.
@@ -251,15 +296,37 @@
                                  certificateSHA256:(nullable NSString *)certificateSHA256
                                             teamID:(nullable NSString *)teamID
                                          signingID:(nullable NSString *)signingID {
-  SNTFileInfo *fileInfo;
+  MOLCodesignChecker *csInfo;
   NSError *error;
-  fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
-  if (!fileInfo) LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+
+  SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:filePath error:&error];
+  if (!fileInfo) {
+    LOGW(@"Failed to read file %@: %@", filePath, error.localizedDescription);
+  } else {
+    csInfo = [fileInfo codesignCheckerWithError:&error];
+    if (error) {
+      LOGW(@"Failed to get codesign ingo for file %@: %@", filePath, error.localizedDescription);
+    }
+  }
+
   return [self decisionForFileInfo:fileInfo
                         fileSHA256:fileSHA256
                  certificateSHA256:certificateSHA256
                             teamID:teamID
-                         signingID:signingID];
+                         signingID:signingID
+              isProdSignedCallback:^BOOL {
+                if (csInfo) {
+                  // Development OID values defined by Apple and used by the Security Framework
+                  // https://images.apple.com/certificateauthority/pdf/Apple_WWDR_CPS_v1.31.pdf
+                  NSArray *keys = @[ @"1.2.840.113635.100.6.1.2", @"1.2.840.113635.100.6.1.12" ];
+                  NSDictionary *vals = CFBridgingRelease(SecCertificateCopyValues(
+                    csInfo.leafCertificate.certRef, (__bridge CFArrayRef)keys, NULL));
+                  return vals.count == 0;
+                } else {
+                  return NO;
+                }
+              }
+        entitlementsFilterCallback:nil];
 }
 
 ///

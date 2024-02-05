@@ -9,6 +9,9 @@ jobs:
   markdown-check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - uses: gaurav-nelson/github-action-markdown-link-check@v1
-    - run: "! git grep -EIn $'[ \t]+$' -- ':(exclude)*.patch'"
+      - name: "Checkout Santa"
+        uses: actions/checkout@61b9e3751b92087fd0b06925ba6dd6314e06f089 # ratchet:actions/checkout@master
+      - name: "Check for deadlinks"
+        uses: gaurav-nelson/github-action-markdown-link-check@5c5dfc0ac2e225883c0e5f03a85311ec2830d368 # ratchet:gaurav-nelson/github-action-markdown-link-check@v1
+      - name: "Check for trailing whitespace and newlines"
+        run: "! git grep -EIn $'[ \t]+$' -- ':(exclude)*.patch'"

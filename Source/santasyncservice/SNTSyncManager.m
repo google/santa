@@ -87,7 +87,7 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     _fullSyncTimer = [self createSyncTimerWithBlock:^{
       [self rescheduleTimerQueue:self.fullSyncTimer
                   secondsFromNow:_pushNotifications.pushNotificationsFullSyncInterval];
-      [self syncAndMakeItClean:NO withReply:NULL];
+      [self syncType:SNTSyncTypeNormal withReply:NULL];
     }];
     _ruleSyncTimer = [self createSyncTimerWithBlock:^{
       dispatch_source_set_timer(self.ruleSyncTimer, DISPATCH_TIME_FOREVER, DISPATCH_TIME_FOREVER,
@@ -177,19 +177,19 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   [self rescheduleTimerQueue:self.fullSyncTimer secondsFromNow:seconds];
 }
 
-- (void)syncAndMakeItClean:(BOOL)clean withReply:(void (^)(SNTSyncStatusType))reply {
+- (void)syncType:(SNTSyncType)syncType withReply:(void (^)(SNTSyncStatusType))reply {
   if (dispatch_semaphore_wait(self.syncLimiter, DISPATCH_TIME_NOW)) {
     if (reply) reply(SNTSyncStatusTypeTooManySyncsInProgress);
     return;
   }
   dispatch_async(self.syncQueue, ^() {
     SLOGI(@"Starting sync...");
-    if (clean) {
+    if (syncType != SNTSyncTypeNormal) {
       dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-      [[self.daemonConn remoteObjectProxy] setSyncCleanRequired:YES
-                                                          reply:^() {
-                                                            dispatch_semaphore_signal(sema);
-                                                          }];
+      [[self.daemonConn remoteObjectProxy] setSyncTypeRequired:syncType
+                                                         reply:^() {
+                                                           dispatch_semaphore_signal(sema);
+                                                         }];
       if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC))) {
         SLOGE(@"Timeout waiting for daemon");
         if (reply) reply(SNTSyncStatusTypeDaemonTimeout);

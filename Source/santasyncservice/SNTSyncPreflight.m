@@ -33,6 +33,39 @@ static id EnsureType(id val, Class c) {
   }
 }
 
+/*
+
+Clean Sync Implementation Notes
+
+The clean sync implementation seems a bit complex at first glance, but boils
+down to the following rules:
+
+1. If the server says to do a "clean" sync, a "clean" sync is performed, unless the
+   client specified a "clean all" sync, in which case "clean all" is performed.
+2. If the server responded that it is performing a "clean all" sync, a "clean all" is performed.
+3. All other server responses result in a "normal" sync.
+
+The following table expands upon the above logic to list most of the permutations:
+
+| Client Sync State | Clean Sync Request? | Server Response    | Sync Type Performed |
+| ----------------- | ------------------- | ------------------ | ------------------- |
+| normal            | No                  | normal OR <empty>  | normal              |
+| normal            | No                  | clean              | clean               |
+| normal            | No                  | clean_all          | clean_all           |
+| normal            | No                  | clean_sync (dep)   | clean               |
+| normal            | Yes                 | New AND Dep Key    | Dep key ignored     |
+| clean             | Yes                 | normal OR <empty>  | normal              |
+| clean             | Yes                 | clean              | clean               |
+| clean             | Yes                 | clean_all          | clean_all           |
+| clean             | Yes                 | clean_sync (dep)   | clean               |
+| clean             | Yes                 | New AND Dep Key    | Dep key ignored     |
+| clean_all         | Yes                 | normal OR <empty>  | normal              |
+| clean_all         | Yes                 | clean              | clean_all           |
+| clean_all         | Yes                 | clean_all          | clean_all           |
+| clean_all         | Yes                 | clean_sync (dep)   | clean_all           |
+| clean_all         | Yes                 | New AND Dep Key    | Dep key ignored     |
+
+*/
 @implementation SNTSyncPreflight
 
 - (NSURL *)stageURL {
@@ -75,14 +108,15 @@ static id EnsureType(id val, Class c) {
     }
   }];
 
-  __block BOOL syncClean = NO;
-  [rop syncCleanRequired:^(BOOL clean) {
-    syncClean = clean;
+  __block SNTSyncType requestSyncType = SNTSyncTypeNormal;
+  [rop syncTypeRequired:^(SNTSyncType syncTypeRequired) {
+    requestSyncType = syncTypeRequired;
   }];
 
   // If user requested it or we've never had a successful sync, try from a clean slate.
-  if (syncClean) {
-    SLOGD(@"Clean sync requested by user");
+  if (requestSyncType == SNTSyncTypeClean || requestSyncType == SNTSyncTypeCleanAll) {
+    SLOGD(@"%@ sync requested by user",
+          (requestSyncType == SNTSyncTypeCleanAll) ? @"Clean All" : @"Clean");
     requestDict[kRequestCleanSync] = @YES;
   }
 
@@ -137,9 +171,51 @@ static id EnsureType(id val, Class c) {
   self.syncState.overrideFileAccessAction =
     EnsureType(resp[kOverrideFileAccessAction], [NSString class]);
 
-  if ([EnsureType(resp[kCleanSync], [NSNumber class]) boolValue]) {
+  // Default sync type is SNTSyncTypeNormal
+  //
+  // Logic overview:
+  // The requested sync type (clean or normal) is merely informative. The server
+  // can choose to respond with a normal, clean or clean_all.
+  //
+  // If the server responds that it will perform a clean sync, santa will
+  // treat it as either a clean or clean_all depending on which was requested.
+  //
+  // The server can also "override" the requested clean operation. If a normal
+  // sync was requested, but the server responded that it was doing a clean or
+  // clean_all sync, that will take precedence. Similarly, if only a clean sync
+  // was requested, the server can force a "clean_all" operation to take place.
+  self.syncState.syncType = SNTSyncTypeNormal;
+
+  // If kSyncType response key exists, it overrides the kCleanSyncDeprecated value
+  // First check if the kSyncType reponse key exists. If so, it takes precedence
+  // over the kCleanSyncDeprecated key.
+  NSString *responseSyncType = [EnsureType(resp[kSyncType], [NSString class]) lowercaseString];
+  if (responseSyncType) {
+    if ([responseSyncType isEqualToString:@"clean"]) {
+      // If the client wants to Clean All, this takes precedence. The server
+      // cannot override the client wanting to remove all rules.
+      if (requestSyncType == SNTSyncTypeCleanAll) {
+        self.syncState.syncType = SNTSyncTypeCleanAll;
+      } else {
+        self.syncState.syncType = SNTSyncTypeClean;
+      }
+    } else if ([responseSyncType isEqualToString:@"clean_all"]) {
+      self.syncState.syncType = SNTSyncTypeCleanAll;
+    }
+  } else if ([EnsureType(resp[kCleanSyncDeprecated], [NSNumber class]) boolValue]) {
+    // If the deprecated key is set, the type of sync clean performed should be
+    // the type that was requested. This must be set appropriately so that it
+    // can be propagated during the Rule Download stage so SNTRuleTable knows
+    // which rules to delete.
+    if (requestSyncType == SNTSyncTypeCleanAll) {
+      self.syncState.syncType = SNTSyncTypeCleanAll;
+    } else {
+      self.syncState.syncType = SNTSyncTypeClean;
+    }
+  }
+
+  if (self.syncState.syncType != SNTSyncTypeNormal) {
     SLOGD(@"Clean sync requested by server");
-    self.syncState.cleanSync = YES;
   }
 
   return YES;

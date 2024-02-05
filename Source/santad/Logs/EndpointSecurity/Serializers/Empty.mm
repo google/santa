@@ -15,6 +15,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Empty.h"
 
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
 using santa::santad::event_providers::endpoint_security::EnrichedExit;
@@ -62,6 +63,10 @@ std::vector<uint8_t> Empty::SerializeMessage(const EnrichedRename &msg) {
 }
 
 std::vector<uint8_t> Empty::SerializeMessage(const EnrichedUnlink &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedCSInvalidated &msg) {
   return {};
 }
 

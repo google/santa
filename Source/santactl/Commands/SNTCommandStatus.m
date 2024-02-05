@@ -15,10 +15,21 @@
 #import <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
+
+NSString *StartupOptionToString(SNTDeviceManagerStartupPreferences pref) {
+  switch (pref) {
+    case SNTDeviceManagerStartupPreferencesUnmount: return @"Unmount";
+    case SNTDeviceManagerStartupPreferencesForceUnmount: return @"ForceUnmount";
+    case SNTDeviceManagerStartupPreferencesRemount: return @"Remount";
+    case SNTDeviceManagerStartupPreferencesForceRemount: return @"ForceRemount";
+    default: return @"None";
+  }
+}
 
 @interface SNTCommandStatus : SNTCommand <SNTCommandProtocol>
 @end
@@ -45,7 +56,6 @@ REGISTER_COMMAND_NAME(@"status")
 }
 
 - (void)runWithArguments:(NSArray *)arguments {
-  dispatch_group_t group = dispatch_group_create();
   id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 
   // Daemon status
@@ -119,8 +129,8 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   __block BOOL syncCleanReqd = NO;
-  [rop syncCleanRequired:^(BOOL clean) {
-    syncCleanReqd = clean;
+  [rop syncTypeRequired:^(SNTSyncType syncType) {
+    syncCleanReqd = (syncType == SNTSyncTypeClean || syncType == SNTSyncTypeCleanAll);
   }];
 
   __block BOOL pushNotifications = NO;
@@ -158,10 +168,15 @@ REGISTER_COMMAND_NAME(@"status")
     }
   }];
 
-  // Wait a maximum of 5s for stats collected from daemon to arrive.
-  if (dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5))) {
-    fprintf(stderr, "Failed to retrieve some stats from daemon\n\n");
-  }
+  __block BOOL blockUSBMount = NO;
+  [rop blockUSBMount:^(BOOL response) {
+    blockUSBMount = response;
+  }];
+
+  __block NSArray<NSString *> *remountUSBMode;
+  [rop remountUSBMode:^(NSArray<NSString *> *response) {
+    remountUSBMode = response;
+  }];
 
   // Format dates
   NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
@@ -185,16 +200,16 @@ REGISTER_COMMAND_NAME(@"status")
       @"daemon" : @{
         @"driver_connected" : @(YES),
         @"mode" : clientMode ?: @"null",
+        @"transitive_rules" : @(enableTransitiveRules),
         @"log_type" : eventLogType,
         @"file_logging" : @(fileLogging),
         @"watchdog_cpu_events" : @(cpuEvents),
         @"watchdog_ram_events" : @(ramEvents),
         @"watchdog_cpu_peak" : @(cpuPeak),
         @"watchdog_ram_peak" : @(ramPeak),
-        @"block_usb" : @(configurator.blockUSBMount),
-        @"remount_usb_mode" : (configurator.blockUSBMount && configurator.remountUSBMode.count
-                                 ? configurator.remountUSBMode
-                                 : @""),
+        @"block_usb" : @(blockUSBMount),
+        @"remount_usb_mode" : (blockUSBMount && remountUSBMode.count ? remountUSBMode : @""),
+        @"on_start_usb_options" : StartupOptionToString(configurator.onStartUSBOptions),
       },
       @"database" : @{
         @"binary_rules" : @(binaryRuleCount),
@@ -215,7 +230,6 @@ REGISTER_COMMAND_NAME(@"status")
         @"last_successful_rule" : ruleSyncLastSuccessStr ?: @"null",
         @"push_notifications" : pushNotifications ? @"Connected" : @"Disconnected",
         @"bundle_scanning" : @(enableBundles),
-        @"transitive_rules" : @(enableTransitiveRules),
       },
     } mutableCopy];
 
@@ -248,13 +262,20 @@ REGISTER_COMMAND_NAME(@"status")
   } else {
     printf(">>> Daemon Info\n");
     printf("  %-25s | %s\n", "Mode", [clientMode UTF8String]);
+
+    if (enableTransitiveRules) {
+      printf("  %-25s | %s\n", "Transitive Rules", (enableTransitiveRules ? "Yes" : "No"));
+    }
+
     printf("  %-25s | %s\n", "Log Type", [eventLogType UTF8String]);
     printf("  %-25s | %s\n", "File Logging", (fileLogging ? "Yes" : "No"));
-    printf("  %-25s | %s\n", "USB Blocking", (configurator.blockUSBMount ? "Yes" : "No"));
-    if (configurator.blockUSBMount && configurator.remountUSBMode.count > 0) {
-      printf("  %-25s | %s\n", "USB Remounting Mode:",
-             [[configurator.remountUSBMode componentsJoinedByString:@", "] UTF8String]);
+    printf("  %-25s | %s\n", "USB Blocking", (blockUSBMount ? "Yes" : "No"));
+    if (blockUSBMount && remountUSBMode.count > 0) {
+      printf("  %-25s | %s\n", "USB Remounting Mode",
+             [[remountUSBMode componentsJoinedByString:@", "] UTF8String]);
     }
+    printf("  %-25s | %s\n", "On Start USB Options",
+           StartupOptionToString(configurator.onStartUSBOptions).UTF8String);
     printf("  %-25s | %lld  (Peak: %.2f%%)\n", "Watchdog CPU Events", cpuEvents, cpuPeak);
     printf("  %-25s | %lld  (Peak: %.2fMB)\n", "Watchdog RAM Events", ramEvents, ramPeak);
 
@@ -294,7 +315,6 @@ REGISTER_COMMAND_NAME(@"status")
       printf("  %-25s | %s\n", "Push Notifications",
              (pushNotifications ? "Connected" : "Disconnected"));
       printf("  %-25s | %s\n", "Bundle Scanning", (enableBundles ? "Yes" : "No"));
-      printf("  %-25s | %s\n", "Transitive Rules", (enableTransitiveRules ? "Yes" : "No"));
     }
 
     if (exportMetrics) {

@@ -15,7 +15,7 @@
 #import <Foundation/Foundation.h>
 
 // The callback type when KVO notifications are received for observed key paths.
-// The first parameter is the previous value, the second paramter is the new value.
+// The first parameter is the previous value, the second parameter is the new value.
 typedef void (^KVOCallback)(id oldValue, id newValue);
 
 @interface SNTKVOManager : NSObject

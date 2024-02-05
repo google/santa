@@ -162,6 +162,20 @@ typedef NS_ENUM(NSInteger, SNTDeviceManagerStartupPreferences) {
   SNTDeviceManagerStartupPreferencesNone,
   SNTDeviceManagerStartupPreferencesUnmount,
   SNTDeviceManagerStartupPreferencesForceUnmount,
+  SNTDeviceManagerStartupPreferencesRemount,
+  SNTDeviceManagerStartupPreferencesForceRemount,
+};
+
+typedef NS_ENUM(NSInteger, SNTSyncType) {
+  SNTSyncTypeNormal,
+  SNTSyncTypeClean,
+  SNTSyncTypeCleanAll,
+};
+
+typedef NS_ENUM(NSInteger, SNTRuleCleanup) {
+  SNTRuleCleanupNone,
+  SNTRuleCleanupAll,
+  SNTRuleCleanupNonTransitive,
 };
 
 #ifdef __cplusplus

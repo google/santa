@@ -23,20 +23,23 @@ jobs:
         run: echo "/opt/homebrew/bin/" >> $GITHUB_PATH
       - name: Install configuration profile
         run: bazel run //Testing/integration:install_profile -- Testing/integration/configs/default.mobileconfig
+      - name: Build, install, and sync santa
+        run: |
+          bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
+          bazel run //Testing/integration:allow_sysex
+      - name: Test config changes
+        run: ./Testing/integration/test_config_changes.sh
       - name: Build, install, and start moroz
         run: |
           bazel build @com_github_groob_moroz//cmd/moroz:moroz
           cp bazel-bin/external/com_github_groob_moroz/cmd/moroz/moroz_/moroz /tmp/moroz
           /tmp/moroz -configs="$GITHUB_WORKSPACE/Testing/integration/configs/moroz_default/global.toml" -use-tls=false &
-      - name: Build, install, and sync santa
-        run: |
-          bazel run :reload --define=SANTA_BUILD_TYPE=adhoc
-          bazel run //Testing/integration:allow_sysex
           sudo santactl sync --debug
       - name: Run integration test binaries
-        run: bazel test //Testing/integration:integration_tests
-      - name: Test config changes
-        run: ./Testing/integration/test_config_changes.sh
+        run: |
+          bazel test //Testing/integration:integration_tests
+          sleep 3
+          bazel run //Testing/integration:dismiss_santa_popup || true
       - name: Test sync server changes
         run: ./Testing/integration/test_sync_changes.sh
       - name: Test USB blocking

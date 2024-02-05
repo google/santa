@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MockDADisk : NSObject
 @property(nonatomic) NSDictionary *diskDescription;
 @property(nonatomic, readwrite) NSString *name;
+@property(nonatomic) BOOL wasMounted;
 @property(nonatomic) BOOL wasUnmounted;
 @end
 
@@ -40,14 +41,13 @@ typedef void (^MockDADiskAppearedCallback)(DADiskRef ref);
   NSMutableDictionary<NSString *, MockDADisk *> *insertedDevices;
 @property(nonatomic, readwrite, nonnull)
   NSMutableArray<MockDADiskAppearedCallback> *diskAppearedCallbacks;
-@property(nonatomic) BOOL wasRemounted;
 @property(nonatomic, nullable) dispatch_queue_t sessionQueue;
 
 - (instancetype _Nonnull)init;
 - (void)reset;
 
 // Also triggers DADiskRegisterDiskAppearedCallback
-- (void)insert:(MockDADisk *)ref bsdName:(NSString *)bsdName;
+- (void)insert:(MockDADisk *)ref;
 
 // Retrieve an initialized singleton MockDiskArbitration object
 + (instancetype _Nonnull)mockDiskArbitration;

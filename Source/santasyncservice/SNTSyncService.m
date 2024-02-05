@@ -81,22 +81,22 @@
 
 // TODO(bur): Add support for santactl sync --debug to enable debug logging for that sync.
 - (void)syncWithLogListener:(NSXPCListenerEndpoint *)logListener
-                    isClean:(BOOL)cleanSync
+                   syncType:(SNTSyncType)syncType
                       reply:(void (^)(SNTSyncStatusType))reply {
   MOLXPCConnection *ll = [[MOLXPCConnection alloc] initClientWithListener:logListener];
   ll.remoteInterface =
     [NSXPCInterface interfaceWithProtocol:@protocol(SNTSyncServiceLogReceiverXPC)];
   [ll resume];
-  [self.syncManager syncAndMakeItClean:cleanSync
-                             withReply:^(SNTSyncStatusType status) {
-                               if (status == SNTSyncStatusTypeSyncStarted) {
-                                 [[SNTSyncBroadcaster broadcaster] addLogListener:ll];
-                                 return;
-                               }
-                               [[SNTSyncBroadcaster broadcaster] barrier];
-                               [[SNTSyncBroadcaster broadcaster] removeLogListener:ll];
-                               reply(status);
-                             }];
+  [self.syncManager syncType:syncType
+                   withReply:^(SNTSyncStatusType status) {
+                     if (status == SNTSyncStatusTypeSyncStarted) {
+                       [[SNTSyncBroadcaster broadcaster] addLogListener:ll];
+                       return;
+                     }
+                     [[SNTSyncBroadcaster broadcaster] barrier];
+                     [[SNTSyncBroadcaster broadcaster] removeLogListener:ll];
+                     reply(status);
+                   }];
 }
 
 - (void)spindown {

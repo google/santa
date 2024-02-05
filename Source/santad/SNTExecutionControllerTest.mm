@@ -18,7 +18,6 @@
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <dispatch/dispatch.h>
-#include "Source/common/SNTCommonEnums.h"
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
@@ -96,7 +95,9 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
                                                     eventTable:self.mockEventDatabase
                                                  notifierQueue:nil
                                                     syncdQueue:nil
-                                                     ttyWriter:nullptr];
+                                                     ttyWriter:nullptr
+                                      entitlementsPrefixFilter:nil
+                                      entitlementsTeamIDFilter:nil];
 }
 
 - (void)tearDown {

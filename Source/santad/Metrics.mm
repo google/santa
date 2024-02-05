@@ -49,6 +49,7 @@ static NSString *const kEventTypeNotifyLink = @"NotifyLink";
 static NSString *const kEventTypeNotifyRename = @"NotifyRename";
 static NSString *const kEventTypeNotifyUnlink = @"NotifyUnlink";
 static NSString *const kEventTypeNotifyUnmount = @"NotifyUnmount";
+static NSString *const kPseudoEventTypeGlobal = @"Global";
 
 static NSString *const kEventDispositionDropped = @"Dropped";
 static NSString *const kEventDispositionProcessed = @"Processed";
@@ -103,6 +104,7 @@ NSString *const EventTypeToString(es_event_type_t eventType) {
     case ES_EVENT_TYPE_NOTIFY_RENAME: return kEventTypeNotifyRename;
     case ES_EVENT_TYPE_NOTIFY_UNLINK: return kEventTypeNotifyUnlink;
     case ES_EVENT_TYPE_NOTIFY_UNMOUNT: return kEventTypeNotifyUnmount;
+    case ES_EVENT_TYPE_LAST: return kPseudoEventTypeGlobal;
     default:
       [NSException raise:@"Invalid event type" format:@"Invalid event type: %d", eventType];
       return nil;
@@ -167,19 +169,24 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t inte
                      fieldNames:@[ @"Processor" ]
                        helpText:@"Events rate limited by each processor"];
 
-  SNTMetricCounter *faa_event_counts = [[SNTMetricSet sharedInstance]
+  SNTMetricCounter *faa_event_counts = [metric_set
     counterWithName:@"/santa/file_access_authorizer/log/count"
          fieldNames:@[
            @"config_version", @"access_type", @"rule_id", @"status", @"operation", @"decision"
          ]
            helpText:@"Count of times a log is emitted from the File Access Authorizer client"];
 
-  std::shared_ptr<Metrics> metrics =
-    std::make_shared<Metrics>(q, timer_source, interval, event_processing_times, event_counts,
-                              rate_limit_counts, faa_event_counts, metric_set, ^(Metrics *metrics) {
-                                SNTRegisterCoreMetrics();
-                                metrics->EstablishConnection();
-                              });
+  SNTMetricCounter *drop_counts =
+    [metric_set counterWithName:@"/santa/event_drop_count"
+                     fieldNames:@[ @"Processor", @"Event" ]
+                       helpText:@"Count of the number of drops for each event"];
+
+  std::shared_ptr<Metrics> metrics = std::make_shared<Metrics>(
+    q, timer_source, interval, event_processing_times, event_counts, rate_limit_counts,
+    faa_event_counts, drop_counts, metric_set, ^(Metrics *metrics) {
+      SNTRegisterCoreMetrics();
+      metrics->EstablishConnection();
+    });
 
   std::weak_ptr<Metrics> weak_metrics(metrics);
   dispatch_source_set_event_handler(metrics->timer_source_, ^{
@@ -197,7 +204,8 @@ std::shared_ptr<Metrics> Metrics::Create(SNTMetricSet *metric_set, uint64_t inte
 Metrics::Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
                  SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
                  SNTMetricCounter *rate_limit_counts, SNTMetricCounter *faa_event_counts,
-                 SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *))
+                 SNTMetricCounter *drop_counts, SNTMetricSet *metric_set,
+                 void (^run_on_first_start)(Metrics *))
     : q_(q),
       timer_source_(timer_source),
       interval_(interval),
@@ -205,6 +213,7 @@ Metrics::Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t in
       event_counts_(event_counts),
       rate_limit_counts_(rate_limit_counts),
       faa_event_counts_(faa_event_counts),
+      drop_counts_(drop_counts),
       metric_set_(metric_set),
       run_on_first_start_(run_on_first_start) {
   SetInterval(interval_);
@@ -285,7 +294,22 @@ void Metrics::FlushMetrics() {
         ]];
     }
 
+    for (auto &[key, stats] : drop_cache_) {
+      if (stats.drops > 0) {
+        NSString *processorName = ProcessorToString(std::get<Processor>(key));
+        NSString *eventName = EventTypeToString(std::get<es_event_type_t>(key));
+
+        [drop_counts_ incrementBy:stats.drops forFieldValues:@[ processorName, eventName ]];
+
+        // Reset drops to 0, but leave sequence number intact. Sequence numbers
+        // must persist so that accurate drops can be counted.
+        stats.drops = 0;
+      }
+    }
+
     // Reset the maps so the next cycle begins with a clean state
+    // IMPORTANT: Do not reset drop_cache_, the sequence numbers must persist
+    // for accurate accounting
     event_counts_cache_ = {};
     event_times_cache_ = {};
     rate_limit_counts_cache_ = {};
@@ -336,6 +360,41 @@ void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
   dispatch_sync(events_q_, ^{
     event_counts_cache_[EventCountTuple{processor, event_type, event_disposition}]++;
     event_times_cache_[EventTimesTuple{processor, event_type}] = nanos;
+  });
+}
+
+void Metrics::UpdateEventStats(Processor processor, const es_message_t *msg) {
+  dispatch_sync(events_q_, ^{
+    EventStatsTuple event_stats_key{processor, msg->event_type};
+    // NB: Using the invalid event type ES_EVENT_TYPE_LAST to store drop counts
+    // based on the global sequence number.
+    EventStatsTuple global_stats_key{processor, ES_EVENT_TYPE_LAST};
+
+    SequenceStats old_event_stats = drop_cache_[event_stats_key];
+    SequenceStats old_global_stats = drop_cache_[global_stats_key];
+
+    // Sequence number should always increment by 1.
+    // Drops detected if there is a difference between the current sequence
+    // number and the expected sequence number
+    int64_t new_event_drops = msg->seq_num - old_event_stats.next_seq_num;
+    int64_t new_global_drops = msg->global_seq_num - old_global_stats.next_seq_num;
+
+    // Only log one or the other, prefer the event specific log.
+    // For higher volume event types, we'll normally see the event-specific log eventually
+    // For lower volume event types, we may only see the global drop message
+    if (new_event_drops > 0) {
+      LOGD(@"Drops detected for client: %@, event: %@, drops: %llu", ProcessorToString(processor),
+           EventTypeToString(msg->event_type), new_event_drops);
+    } else if (new_global_drops > 0) {
+      LOGD(@"Drops detected globally for client: %@, drops: %llu", ProcessorToString(processor),
+           new_global_drops);
+    }
+
+    drop_cache_[event_stats_key] = SequenceStats{.next_seq_num = msg->seq_num + 1,
+                                                 .drops = old_event_stats.drops + new_event_drops};
+
+    drop_cache_[global_stats_key] = SequenceStats{
+      .next_seq_num = msg->global_seq_num + 1, .drops = old_global_stats.drops + new_global_drops};
   });
 }
 

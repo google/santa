@@ -26,6 +26,7 @@
 
 using santa::santad::EventCountTuple;
 using santa::santad::EventDisposition;
+using santa::santad::EventStatsTuple;
 using santa::santad::EventTimesTuple;
 using santa::santad::FileAccessEventCountTuple;
 using santa::santad::Processor;
@@ -47,12 +48,15 @@ class MetricsPeer : public Metrics {
   using Metrics::FlushMetrics;
 
   // Private member variables
+  using Metrics::drop_cache_;
   using Metrics::event_counts_cache_;
   using Metrics::event_times_cache_;
   using Metrics::faa_event_counts_cache_;
   using Metrics::interval_;
   using Metrics::rate_limit_counts_cache_;
   using Metrics::running_;
+
+  using Metrics::SequenceStats;
 };
 
 }  // namespace santa::santad
@@ -62,8 +66,14 @@ using santa::santad::EventTypeToString;
 using santa::santad::FileAccessMetricStatus;
 using santa::santad::FileAccessMetricStatusToString;
 using santa::santad::FileAccessPolicyDecisionToString;
+using santa::santad::Metrics;
 using santa::santad::MetricsPeer;
 using santa::santad::ProcessorToString;
+
+std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^block)(Metrics *)) {
+  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
+  return std::make_shared<MetricsPeer>(q, timer, 100, nil, nil, nil, nil, nil, nil, block);
+}
 
 @interface MetricsTest : XCTestCase
 @property dispatch_queue_t q;
@@ -79,11 +89,9 @@ using santa::santad::ProcessorToString;
 }
 
 - (void)testStartStop {
-  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
-                                               ^(santa::santad::Metrics *m) {
-                                                 dispatch_semaphore_signal(self.sema);
-                                               });
+  std::shared_ptr<MetricsPeer> metrics = CreateBasicMetricsPeer(self.q, ^(Metrics *) {
+    dispatch_semaphore_signal(self.sema);
+  });
 
   XCTAssertFalse(metrics->running_);
 
@@ -115,10 +123,8 @@ using santa::santad::ProcessorToString;
 }
 
 - (void)testSetInterval {
-  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
-                                               ^(santa::santad::Metrics *m){
-                                               });
+  std::shared_ptr<MetricsPeer> metrics = CreateBasicMetricsPeer(self.q, ^(Metrics *){
+                                                                });
 
   XCTAssertEqual(100, metrics->interval_);
 
@@ -164,6 +170,7 @@ using santa::santad::ProcessorToString;
     {ES_EVENT_TYPE_NOTIFY_RENAME, @"NotifyRename"},
     {ES_EVENT_TYPE_NOTIFY_UNLINK, @"NotifyUnlink"},
     {ES_EVENT_TYPE_NOTIFY_UNMOUNT, @"NotifyUnmount"},
+    {ES_EVENT_TYPE_LAST, @"Global"},
   };
 
   for (const auto &kv : eventTypeToString) {
@@ -224,11 +231,8 @@ using santa::santad::ProcessorToString;
 - (void)testSetEventMetrics {
   int64_t nanos = 1234;
 
-  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
-                                               ^(santa::santad::Metrics *m){
-                                                 // This block intentionally left blank
-                                               });
+  std::shared_ptr<MetricsPeer> metrics = CreateBasicMetricsPeer(self.q, ^(Metrics *){
+                                                                });
 
   // Initial maps are empty
   XCTAssertEqual(metrics->event_counts_cache_.size(), 0);
@@ -265,11 +269,8 @@ using santa::santad::ProcessorToString;
 }
 
 - (void)testSetRateLimitingMetrics {
-  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
-                                               ^(santa::santad::Metrics *m){
-                                                 // This block intentionally left blank
-                                               });
+  std::shared_ptr<MetricsPeer> metrics = CreateBasicMetricsPeer(self.q, ^(Metrics *){
+                                                                });
 
   // Initial map is empty
   XCTAssertEqual(metrics->rate_limit_counts_cache_.size(), 0);
@@ -291,11 +292,8 @@ using santa::santad::ProcessorToString;
 }
 
 - (void)testSetFileAccessEventMetrics {
-  dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
-  auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, nil, nil, nil, nil, nil,
-                                               ^(santa::santad::Metrics *m){
-                                                 // This block intentionally left blank
-                                               });
+  std::shared_ptr<MetricsPeer> metrics = CreateBasicMetricsPeer(self.q, ^(Metrics *){
+                                                                });
 
   // Initial map is empty
   XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 0);
@@ -326,10 +324,63 @@ using santa::santad::ProcessorToString;
   XCTAssertEqual(metrics->faa_event_counts_cache_[ruleXyz], 1);
 }
 
+- (void)testUpdateEventStats {
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, NULL);
+  esMsg.seq_num = 0;
+  esMsg.global_seq_num = 0;
+
+  std::shared_ptr<MetricsPeer> metrics = CreateBasicMetricsPeer(self.q, ^(Metrics *){
+                                                                });
+
+  EventStatsTuple eventStats{Processor::kRecorder, ES_EVENT_TYPE_NOTIFY_EXEC};
+  EventStatsTuple globalStats{Processor::kRecorder, ES_EVENT_TYPE_LAST};
+
+  // Map does not initially contain entries
+  XCTAssertEqual(0, metrics->drop_cache_.size());
+
+  metrics->UpdateEventStats(Processor::kRecorder, &esMsg);
+
+  // After the first update, 2 entries exist, one for the event, and one for global
+  XCTAssertEqual(2, metrics->drop_cache_.size());
+  XCTAssertEqual(1, metrics->drop_cache_[eventStats].next_seq_num);
+  XCTAssertEqual(0, metrics->drop_cache_[eventStats].drops);
+  XCTAssertEqual(1, metrics->drop_cache_[globalStats].next_seq_num);
+  XCTAssertEqual(0, metrics->drop_cache_[globalStats].drops);
+
+  // Increment sequence numbers by 1 and check that no drop was detected
+  esMsg.seq_num++;
+  esMsg.global_seq_num++;
+
+  metrics->UpdateEventStats(Processor::kRecorder, &esMsg);
+
+  XCTAssertEqual(2, metrics->drop_cache_.size());
+  XCTAssertEqual(2, metrics->drop_cache_[eventStats].next_seq_num);
+  XCTAssertEqual(0, metrics->drop_cache_[eventStats].drops);
+  XCTAssertEqual(2, metrics->drop_cache_[globalStats].next_seq_num);
+  XCTAssertEqual(0, metrics->drop_cache_[globalStats].drops);
+
+  // Now incremenet sequence numbers by a large amount to trigger drop detection
+  esMsg.seq_num += 10;
+  esMsg.global_seq_num += 10;
+
+  metrics->UpdateEventStats(Processor::kRecorder, &esMsg);
+
+  XCTAssertEqual(2, metrics->drop_cache_.size());
+  XCTAssertEqual(12, metrics->drop_cache_[eventStats].next_seq_num);
+  XCTAssertEqual(9, metrics->drop_cache_[eventStats].drops);
+  XCTAssertEqual(12, metrics->drop_cache_[globalStats].next_seq_num);
+  XCTAssertEqual(9, metrics->drop_cache_[globalStats].drops);
+}
+
 - (void)testFlushMetrics {
   id mockEventProcessingTimes = OCMClassMock([SNTMetricInt64Gauge class]);
   id mockEventCounts = OCMClassMock([SNTMetricCounter class]);
   int64_t nanos = 1234;
+
+  // Initial update will have non-zero sequence numbers, triggering drop detection
+  es_message_t esMsgWithDrops = MakeESMessage(ES_EVENT_TYPE_NOTIFY_EXEC, NULL);
+  esMsgWithDrops.seq_num = 123;
+  esMsgWithDrops.global_seq_num = 123;
 
   OCMStub([mockEventCounts incrementBy:0 forFieldValues:[OCMArg any]])
     .ignoringNonObjectArgs()
@@ -346,7 +397,7 @@ using santa::santad::ProcessorToString;
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.q);
   auto metrics =
     std::make_shared<MetricsPeer>(self.q, timer, 100, mockEventProcessingTimes, mockEventCounts,
-                                  mockEventCounts, mockEventCounts, nil,
+                                  mockEventCounts, mockEventCounts, mockEventCounts, nil,
                                   ^(santa::santad::Metrics *m){
                                     // This block intentionally left blank
                                   });
@@ -355,6 +406,7 @@ using santa::santad::ProcessorToString;
                            EventDisposition::kProcessed, nanos);
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN,
                            EventDisposition::kProcessed, nanos * 2);
+  metrics->UpdateEventStats(Processor::kRecorder, &esMsgWithDrops);
   metrics->SetRateLimitingMetrics(Processor::kFileAccessAuthorizer, 123);
   metrics->SetFileAccessEventMetrics("v1.0", "rule_abc", FileAccessMetricStatus::kOK,
                                      ES_EVENT_TYPE_AUTH_OPEN, FileAccessPolicyDecision::kDenied);
@@ -364,24 +416,40 @@ using santa::santad::ProcessorToString;
   XCTAssertEqual(metrics->event_times_cache_.size(), 2);
   XCTAssertEqual(metrics->rate_limit_counts_cache_.size(), 1);
   XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 1);
+  XCTAssertEqual(metrics->drop_cache_.size(), 2);
+
+  EventStatsTuple eventStats{Processor::kRecorder, esMsgWithDrops.event_type};
+  EventStatsTuple globalStats{Processor::kRecorder, ES_EVENT_TYPE_LAST};
+  XCTAssertEqual(metrics->drop_cache_[eventStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[eventStats].drops, 123);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].drops, 123);
 
   metrics->FlushMetrics();
 
-  // After setting two different event metrics, we expect the sema to be hit
-  // five times - twice each for the event counts and event times maps, and
-  // once for the rate limit count map.
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (1)");
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (2)");
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (3)");
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (4)");
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (5)");
-  XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush (6)");
+  // Expected call count is 8:
+  // 2: event counts
+  // 2: event times
+  // 1: rate limit
+  // 1: FAA
+  // 2: drops (1 event, 1 global)
+  int expectedCalls = 8;
+  for (int i = 0; i < expectedCalls; i++) {
+    XCTAssertSemaTrue(self.sema, 5, "Failed waiting for metrics to flush");
+  }
 
   // After a flush, map sizes should be reset to 0
   XCTAssertEqual(metrics->event_counts_cache_.size(), 0);
   XCTAssertEqual(metrics->event_times_cache_.size(), 0);
   XCTAssertEqual(metrics->rate_limit_counts_cache_.size(), 0);
   XCTAssertEqual(metrics->faa_event_counts_cache_.size(), 0);
+  // Note: The drop_cache_ should not be reset back to size 0. Instead, each
+  // entry has the sequence number left intact, but drop counts reset to 0.
+  XCTAssertEqual(metrics->drop_cache_.size(), 2);
+  XCTAssertEqual(metrics->drop_cache_[eventStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[eventStats].drops, 0);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].next_seq_num, 124);
+  XCTAssertEqual(metrics->drop_cache_[globalStats].drops, 0);
 }
 
 @end

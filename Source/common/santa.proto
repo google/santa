@@ -213,6 +213,27 @@ message CertificateInfo {
   optional string common_name = 2;
 }
 
+// Information about a single entitlement key/value pair
+message Entitlement {
+  // The name of an entitlement
+  optional string key = 1;
+
+  // The value of an entitlement
+  optional string value = 2;
+}
+
+// Information about entitlements
+message EntitlementInfo {
+  // Whether or not the set of reported entilements is complete or has been
+  // filtered (e.g. by configuration or clipped because too many to log).
+  optional bool entitlements_filtered = 1;
+
+  // The set of entitlements associated with the target executable
+  // Only top level keys are represented
+  // Values (including nested keys) are JSON serialized
+  repeated Entitlement entitlements = 2;
+}
+
 // Information about a process execution event
 message Execution {
   // The process that executed the new image (e.g. the process that called
@@ -286,6 +307,9 @@ message Execution {
   // The original path on disk of the target executable
   // Applies when executables are translocated
   optional string original_path = 15;
+
+  // Entitlement information about the target executbale
+  optional EntitlementInfo entitlement_info = 16;
 }
 
 // Information about a fork event
@@ -379,6 +403,11 @@ message Unlink {
 
   // The file being deleted
   optional FileInfo target = 2;
+}
+
+// Information about a processes codesigning invalidation event
+message CodesigningInvalidated {
+  optional ProcessInfoLight instigator = 1;
 }
 
 // Information about a link event
@@ -529,6 +558,7 @@ message SantaMessage {
     Bundle bundle = 19;
     Allowlist allowlist = 20;
     FileAccess file_access = 21;
+    CodesigningInvalidated codesigning_invalidated = 22;
   };
 }
 

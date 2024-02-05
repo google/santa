@@ -14,7 +14,7 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
-#include "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTCommonEnums.h"
 #include "Source/common/SNTLogging.h"
 #include "Source/common/SNTStoredEvent.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/BasicString.h"

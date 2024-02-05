@@ -251,6 +251,20 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   XCTAssertCppStringEqual(got, want);
 }
 
+- (void)testSerializeMessageCSInvalidated {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED, &proc);
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want =
+    "action=CODESIGNING_INVALIDATED"
+    "|pid=12|ppid=56|process=foo|processpath=foo"
+    "|uid=-2|user=nobody|gid=-1|group=nogroup|codesigning_flags=0x00000000|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
 - (void)testGetAccessTypeString {
   std::map<es_event_type_t, std::string> accessTypeToString = {
     {ES_EVENT_TYPE_AUTH_OPEN, "OPEN"},         {ES_EVENT_TYPE_AUTH_LINK, "LINK"},

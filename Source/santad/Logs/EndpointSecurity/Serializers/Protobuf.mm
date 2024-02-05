@@ -46,6 +46,7 @@ using google::protobuf::json::MessageToJsonString;
 using santa::common::NSStringToUTF8StringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
+using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedExchange;
 using santa::santad::event_providers::endpoint_security::EnrichedExec;
@@ -69,6 +70,9 @@ using santa::santad::logs::endpoint_security::serializers::Utilities::RealUser;
 namespace pbv1 = ::santa::pb::v1;
 
 namespace santa::santad::logs::endpoint_security::serializers {
+
+static constexpr NSUInteger kMaxEncodeObjectEntries = 64;
+static constexpr NSUInteger kMaxEncodeObjectLevels = 5;
 
 std::shared_ptr<Protobuf> Protobuf::Create(std::shared_ptr<EndpointSecurityAPI> esapi,
                                            SNTDecisionCache *decision_cache, bool json) {
@@ -448,6 +452,124 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
   return FinalizeProto(santa_msg);
 }
 
+id StandardizedNestedObjects(id obj, int level) {
+  if (level-- == 0) {
+    return [obj description];
+  }
+
+  if ([obj isKindOfClass:[NSNumber class]] || [obj isKindOfClass:[NSString class]]) {
+    return obj;
+  } else if ([obj isKindOfClass:[NSArray class]]) {
+    NSMutableArray *arr = [NSMutableArray array];
+    for (id item in obj) {
+      [arr addObject:StandardizedNestedObjects(item, level)];
+    }
+    return arr;
+  } else if ([obj isKindOfClass:[NSDictionary class]]) {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    for (id key in obj) {
+      [dict setObject:StandardizedNestedObjects(obj[key], level) forKey:key];
+    }
+    return dict;
+  } else if ([obj isKindOfClass:[NSData class]]) {
+    return [obj base64EncodedStringWithOptions:0];
+  } else if ([obj isKindOfClass:[NSDate class]]) {
+    return [NSISO8601DateFormatter stringFromDate:obj
+                                         timeZone:[NSTimeZone timeZoneWithAbbreviation:@"UTC"]
+                                    formatOptions:NSISO8601DateFormatWithFractionalSeconds |
+                                                  NSISO8601DateFormatWithInternetDateTime];
+
+  } else {
+    LOGW(@"Unexpected object encountered: %@", obj);
+    return [obj description];
+  }
+}
+
+void EncodeEntitlements(::pbv1::Execution *pb_exec, SNTCachedDecision *cd) {
+  ::pbv1::EntitlementInfo *pb_entitlement_info = pb_exec->mutable_entitlement_info();
+
+  pb_entitlement_info->set_entitlements_filtered(cd.entitlementsFiltered != NO);
+
+  if (!cd.entitlements) {
+    return;
+  }
+
+  // Since nested objects with varying types is hard for the API to serialize to
+  // JSON, first go through and standardize types to ensure better serialization
+  // as well as a consitent view of data.
+  NSDictionary *entitlements = StandardizedNestedObjects(cd.entitlements, kMaxEncodeObjectLevels);
+
+  __block int numObjectsToEncode = (int)std::min(kMaxEncodeObjectEntries, entitlements.count);
+
+  pb_entitlement_info->mutable_entitlements()->Reserve(numObjectsToEncode);
+
+  [entitlements enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+    if (numObjectsToEncode-- == 0) {
+      // Because entitlements are being clipped, ensure that we update that
+      // the set of entitlements were filtered.
+      pb_entitlement_info->set_entitlements_filtered(true);
+      *stop = YES;
+      return;
+    }
+
+    if (![key isKindOfClass:[NSString class]]) {
+      LOGW(@"Skipping entitlement key with unexpected key type: %@", key);
+      return;
+    }
+
+    NSError *err;
+    NSData *jsonData;
+    @try {
+      jsonData = [NSJSONSerialization dataWithJSONObject:obj
+                                                 options:NSJSONWritingFragmentsAllowed
+                                                   error:&err];
+    } @catch (NSException *e) {
+      LOGW(@"Encountered entitlement that cannot directly convert to JSON: %@: %@", key, obj);
+    }
+
+    if (!jsonData) {
+      // If the first attempt to serialize to JSON failed, get a string
+      // representation of the object via the `description` method and attempt
+      // to serialize that instead. Serialization can fail for a number of
+      // reasons, such as arrays including invalid types.
+      @try {
+        jsonData = [NSJSONSerialization dataWithJSONObject:[obj description]
+                                                   options:NSJSONWritingFragmentsAllowed
+                                                     error:&err];
+      } @catch (NSException *e) {
+        LOGW(@"Unable to create fallback string: %@: %@", key, obj);
+      }
+
+      if (!jsonData) {
+        @try {
+          // As a final fallback, simply serialize an error message so that the
+          // entitlement key is still logged.
+          jsonData = [NSJSONSerialization dataWithJSONObject:@"JSON Serialization Failed"
+                                                     options:NSJSONWritingFragmentsAllowed
+                                                       error:&err];
+        } @catch (NSException *e) {
+          // This shouldn't be able to happen...
+          LOGW(@"Failed to serialize fallback error message");
+        }
+      }
+    }
+
+    // This shouldn't be possible given the fallback code above. But handle it
+    // just in case to prevent a crash.
+    if (!jsonData) {
+      LOGW(@"Failed to create valid JSON for entitlement: %@", key);
+      return;
+    }
+
+    ::pbv1::Entitlement *pb_entitlement = pb_entitlement_info->add_entitlements();
+    EncodeString([pb_entitlement] { return pb_entitlement->mutable_key(); },
+                 NSStringToUTF8StringView(key));
+    EncodeString([pb_entitlement] { return pb_entitlement->mutable_value(); },
+                 NSStringToUTF8StringView([[NSString alloc] initWithData:jsonData
+                                                                encoding:NSUTF8StringEncoding]));
+  }];
+}
+
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCachedDecision *cd) {
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
@@ -524,6 +646,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
   NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
   EncodeString([pb_exec] { return pb_exec->mutable_original_path(); }, orig_path);
 
+  EncodeEntitlements(pb_exec, cd);
+
   return FinalizeProto(santa_msg);
 }
 
@@ -596,6 +720,17 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
   EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg.es_msg().version,
                          msg.es_msg().process, msg.instigator());
   EncodeFileInfo(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
+
+  return FinalizeProto(santa_msg);
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+
+  ::pbv1::CodesigningInvalidated *pb_cs_invalidated = santa_msg->mutable_codesigning_invalidated();
+  EncodeProcessInfoLight(pb_cs_invalidated->mutable_instigator(), msg.es_msg().version,
+                         msg.es_msg().process, msg.instigator());
 
   return FinalizeProto(santa_msg);
 }

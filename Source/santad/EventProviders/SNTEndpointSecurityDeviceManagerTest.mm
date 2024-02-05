@@ -55,6 +55,7 @@ class MockAuthResultCache : public AuthResultCache {
 - (void)logDiskAppeared:(NSDictionary *)props;
 - (BOOL)shouldOperateOnDisk:(DADiskRef)disk;
 - (void)performStartupTasks:(SNTDeviceManagerStartupPreferences)startupPrefs;
+- (uint32_t)updatedMountFlags:(struct statfs *)sfs;
 @end
 
 @interface SNTEndpointSecurityDeviceManagerTest : XCTestCase
@@ -131,7 +132,7 @@ class MockAuthResultCache : public AuthResultCache {
   id partialDeviceManager = OCMPartialMock(deviceManager);
   OCMStub([partialDeviceManager logDiskAppeared:OCMOCK_ANY]);
 
-  [self.mockDA insert:disk bsdName:test_mntfromname];
+  [self.mockDA insert:disk];
 
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
@@ -222,7 +223,8 @@ class MockAuthResultCache : public AuthResultCache {
              };
            }];
 
-  XCTAssertEqual(self.mockDA.wasRemounted, YES);
+  XCTAssertEqual(self.mockDA.insertedDevices.count, 1);
+  XCTAssertTrue([self.mockDA.insertedDevices allValues][0].wasMounted);
 
   [self waitForExpectations:@[ expectation ] timeout:60.0];
 
@@ -285,7 +287,8 @@ class MockAuthResultCache : public AuthResultCache {
              };
            }];
 
-  XCTAssertEqual(self.mockDA.wasRemounted, YES);
+  XCTAssertEqual(self.mockDA.insertedDevices.count, 1);
+  XCTAssertTrue([self.mockDA.insertedDevices allValues][0].wasMounted);
 
   [self waitForExpectations:@[ expectation ] timeout:10.0];
 
@@ -314,7 +317,8 @@ class MockAuthResultCache : public AuthResultCache {
              };
            }];
 
-  XCTAssertEqual(self.mockDA.wasRemounted, NO);
+  XCTAssertEqual(self.mockDA.insertedDevices.count, 1);
+  XCTAssertFalse([self.mockDA.insertedDevices allValues][0].wasMounted);
 }
 
 - (void)testNotifyUnmountFlushesCache {
@@ -368,38 +372,106 @@ class MockAuthResultCache : public AuthResultCache {
                                                     on:@"v2"
                                                  flags:@(MNT_RDONLY | MNT_NOEXEC | MNT_JOURNALED)]];
 
-  MockDADisk *disk1 = [[MockDADisk alloc] init];
-  MockDADisk *disk2 = [[MockDADisk alloc] init];
+  // Create mock disks with desired args
+  MockDADisk * (^CreateMockDisk)(NSString *, NSString *) =
+    ^MockDADisk *(NSString *mountOn, NSString *mountFrom) {
+      MockDADisk *mockDisk = [[MockDADisk alloc] init];
+      mockDisk.diskDescription = @{
+        @"DAVolumePath" : mountOn,      // f_mntonname,
+        @"DADevicePath" : mountOn,      // f_mntonname,
+        @"DAMediaBSDName" : mountFrom,  // f_mntfromname,
+      };
 
-  disk1.diskDescription = @{
-    @"DAVolumePath" : @"v1",    // f_mntonname,
-    @"DADevicePath" : @"v1",    // f_mntonname,
-    @"DAMediaBSDName" : @"d1",  // f_mntfromname,
-  };
+      return mockDisk;
+    };
 
-  disk2.diskDescription = @{
-    @"DAVolumePath" : @"v2",    // f_mntonname,
-    @"DADevicePath" : @"v2",    // f_mntonname,
-    @"DAMediaBSDName" : @"d2",  // f_mntfromname,
-  };
+  // Reset the Mock DA property, setup disks and remount args, then trigger the test
+  void (^PerformStartupTest)(NSArray<MockDADisk *> *, NSArray<NSString *> *,
+                             SNTDeviceManagerStartupPreferences) =
+    ^void(NSArray<MockDADisk *> *disks, NSArray<NSString *> *remountArgs,
+          SNTDeviceManagerStartupPreferences startupPref) {
+      [self.mockDA reset];
 
-  [self.mockDA insert:disk1 bsdName:disk1.diskDescription[@"DAMediaBSDName"]];
-  [self.mockDA insert:disk2 bsdName:disk2.diskDescription[@"DAMediaBSDName"]];
+      for (MockDADisk *d in disks) {
+        [self.mockDA insert:d];
+      }
 
-  [deviceManager performStartupTasks:SNTDeviceManagerStartupPreferencesUnmount];
+      deviceManager.remountArgs = remountArgs;
 
-  XCTAssertTrue(disk1.wasUnmounted);
-  XCTAssertFalse(disk2.wasUnmounted);
+      [deviceManager performStartupTasks:startupPref];
+    };
 
-  // Re-run tests with no remount args set, everything should be unmounted
-  disk1.wasUnmounted = NO;
-  disk2.wasUnmounted = NO;
-  deviceManager.remountArgs = nil;
+  // Unmount with RemountUSBMode set
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
 
-  [deviceManager performStartupTasks:SNTDeviceManagerStartupPreferencesUnmount];
+    PerformStartupTest(@[ disk1, disk2 ], @[ @"noexec", @"rdonly" ],
+                       SNTDeviceManagerStartupPreferencesUnmount);
 
-  XCTAssertTrue(disk1.wasUnmounted);
-  XCTAssertTrue(disk2.wasUnmounted);
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertFalse(disk1.wasMounted);
+    XCTAssertFalse(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+
+  // Unmount with RemountUSBMode nil
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
+
+    PerformStartupTest(@[ disk1, disk2 ], nil, SNTDeviceManagerStartupPreferencesUnmount);
+
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertFalse(disk1.wasMounted);
+    XCTAssertTrue(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+
+  // Remount with RemountUSBMode set
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
+
+    PerformStartupTest(@[ disk1, disk2 ], @[ @"noexec", @"rdonly" ],
+                       SNTDeviceManagerStartupPreferencesRemount);
+
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertTrue(disk1.wasMounted);
+    XCTAssertFalse(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+
+  // Unmount with RemountUSBMode nil
+  {
+    MockDADisk *disk1 = CreateMockDisk(@"v1", @"d1");
+    MockDADisk *disk2 = CreateMockDisk(@"v2", @"d2");
+
+    PerformStartupTest(@[ disk1, disk2 ], nil, SNTDeviceManagerStartupPreferencesRemount);
+
+    XCTAssertTrue(disk1.wasUnmounted);
+    XCTAssertFalse(disk1.wasMounted);
+    XCTAssertTrue(disk2.wasUnmounted);
+    XCTAssertFalse(disk2.wasMounted);
+  }
+}
+
+- (void)testUpdatedMountFlags {
+  struct statfs sfs;
+
+  strlcpy(sfs.f_fstypename, "foo", sizeof(sfs.f_fstypename));
+  sfs.f_flags = MNT_JOURNALED | MNT_NOSUID | MNT_NODEV;
+
+  SNTEndpointSecurityDeviceManager *deviceManager = [[SNTEndpointSecurityDeviceManager alloc] init];
+  deviceManager.remountArgs = @[ @"noexec", @"rdonly" ];
+
+  // For most filesystems, the flags are the union of what is in statfs and the remount args
+  XCTAssertEqual([deviceManager updatedMountFlags:&sfs], sfs.f_flags | MNT_RDONLY | MNT_NOEXEC);
+
+  // For APFS, flags are still unioned, but MNT_JOUNRNALED is cleared
+  strlcpy(sfs.f_fstypename, "apfs", sizeof(sfs.f_fstypename));
+  XCTAssertEqual([deviceManager updatedMountFlags:&sfs],
+                 (sfs.f_flags | MNT_RDONLY | MNT_NOEXEC) & ~MNT_JOURNALED);
 }
 
 - (void)testEnable {

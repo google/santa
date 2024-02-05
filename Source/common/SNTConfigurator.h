@@ -284,7 +284,7 @@
 
 ///
 /// Enabling this appends the Santa machine ID to the end of each log line. If nothing
-/// has been overriden, this is the host's UUID.
+/// has been overridden, this is the host's UUID.
 /// Defaults to NO.
 ///
 @property(readonly, nonatomic) BOOL enableMachineIDDecoration;
@@ -437,9 +437,9 @@
 @property(nonatomic) NSDate *ruleSyncLastSuccess;
 
 ///
-///  If YES a clean sync is required.
+///  Type of sync required (e.g. normal, clean, etc.).
 ///
-@property(nonatomic) BOOL syncCleanRequired;
+@property(nonatomic) SNTSyncType syncTypeRequired;
 
 #pragma mark - USB Settings
 
@@ -449,7 +449,7 @@
 @property(nonatomic) BOOL blockUSBMount;
 
 ///
-/// Comma-seperated `$ mount -o` arguments used for forced remounting of USB devices. Default
+/// Comma-separated `$ mount -o` arguments used for forced remounting of USB devices. Default
 /// to fully allow/deny without remounting if unset.
 ///
 @property(nonatomic) NSArray<NSString *> *remountUSBMode;
@@ -641,6 +641,18 @@
 /// Duration in seconds for metrics export timeout. Defaults to 30;
 ///
 @property(readonly, nonatomic) NSUInteger metricExportTimeout;
+
+///
+/// List of prefix strings for which individual entitlement keys with a matching
+/// prefix should not be logged.
+///
+@property(readonly, nonatomic) NSArray<NSString *> *entitlementsPrefixFilter;
+
+///
+/// List of TeamIDs for which entitlements should not be logged. Use the string
+/// "platform" to refer to platform binaries.
+///
+@property(readonly, nonatomic) NSArray<NSString *> *entitlementsTeamIDFilter;
 
 ///
 ///  Retrieve an initialized singleton configurator object using the default file path.

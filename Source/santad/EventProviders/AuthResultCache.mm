@@ -31,6 +31,10 @@ static NSString *const kFlushCacheReasonRulesChanged = @"RulesChanged";
 static NSString *const kFlushCacheReasonStaticRulesChanged = @"StaticRulesChanged";
 static NSString *const kFlushCacheReasonExplicitCommand = @"ExplicitCommand";
 static NSString *const kFlushCacheReasonFilesystemUnmounted = @"FilesystemUnmounted";
+static NSString *const kFlushCacheReasonEntitlementsPrefixFilterChanged =
+  @"EntitlementsPrefixFilterChanged";
+static NSString *const kFlushCacheReasonEntitlementsTeamIDFilterChanged =
+  @"EntitlementsTeamIDFilterChanged";
 
 namespace santa::santad::event_providers {
 
@@ -59,6 +63,10 @@ NSString *const FlushCacheReasonToString(FlushCacheReason reason) {
     case FlushCacheReason::kStaticRulesChanged: return kFlushCacheReasonStaticRulesChanged;
     case FlushCacheReason::kExplicitCommand: return kFlushCacheReasonExplicitCommand;
     case FlushCacheReason::kFilesystemUnmounted: return kFlushCacheReasonFilesystemUnmounted;
+    case FlushCacheReason::kEntitlementsPrefixFilterChanged:
+      return kFlushCacheReasonEntitlementsPrefixFilterChanged;
+    case FlushCacheReason::kEntitlementsTeamIDFilterChanged:
+      return kFlushCacheReasonEntitlementsTeamIDFilterChanged;
     default:
       [NSException raise:@"Invalid reason"
                   format:@"Unknown reason value: %d", static_cast<int>(reason)];

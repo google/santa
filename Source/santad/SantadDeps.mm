@@ -94,7 +94,9 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
                                            eventTable:event_table
                                         notifierQueue:notifier_queue
                                            syncdQueue:syncd_queue
-                                            ttyWriter:tty_writer];
+                                            ttyWriter:tty_writer
+                             entitlementsPrefixFilter:[configurator entitlementsPrefixFilter]
+                             entitlementsTeamIDFilter:[configurator entitlementsTeamIDFilter]];
   if (!exec_controller) {
     LOGE(@"Failed to initialize exec controller.");
     exit(EXIT_FAILURE);

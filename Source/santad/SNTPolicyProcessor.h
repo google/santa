@@ -36,22 +36,19 @@
 - (nullable instancetype)initWithRuleTable:(nonnull SNTRuleTable *)ruleTable;
 
 ///
-///  @param fileInfo A SNTFileInfo object.
-///  @param fileSHA256 The pre-calculated SHA256 hash for the file, can be nil. If nil the hash will
-///                    be calculated by this method from the filePath.
-///  @param certificateSHA256 The pre-calculated SHA256 hash of the leaf certificate. If nil, the
-///                    signature will be validated on the binary represented by fileInfo.
-///
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                        fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID
-                                         signingID:(nullable NSString *)signingID;
-
 ///  Convenience initializer. Will obtain the teamID and construct the signingID
 ///  identifier if able.
+///
+///  IMPORTANT: The lifetimes of arguments to `entitlementsFilterCallback` are
+///  only guaranteed for the duration of the call to the block. Do not perform
+///  any async processing without extending their lifetimes.
+///
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                     targetProcess:(nonnull const es_process_t *)targetProc;
+                                     targetProcess:(nonnull const es_process_t *)targetProc
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nonnull)(
+                            const char *_Nullable teamID,
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback;
 
 ///
 ///  A wrapper for decisionForFileInfo:fileSHA256:certificateSHA256:. This method is slower as it

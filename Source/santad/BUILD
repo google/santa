@@ -21,6 +21,9 @@ objc_library(
     name = "SNTRuleTable",
     srcs = ["DataLayer/SNTRuleTable.m"],
     hdrs = ["DataLayer/SNTRuleTable.h"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
     deps = [
         ":SNTDatabaseTable",
         "//Source/common:Platform",
@@ -199,6 +202,7 @@ objc_library(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeepCopy",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
@@ -236,10 +240,12 @@ objc_library(
         ":SNTSyncdQueue",
         ":TTYWriter",
         "//Source/common:BranchPrediction",
+        "//Source/common:PrefixTree",
         "//Source/common:SNTBlockMessage",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
+        "//Source/common:SNTDeepCopy",
         "//Source/common:SNTDropRootPrivs",
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
@@ -248,7 +254,9 @@ objc_library(
         "//Source/common:SNTStoredEvent",
         "//Source/common:SantaVnode",
         "//Source/common:String",
+        "//Source/common:Unit",
         "@MOLCodesignChecker",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -398,6 +406,7 @@ objc_library(
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTDeviceEvent",
         "//Source/common:SNTLogging",
+        "//Source/common:SNTMetricSet",
     ],
 )
 
@@ -469,7 +478,6 @@ objc_library(
         "bsm",
     ],
     deps = [
-        ":EndpointSecurityEnrichedTypes",
         ":EndpointSecurityMessage",
         ":SNTDecisionCache",
         "//Source/common:SantaCache",
