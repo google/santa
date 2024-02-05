@@ -21,11 +21,7 @@
 
 namespace santa::santad::process_tree {
 
-void InformFromESEvent(int client, ProcessTree &tree, const es_message_t *msg) {
-  if (!tree.Step(client, msg->mach_time)) {
-    return;
-  };
-
+void InformFromESEvent(ProcessTree &tree, const es_message_t *msg) {
   struct pid event_pid = PidFromAuditToken(msg->process->audit_token);
   auto proc = tree.Get(event_pid);
 
