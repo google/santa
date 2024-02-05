@@ -22,7 +22,7 @@
 namespace santa::santad::process_tree {
 
 void InformFromESEvent(ProcessTree &tree, const es_message_t *msg) {
-  struct pid event_pid = PidFromAuditToken(msg->process->audit_token);
+  struct Pid event_pid = PidFromAuditToken(msg->process->audit_token);
   auto proc = tree.Get(event_pid);
 
   if (!proc) {
@@ -42,9 +42,9 @@ void InformFromESEvent(ProcessTree &tree, const es_message_t *msg) {
       es_string_token_t executable = msg->event.exec.target->executable->path;
       tree.HandleExec(
         msg->mach_time, **proc, PidFromAuditToken(msg->event.exec.target->audit_token),
-        (struct program){.executable = std::string(executable.data, executable.length),
+        (struct Program){.executable = std::string(executable.data, executable.length),
                          .arguments = args},
-        (struct cred){
+        (struct Cred){
           .uid = audit_token_to_euid(msg->event.exec.target->audit_token),
           .gid = audit_token_to_egid(msg->event.exec.target->audit_token),
         });

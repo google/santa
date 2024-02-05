@@ -19,7 +19,7 @@
 namespace santa::santad::process_tree {
 
 // Create a struct pid from the given audit token.
-struct pid PidFromAuditToken(const audit_token_t &tok);
+struct Pid PidFromAuditToken(const audit_token_t &tok);
 
 }  // namespace santa::santad::process_tree
 
