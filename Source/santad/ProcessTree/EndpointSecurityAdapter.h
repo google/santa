@@ -16,7 +16,7 @@
 
 #include <EndpointSecurity/ESTypes.h>
 
-#include "Source/santad/ProcessTree/tree.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 
 namespace santa::santad::process_tree {
 
