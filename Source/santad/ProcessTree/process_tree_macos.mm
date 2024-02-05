@@ -97,7 +97,8 @@ absl::StatusOr<std::vector<std::string>> ProcessArgumentsForPID(pid_t pid) {
 }  // namespace
 
 struct Pid PidFromAuditToken(const audit_token_t &tok) {
-  return (struct Pid){.pid = audit_token_to_pid(tok), .pidversion = (uint64_t)audit_token_to_pidversion(tok)};
+  return (struct Pid){.pid = audit_token_to_pid(tok),
+                      .pidversion = (uint64_t)audit_token_to_pidversion(tok)};
 }
 
 absl::StatusOr<Process> LoadPID(pid_t pid) {
@@ -123,17 +124,17 @@ absl::StatusOr<Process> LoadPID(pid_t pid) {
   std::vector<std::string> args =
     ProcessArgumentsForPID(audit_token_to_pid(token)).value_or(std::vector<std::string>());
 
-  return Process(
-    (struct Pid){.pid = audit_token_to_pid(token), .pidversion = (uint64_t)audit_token_to_pidversion(token)},
-    (struct Cred){
-      .uid = audit_token_to_euid(token),
-      .gid = audit_token_to_egid(token),
-    },
-    std::make_shared<struct Program>((struct Program){
-      .executable = path,
-      .arguments = args,
-    }),
-    nullptr);
+  return Process((struct Pid){.pid = audit_token_to_pid(token),
+                              .pidversion = (uint64_t)audit_token_to_pidversion(token)},
+                 (struct Cred){
+                   .uid = audit_token_to_euid(token),
+                   .gid = audit_token_to_egid(token),
+                 },
+                 std::make_shared<struct Program>((struct Program){
+                   .executable = path,
+                   .arguments = args,
+                 }),
+                 nullptr);
 }
 
 absl::Status ProcessTree::Backfill() {
