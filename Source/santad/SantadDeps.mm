@@ -24,7 +24,7 @@
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
-#include "Source/santad/ProcessTree/tree.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 #import "Source/santad/SNTDatabaseController.h"
 #include "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/TTYWriter.h"
@@ -190,7 +190,7 @@ SantadDeps::SantadDeps(
       logger_(std::move(logger)),
       metrics_(std::move(metrics)),
       watch_items_(std::move(watch_items)),
-      enricher_(std::make_shared<::Enricher>()),
+      enricher_(std::make_shared<::Enricher>(process_tree)),
       auth_result_cache_(std::move(auth_result_cache)),
       control_connection_(control_connection),
       compiler_controller_(compiler_controller),
