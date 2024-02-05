@@ -139,13 +139,6 @@ static NSString *const kFCMAPIKey = @"FCMAPIKey";
 static NSString *const kEntitlementsPrefixFilterKey = @"EntitlementsPrefixFilter";
 static NSString *const kEntitlementsTeamIDFilterKey = @"EntitlementsTeamIDFilter";
 
-static NSString *const kEnabledProcessAnnotations = @"EnabledProcessAnnotations";
-
-// The keys managed by a sync server or mobileconfig.
-static NSString *const kClientModeKey = @"ClientMode";
-static NSString *const kFailClosedKey = @"FailClosed";
-static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
-static NSString *const kRemountUSBModeKey = @"RemountUSBMode";
 static NSString *const kOnStartUSBOptions = @"OnStartUSBOptions";
 
 static NSString *const kMetricFormat = @"MetricFormat";
@@ -153,6 +146,8 @@ static NSString *const kMetricURL = @"MetricURL";
 static NSString *const kMetricExportInterval = @"MetricExportInterval";
 static NSString *const kMetricExportTimeout = @"MetricExportTimeout";
 static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
+
+static NSString *const kEnabledProcessAnnotations = @"EnabledProcessAnnotations";
 
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";

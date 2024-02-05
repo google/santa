@@ -654,6 +654,7 @@
 /// "platform" to refer to platform binaries.
 ///
 @property(readonly, nonatomic) NSArray<NSString *> *entitlementsTeamIDFilter;
+
 ///
 /// List of enabled process annotations.
 ///
