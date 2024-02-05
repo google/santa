@@ -107,6 +107,32 @@ using namespace santa::santad::process_tree;
   XCTAssertEqual(child->effective_cred_, self.initProc->effective_cred_);
 }
 
+// We can't test the full backfill process, as retrieving information on
+// processes (with task_name_for_pid) requires privileges.
+// Test what we can by LoadPID'ing ourselves.
+- (void)testLoadPID {
+  auto proc = LoadPID(getpid()).value();
+
+  audit_token_t self_tok;
+  mach_msg_type_number_t count = TASK_AUDIT_TOKEN_COUNT;
+  XCTAssertEqual(task_info(mach_task_self(), TASK_AUDIT_TOKEN, (task_info_t)&self_tok, &count),
+                 KERN_SUCCESS);
+
+  XCTAssertEqual(proc.pid_.pid, audit_token_to_pid(self_tok));
+  XCTAssertEqual(proc.pid_.pidversion, audit_token_to_pidversion(self_tok));
+
+  XCTAssertEqual(proc.effective_cred_.uid, geteuid());
+  XCTAssertEqual(proc.effective_cred_.gid, getegid());
+
+  [[[NSProcessInfo processInfo] arguments]
+    enumerateObjectsUsingBlock:^(NSString *_Nonnull obj, NSUInteger idx, BOOL *_Nonnull stop) {
+      XCTAssertEqualObjects(@(proc.program_->arguments[idx].c_str()), obj);
+      if (idx == 0) {
+        XCTAssertEqualObjects(@(proc.program_->executable.c_str()), obj);
+      }
+    }];
+}
+
 - (void)testAnnotation {
   std::vector<std::unique_ptr<Annotator>> annotators{};
   annotators.emplace_back(std::make_unique<TestAnnotator>());
