@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package santa.pb.v1.process_tree;
+
+message Annotations {
+}
