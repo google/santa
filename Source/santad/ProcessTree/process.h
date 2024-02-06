@@ -14,8 +14,7 @@
 #ifndef SANTA__SANTAD_PROCESSTREE_PROCESS_H
 #define SANTA__SANTAD_PROCESSTREE_PROCESS_H
 
-#include <unistd.h>
-
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <typeindex>

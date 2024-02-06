@@ -46,7 +46,7 @@ class ProcessTree {
   // Inform the tree of a fork event, in which the parent process spawns a child
   // with the only difference between the two being the pid.
   void HandleFork(uint64_t timestamp, const Process &parent,
-                  const struct Pid child);
+                  struct Pid new_pid);
 
   // Inform the tree of an exec event, in which the program and potentially cred
   // of a Process change.
@@ -57,8 +57,8 @@ class ProcessTree {
   // It is a programming error to pass a new_pid such that
   // p.pid_.pid != new_pid.pid.
   void HandleExec(uint64_t timestamp, const Process &p,
-                  const struct Pid new_pid, const struct Program prog,
-                  const struct Cred c);
+                  struct Pid new_pid, struct Program prog,
+                  struct Cred c);
 
   // Inform the tree of a process exit.
   void HandleExit(uint64_t timestamp, const Process &p);
@@ -84,7 +84,7 @@ class ProcessTree {
 
   // Get the fully merged proto form of all annotations on the given process.
   std::optional<::santa::pb::v1::process_tree::Annotations> ExportAnnotations(
-      const struct Pid p);
+      struct Pid p);
 
   // Atomically get the slice of Processes going from the given process "up"
   // to the root. The root process has no parent. N.B. There may be more than
@@ -99,7 +99,7 @@ class ProcessTree {
 
   // Get the Process for the given pid in the tree if it exists.
   std::optional<std::shared_ptr<const Process>> Get(
-      const struct Pid target) const;
+      struct Pid target) const;
 
   // Traverse the tree from the given Process to its parent.
   std::shared_ptr<const Process> GetParent(const Process &p) const;
@@ -112,7 +112,7 @@ class ProcessTree {
  private:
   friend class ProcessTreeTestPeer;
   void BackfillInsertChildren(
-      absl::flat_hash_map<pid_t, std::vector<const Process>> &parent_map,
+      absl::flat_hash_map<pid_t, std::vector<Process>> &parent_map,
       std::shared_ptr<Process> parent, const Process &unlinked_proc);
 
   // Mark that an event with the given timestamp is being processed.
@@ -121,7 +121,7 @@ class ProcessTree {
   bool Step(uint64_t timestamp);
 
   std::optional<std::shared_ptr<Process>> GetLocked(
-      const struct Pid target) const ABSL_SHARED_LOCKS_REQUIRED(mtx_);
+      struct Pid target) const ABSL_SHARED_LOCKS_REQUIRED(mtx_);
 
   void DebugDumpLocked(std::ostream &stream, int depth, pid_t ppid) const;
 

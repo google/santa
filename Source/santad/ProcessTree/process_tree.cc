@@ -14,23 +14,28 @@
 #include "Source/santad/ProcessTree/process_tree.h"
 
 #include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <typeindex>
-#include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include "Source/santad/ProcessTree/annotations/annotator.h"
 #include "Source/santad/ProcessTree/process.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 
 namespace santa::santad::process_tree {
 
 void ProcessTree::BackfillInsertChildren(
-    absl::flat_hash_map<pid_t, std::vector<const Process>> &parent_map,
+    absl::flat_hash_map<pid_t, std::vector<Process>> &parent_map,
     std::shared_ptr<Process> parent, const Process &unlinked_proc) {
   auto proc = std::make_shared<Process>(
       unlinked_proc.pid_, unlinked_proc.effective_cred_,
@@ -188,7 +193,7 @@ void ProcessTree::AnnotateProcess(const Process &p,
 std::optional<::santa::pb::v1::process_tree::Annotations>
 ProcessTree::ExportAnnotations(const Pid p) {
   auto proc = Get(p);
-  if (!proc || (*proc)->annotations_.size() == 0) {
+  if (!proc || (*proc)->annotations_.empty()) {
     return std::nullopt;
   }
   ::santa::pb::v1::process_tree::Annotations a;
