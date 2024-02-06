@@ -13,6 +13,8 @@
 /// limitations under the License.
 #include "Source/santad/ProcessTree/process_tree.h"
 
+#include <sys/types.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
