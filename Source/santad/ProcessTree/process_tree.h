@@ -23,7 +23,6 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
-#include "process.h"
 
 namespace santa::santad::process_tree {
 
@@ -34,11 +33,12 @@ class ProcessTreeTestPeer;
 
 class ProcessTree {
  public:
-  explicit ProcessTree(std::vector<std::unique_ptr<Annotator>> &&annotators) : annotators_(std::move(annotators)), seen_timestamps_({}) {}
+  explicit ProcessTree(std::vector<std::unique_ptr<Annotator>> &&annotators)
+      : annotators_(std::move(annotators)), seen_timestamps_({}) {}
   ProcessTree(const ProcessTree &) = delete;
-  ProcessTree& operator=(const ProcessTree &) = delete;
+  ProcessTree &operator=(const ProcessTree &) = delete;
   ProcessTree(ProcessTree &&) = delete;
-  ProcessTree& operator=(ProcessTree &&) = delete;
+  ProcessTree &operator=(ProcessTree &&) = delete;
 
   // Initialize the tree with the processes currently running on the system.
   absl::Status Backfill();
@@ -83,7 +83,8 @@ class ProcessTree {
   std::optional<std::shared_ptr<const T>> GetAnnotation(const Process &p) const;
 
   // Get the fully merged proto form of all annotations on the given process.
-  std::optional<::santa::pb::v1::process_tree::Annotations> ExportAnnotations(const struct Pid p);
+  std::optional<::santa::pb::v1::process_tree::Annotations> ExportAnnotations(
+      const struct Pid p);
 
   // Atomically get the slice of Processes going from the given process "up"
   // to the root. The root process has no parent. N.B. There may be more than
@@ -150,9 +151,10 @@ std::optional<std::shared_ptr<const T>> ProcessTree::GetAnnotation(
   return std::dynamic_pointer_cast<const T>(it->second);
 }
 
-// Create a new tree, ensuring the provided annotations are valid and that backfill
-// is successful.
-absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(std::vector<std::unique_ptr<Annotator>> &&annotations);
+// Create a new tree, ensuring the provided annotations are valid and that
+// backfill is successful.
+absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(
+    std::vector<std::unique_ptr<Annotator>> &&annotations);
 
 // ProcessTokens provide a lifetime based approach to retaining processes
 // in a ProcessTree. When a token is created with a list of pids that may need

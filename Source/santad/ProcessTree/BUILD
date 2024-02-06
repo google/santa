@@ -1,9 +1,5 @@
-load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("//:helper.bzl", "santa_unit_test")
-
-package(
-    default_visibility = ["//:santa_package_group"],
-)
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 
 cc_library(
     name = "process",
@@ -14,6 +10,7 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
+    visibility = ["//:santa_package_group"],
 )
 
 objc_library(
@@ -34,16 +31,19 @@ objc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ],
+    visibility = ["//:santa_package_group"],
 )
 
 proto_library(
     name = "process_tree_proto",
     srcs = ["process_tree.proto"],
+    visibility = ["//:santa_package_group"],
 )
 
 cc_proto_library(
     name = "process_tree_cc_proto",
     deps = [":process_tree_proto"],
+    visibility = ["//:santa_package_group"],
 )
 
 objc_library(

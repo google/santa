@@ -83,9 +83,9 @@ class Process {
         refcnt_(0),
         tombstoned_(false) {}
   Process(const Process &) = default;
-  Process& operator=(const Process &) = delete;
+  Process &operator=(const Process &) = delete;
   Process(Process &&) = default;
-  Process& operator=(Process &&) = delete;
+  Process &operator=(Process &&) = delete;
 
   // Const "attributes" are public
   const struct Pid pid_;

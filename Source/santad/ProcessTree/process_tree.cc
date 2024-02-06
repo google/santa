@@ -114,7 +114,8 @@ bool ProcessTree::Step(uint64_t timestamp) {
     return false;
   }
 
-  // seen_timestamps_ is sorted, so only look for the value if it's possibly within the array.
+  // seen_timestamps_ is sorted, so only look for the value if it's possibly
+  // within the array.
   if (timestamp < seen_timestamps_.back()) {
     // TODO(nickmg): If array is made bigger, replace with a binary search.
     for (const auto seen_ts : seen_timestamps_) {
@@ -184,7 +185,8 @@ void ProcessTree::AnnotateProcess(const Process &p,
   map_[p.pid_]->annotations_.emplace(std::type_index(typeid(x)), std::move(a));
 }
 
-std::optional<::santa::pb::v1::process_tree::Annotations> ProcessTree::ExportAnnotations(const Pid p) {
+std::optional<::santa::pb::v1::process_tree::Annotations>
+ProcessTree::ExportAnnotations(const Pid p) {
   auto proc = Get(p);
   if (!proc || (*proc)->annotations_.size() == 0) {
     return std::nullopt;
@@ -268,11 +270,13 @@ void ProcessTree::DebugDumpLocked(std::ostream &stream, int depth,
 }
 #endif
 
-absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(std::vector<std::unique_ptr<Annotator>> &&annotations) {
+absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(
+    std::vector<std::unique_ptr<Annotator>> &&annotations) {
   absl::flat_hash_set<std::type_index> seen;
   for (const auto &annotator : annotations) {
     if (seen.count(std::type_index(typeid(annotator)))) {
-        return absl::InvalidArgumentError("Multiple annotators of the same class");
+      return absl::InvalidArgumentError(
+          "Multiple annotators of the same class");
     }
     seen.emplace(std::type_index(typeid(annotator)));
   }
