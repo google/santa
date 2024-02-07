@@ -4,7 +4,7 @@ package(
 
 cc_library(
     name = "annotator",
-    hdrs = ["Annotator.h"],
+    hdrs = ["annotator.h"],
     deps = [
         "//Source/santad/ProcessTree:process_tree_cc_proto",
     ],

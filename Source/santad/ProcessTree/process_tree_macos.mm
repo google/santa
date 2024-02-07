@@ -48,7 +48,7 @@ absl::Status ProcessTree::Backfill() {
   n_procs /= sizeof(pid_t);
   pids.resize(n_procs);
 
-  absl::flat_hash_map<pid_t, std::vector<const Process>> parent_map;
+  absl::flat_hash_map<pid_t, std::vector<Process>> parent_map;
   for (pid_t pid : pids) {
     auto proc_status = LoadPID(pid);
     if (proc_status.ok()) {

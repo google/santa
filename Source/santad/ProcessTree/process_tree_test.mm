@@ -67,7 +67,7 @@ using namespace santa::santad::process_tree;
 
 @interface ProcessTreeTest : XCTestCase
 @property std::shared_ptr<ProcessTreeTestPeer> tree;
-@property std::shared_ptr<const Process> init_proc;
+@property std::shared_ptr<const Process> initProc;
 @end
 
 @implementation ProcessTreeTest
@@ -75,22 +75,22 @@ using namespace santa::santad::process_tree;
 - (void)setUp {
   std::vector<std::unique_ptr<Annotator>> annotators{};
   self.tree = std::make_shared<ProcessTreeTestPeer>(std::move(annotators));
-  self.init_proc = self.tree->InsertInit();
+  self.initProc = self.tree->InsertInit();
 }
 
 - (void)testSimpleOps {
   uint64_t event_id = 1;
   // PID 1.1: fork() -> PID 2.2
   const struct Pid child_pid = {.pid = 2, .pidversion = 2};
-  self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
+  self.tree->HandleFork(event_id++, *self.initProc, child_pid);
 
   auto child_opt = self.tree->Get(child_pid);
   XCTAssertTrue(child_opt.has_value());
   std::shared_ptr<const Process> child = *child_opt;
   XCTAssertEqual(child->pid_, child_pid);
-  XCTAssertEqual(child->program_, self.init_proc->program_);
-  XCTAssertEqual(child->effective_cred_, self.init_proc->effective_cred_);
-  XCTAssertEqual(self.tree->GetParent(*child), self.init_proc);
+  XCTAssertEqual(child->program_, self.initProc->program_);
+  XCTAssertEqual(child->effective_cred_, self.initProc->effective_cred_);
+  XCTAssertEqual(self.tree->GetParent(*child), self.initProc);
 
   // PID 2.2: exec("/bin/bash") -> PID 2.3
   const struct Pid child_exec_pid = {.pid = 2, .pidversion = 3};
@@ -104,21 +104,21 @@ using namespace santa::santad::process_tree;
   child = *child_opt;
   XCTAssertEqual(child->pid_, child_exec_pid);
   XCTAssertEqual(*child->program_, child_exec_prog);
-  XCTAssertEqual(child->effective_cred_, self.init_proc->effective_cred_);
+  XCTAssertEqual(child->effective_cred_, self.initProc->effective_cred_);
 }
 
 - (void)testAnnotation {
   std::vector<std::unique_ptr<Annotator>> annotators{};
   annotators.emplace_back(std::make_unique<TestAnnotator>());
   self.tree = std::make_shared<ProcessTreeTestPeer>(std::move(annotators));
-  self.init_proc = self.tree->InsertInit();
+  self.initProc = self.tree->InsertInit();
 
   uint64_t event_id = 1;
   const struct Cred cred = {.uid = 0, .gid = 0};
 
   // PID 1.1: fork() -> PID 2.2
   const struct Pid login_pid = {.pid = 2, .pidversion = 2};
-  self.tree->HandleFork(event_id++, *self.init_proc, login_pid);
+  self.tree->HandleFork(event_id++, *self.initProc, login_pid);
 
   // PID 2.2: exec("/usr/bin/login") -> PID 2.3
   const struct Pid login_exec_pid = {.pid = 2, .pidversion = 3};
@@ -151,7 +151,7 @@ using namespace santa::santad::process_tree;
   uint64_t event_id = 1;
   const struct Pid child_pid = {.pid = 2, .pidversion = 2};
   {
-    self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
+    self.tree->HandleFork(event_id++, *self.initProc, child_pid);
     auto child = *self.tree->Get(child_pid);
     self.tree->HandleExit(event_id++, *child);
   }
@@ -165,12 +165,12 @@ using namespace santa::santad::process_tree;
   // ... until we step far enough into the future (32 events).
   struct Pid churn_pid = {.pid = 3, .pidversion = 3};
   for (int i = 0; i < 32; i++) {
-    self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
+    self.tree->HandleFork(event_id++, *self.initProc, churn_pid);
     churn_pid.pid++;
   }
 
   // Now when we try processing the next event, it should have fallen out of the tree.
-  self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
+  self.tree->HandleFork(event_id++, *self.initProc, churn_pid);
   {
     auto child = self.tree->Get(child_pid);
     XCTAssertFalse(child.has_value());
@@ -181,7 +181,7 @@ using namespace santa::santad::process_tree;
   uint64_t event_id = 1;
   const struct Pid child_pid = {.pid = 2, .pidversion = 2};
   {
-    self.tree->HandleFork(event_id++, *self.init_proc, child_pid);
+    self.tree->HandleFork(event_id++, *self.initProc, child_pid);
     auto child = *self.tree->Get(child_pid);
     self.tree->HandleExit(event_id++, *child);
   }
@@ -197,7 +197,7 @@ using namespace santa::santad::process_tree;
   // the child.
   for (int i = 0; i < 1000; i++) {
     struct Pid churn_pid = {.pid = 100 + i, .pidversion = (uint64_t)(100 + i)};
-    self.tree->HandleFork(event_id++, *self.init_proc, churn_pid);
+    self.tree->HandleFork(event_id++, *self.initProc, churn_pid);
     auto child = self.tree->Get(child_pid);
     XCTAssertTrue(child.has_value());
   }

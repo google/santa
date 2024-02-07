@@ -14,8 +14,9 @@
 #ifndef SANTA__SANTAD_PROCESSTREE_PROCESS_H
 #define SANTA__SANTAD_PROCESSTREE_PROCESS_H
 
-#include <unistd.h>
+#include <sys/types.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <typeindex>
@@ -83,9 +84,9 @@ class Process {
         refcnt_(0),
         tombstoned_(false) {}
   Process(const Process &) = default;
-  Process& operator=(const Process &) = delete;
+  Process &operator=(const Process &) = delete;
   Process(Process &&) = default;
-  Process& operator=(Process &&) = delete;
+  Process &operator=(Process &&) = delete;
 
   // Const "attributes" are public
   const struct Pid pid_;

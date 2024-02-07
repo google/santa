@@ -13,24 +13,31 @@
 /// limitations under the License.
 #include "Source/santad/ProcessTree/process_tree.h"
 
+#include <sys/types.h>
+
 #include <algorithm>
+#include <cassert>
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <typeindex>
-#include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include "Source/santad/ProcessTree/annotations/annotator.h"
 #include "Source/santad/ProcessTree/process.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 
 namespace santa::santad::process_tree {
 
 void ProcessTree::BackfillInsertChildren(
-    absl::flat_hash_map<pid_t, std::vector<const Process>> &parent_map,
+    absl::flat_hash_map<pid_t, std::vector<Process>> &parent_map,
     std::shared_ptr<Process> parent, const Process &unlinked_proc) {
   auto proc = std::make_shared<Process>(
       unlinked_proc.pid_, unlinked_proc.effective_cred_,
@@ -114,7 +121,8 @@ bool ProcessTree::Step(uint64_t timestamp) {
     return false;
   }
 
-  // seen_timestamps_ is sorted, so only look for the value if it's possibly within the array.
+  // seen_timestamps_ is sorted, so only look for the value if it's possibly
+  // within the array.
   if (timestamp < seen_timestamps_.back()) {
     // TODO(nickmg): If array is made bigger, replace with a binary search.
     for (const auto seen_ts : seen_timestamps_) {
@@ -184,9 +192,10 @@ void ProcessTree::AnnotateProcess(const Process &p,
   map_[p.pid_]->annotations_.emplace(std::type_index(typeid(x)), std::move(a));
 }
 
-std::optional<::santa::pb::v1::process_tree::Annotations> ProcessTree::ExportAnnotations(const Pid p) {
+std::optional<::santa::pb::v1::process_tree::Annotations>
+ProcessTree::ExportAnnotations(const Pid p) {
   auto proc = Get(p);
-  if (!proc || (*proc)->annotations_.size() == 0) {
+  if (!proc || (*proc)->annotations_.empty()) {
     return std::nullopt;
   }
   ::santa::pb::v1::process_tree::Annotations a;
@@ -268,11 +277,13 @@ void ProcessTree::DebugDumpLocked(std::ostream &stream, int depth,
 }
 #endif
 
-absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(std::vector<std::unique_ptr<Annotator>> &&annotations) {
+absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(
+    std::vector<std::unique_ptr<Annotator>> &&annotations) {
   absl::flat_hash_set<std::type_index> seen;
   for (const auto &annotator : annotations) {
     if (seen.count(std::type_index(typeid(annotator)))) {
-        return absl::InvalidArgumentError("Multiple annotators of the same class");
+      return absl::InvalidArgumentError(
+          "Multiple annotators of the same class");
     }
     seen.emplace(std::type_index(typeid(annotator)));
   }
