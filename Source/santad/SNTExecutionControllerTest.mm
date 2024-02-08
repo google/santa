@@ -557,7 +557,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self checkMetricCounters:kAllowUnknown expected:@1];
 }
 
-- (void)testUnreadableFailOpenLockdown {
+- (void)testUnreadableFailOpen {
   // Undo the default mocks
   [self.mockFileInfo stopMocking];
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
@@ -565,15 +565,13 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
-  // Lockdown mode, no fail-closed
   OCMStub([self.mockConfigurator failClosed]).andReturn(NO);
-  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
   [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
-- (void)testUnreadableFailClosedLockdown {
+- (void)testUnreadableFailClosed {
   // Undo the default mocks
   [self.mockFileInfo stopMocking];
   self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
@@ -581,28 +579,10 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   OCMStub([self.mockFileInfo alloc]).andReturn(nil);
   OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
 
-  // Lockdown mode, fail-closed
   OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
-  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeLockdown);
 
   [self validateExecEvent:SNTActionRespondDeny];
   [self checkMetricCounters:kDenyNoFileInfo expected:@1];
-}
-
-- (void)testUnreadableFailClosedMonitor {
-  // Undo the default mocks
-  [self.mockFileInfo stopMocking];
-  self.mockFileInfo = OCMClassMock([SNTFileInfo class]);
-
-  OCMStub([self.mockFileInfo alloc]).andReturn(nil);
-  OCMStub([self.mockFileInfo initWithPath:OCMOCK_ANY error:[OCMArg setTo:nil]]).andReturn(nil);
-
-  // Monitor mode, fail-closed
-  OCMStub([self.mockConfigurator failClosed]).andReturn(YES);
-  OCMStub([self.mockConfigurator clientMode]).andReturn(SNTClientModeMonitor);
-
-  [self validateExecEvent:SNTActionRespondAllow];
-  [self checkMetricCounters:kAllowNoFileInfo expected:@1];
 }
 
 - (void)testMissingShasum {
