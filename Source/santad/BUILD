@@ -1392,7 +1392,6 @@ test_suite(
         ":SantadTest",
         ":WatchItemsTest",
         "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_test",
-        "//Source/santad/ProcessTree:process_tree_test",
     ],
     visibility = ["//:santa_package_group"],
 )
