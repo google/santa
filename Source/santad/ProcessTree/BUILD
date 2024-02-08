@@ -1,16 +1,16 @@
-load("//:helper.bzl", "santa_unit_test")
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
+load("//:helper.bzl", "santa_unit_test")
 
 cc_library(
     name = "process",
     hdrs = ["process.h"],
+    visibility = ["//:santa_package_group"],
     deps = [
         "//Source/santad/ProcessTree/annotations:annotator",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
-    visibility = ["//:santa_package_group"],
 )
 
 objc_library(
@@ -23,6 +23,7 @@ objc_library(
     sdk_dylibs = [
         "bsm",
     ],
+    visibility = ["//:santa_package_group"],
     deps = [
         ":process",
         "//Source/santad/ProcessTree:process_tree_cc_proto",
@@ -33,7 +34,6 @@ objc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
-    visibility = ["//:santa_package_group"],
 )
 
 proto_library(
@@ -44,8 +44,8 @@ proto_library(
 
 cc_proto_library(
     name = "process_tree_cc_proto",
-    deps = [":process_tree_proto"],
     visibility = ["//:santa_package_group"],
+    deps = [":process_tree_proto"],
 )
 
 objc_library(
@@ -66,5 +66,6 @@ santa_unit_test(
         ":process",
         ":process_tree_test_helpers",
         "//Source/santad/ProcessTree/annotations:annotator",
+        "@com_google_absl//absl/synchronization",
     ],
 )

@@ -56,9 +56,8 @@ class ProcessTree {
   // N.B. new_pid is required as the "pid version" will have changed.
   // It is a programming error to pass a new_pid such that
   // p.pid_.pid != new_pid.pid.
-  void HandleExec(uint64_t timestamp, const Process &p,
-                  struct Pid new_pid, struct Program prog,
-                  struct Cred c);
+  void HandleExec(uint64_t timestamp, const Process &p, struct Pid new_pid,
+                  struct Program prog, struct Cred c);
 
   // Inform the tree of a process exit.
   void HandleExit(uint64_t timestamp, const Process &p);
@@ -98,8 +97,7 @@ class ProcessTree {
   void Iterate(std::function<void(std::shared_ptr<const Process>)> f) const;
 
   // Get the Process for the given pid in the tree if it exists.
-  std::optional<std::shared_ptr<const Process>> Get(
-      struct Pid target) const;
+  std::optional<std::shared_ptr<const Process>> Get(struct Pid target) const;
 
   // Traverse the tree from the given Process to its parent.
   std::shared_ptr<const Process> GetParent(const Process &p) const;
@@ -120,8 +118,8 @@ class ProcessTree {
   // updated with the results of the event.
   bool Step(uint64_t timestamp);
 
-  std::optional<std::shared_ptr<Process>> GetLocked(
-      struct Pid target) const ABSL_SHARED_LOCKS_REQUIRED(mtx_);
+  std::optional<std::shared_ptr<Process>> GetLocked(struct Pid target) const
+      ABSL_SHARED_LOCKS_REQUIRED(mtx_);
 
   void DebugDumpLocked(std::ostream &stream, int depth, pid_t ppid) const;
 
