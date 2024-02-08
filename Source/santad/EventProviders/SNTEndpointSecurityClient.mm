@@ -303,10 +303,6 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   int64_t processingBudget = [self computeBudgetForDeadline:msg->deadline
                                                 currentTime:mach_absolute_time()];
 
-  // TODO(mlw): How should we handle `deadlineNano <= timeout`. Will currently
-  // result in the deadline block being dispatched immediately (and therefore
-  // the event will be denied).
-
   // Workaround for compiler bug that doesn't properly close over variables
   __block Message processMsg = msg;
   __block Message deadlineMsg = msg;
@@ -318,7 +314,7 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
     }
 
     es_auth_result_t authResult;
-    if (self.configurator.failClosed && self.configurator.clientMode == SNTClientModeLockdown) {
+    if (self.configurator.failClosed) {
       authResult = ES_AUTH_RESULT_DENY;
     } else {
       authResult = ES_AUTH_RESULT_ALLOW;
