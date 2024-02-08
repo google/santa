@@ -30,6 +30,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityAuthorizer.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/Metrics.h"
 #import "Source/santad/SNTDatabaseController.h"
 #import "Source/santad/SNTDecisionCache.h"
@@ -44,6 +45,12 @@ static const char *kBlockedSigningID = "com.google.blocked_signing_id";
 static const char *kNoRuleMatchSigningID = "com.google.no_rule_match_signing_id";
 static const char *kBlockedTeamID = "EQHXZ8M8AV";
 static const char *kAllowedTeamID = "TJNVEKW352";
+
+@interface SNTEndpointSecurityClient (Testing)
+@property(nonatomic) double defaultBudget;
+@property(nonatomic) int64_t minAllowedHeadroom;
+@property(nonatomic) int64_t maxAllowedHeadroom;
+@end
 
 @interface SantadTest : XCTestCase
 @property id mockSNTDatabaseController;
@@ -118,12 +125,14 @@ static const char *kAllowedTeamID = "TJNVEKW352";
   es_file_t file = MakeESFile([binaryPath UTF8String], fileStat);
   es_process_t proc = MakeESProcess(&file);
   proc.is_platform_binary = false;
-  // Set a 6.5 second deadline for the message. The base SNTEndpointSecurityClient
-  // class leaves a 5 second buffer to auto-respond to messages. A 6 second
-  // deadline means there is a 1.5 second leeway given for the processing block
+
+  // Set a 6.5 second deadline for the message and clamp deadline headroom to 5
+  // seconds. This means there is a 1.5 second leeway given for the processing block
   // to finish its tasks and release the `Message`. This will add about 1 second
   // to the run time of each test case since each one must wait for the
   // deadline block to run and release the message.
+  authClient.minAllowedHeadroom = 5 * NSEC_PER_SEC;
+  authClient.maxAllowedHeadroom = 5 * NSEC_PER_SEC;
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth, 6500);
   esMsg.event.exec.target = &proc;
 

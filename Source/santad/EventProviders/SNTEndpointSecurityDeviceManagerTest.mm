@@ -34,6 +34,7 @@
 #import "Source/santad/EventProviders/DiskArbitrationTestUtil.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
+#import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 #include "Source/santad/Metrics.h"
 
@@ -49,6 +50,12 @@ class MockAuthResultCache : public AuthResultCache {
 
   MOCK_METHOD(void, FlushCache, (FlushCacheMode mode, FlushCacheReason reason));
 };
+
+@interface SNTEndpointSecurityClient (Testing)
+@property(nonatomic) double defaultBudget;
+@property(nonatomic) int64_t minAllowedHeadroom;
+@property(nonatomic) int64_t maxAllowedHeadroom;
+@end
 
 @interface SNTEndpointSecurityDeviceManager (Testing)
 - (instancetype)init;
@@ -136,6 +143,11 @@ class MockAuthResultCache : public AuthResultCache {
 
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
+
+  // This test is sensitive to ~1s processing budget.
+  // Set a 5s headroom and 6s deadline
+  deviceManager.minAllowedHeadroom = 5 * NSEC_PER_SEC;
+  deviceManager.maxAllowedHeadroom = 5 * NSEC_PER_SEC;
   es_message_t esMsg = MakeESMessage(eventType, &proc, ActionType::Auth, 6000);
 
   dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
