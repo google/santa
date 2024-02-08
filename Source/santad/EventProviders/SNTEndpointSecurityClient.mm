@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <sys/qos.h>
 
+#include <algorithm>
 #include <set>
 #include <string>
 #include <string_view>
@@ -48,7 +49,9 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
                                                 "/private/var/db/santa/events.db"};
 
 @interface SNTEndpointSecurityClient ()
-@property int64_t deadlineMarginMS;
+@property(nonatomic) double defaultBudget;
+@property(nonatomic) int64_t minAllowedHeadroom;
+@property(nonatomic) int64_t maxAllowedHeadroom;
 @property SNTConfigurator *configurator;
 @end
 
@@ -68,9 +71,17 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   if (self) {
     _esApi = std::move(esApi);
     _metrics = std::move(metrics);
-    _deadlineMarginMS = 5000;
     _configurator = [SNTConfigurator configurator];
     _processor = processor;
+
+    // Default event processing budget is 80% of the deadline time
+    _defaultBudget = 0.8;
+
+    // For events with small deadlines, clamp processing budget to 1s headroom
+    _minAllowedHeadroom = 1 * NSEC_PER_SEC;
+
+    // For events with large deadlines, clamp processing budget to 5s headroom
+    _maxAllowedHeadroom = 5 * NSEC_PER_SEC;
 
     _authQueue = dispatch_queue_create(
       "com.google.santa.daemon.auth_queue",
@@ -255,6 +266,24 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   });
 }
 
+- (int64_t)computeBudgetForDeadline:(uint64_t)deadline currentTime:(uint64_t)currentTime {
+  // First get how much time we have left
+  int64_t nanosUntilDeadline = (int64_t)MachTimeToNanos(deadline - currentTime);
+
+  // Compute the desired budget
+  int64_t budget = nanosUntilDeadline * self.defaultBudget;
+
+  // See how much headroom is left
+  int64_t headroom = nanosUntilDeadline - budget;
+
+  // Clamp headroom to maximize budget but ensure it's not so large as to not leave
+  // enough time to respond in an emergency.
+  headroom = std::clamp(headroom, self.minAllowedHeadroom, self.maxAllowedHeadroom);
+
+  // Return the processing budget given the allotted headroom
+  return nanosUntilDeadline - headroom;
+}
+
 - (void)processMessage:(Message &&)msg handler:(void (^)(const Message &))messageHandler {
   if (unlikely(msg->action_type != ES_ACTION_TYPE_AUTH)) {
     // This is a programming error
@@ -270,9 +299,8 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   dispatch_semaphore_signal(processingSema);
   dispatch_semaphore_t deadlineExpiredSema = dispatch_semaphore_create(0);
 
-  const uint64_t timeout = NSEC_PER_MSEC * (self.deadlineMarginMS);
-
-  uint64_t deadlineNano = MachTimeToNanos(msg->deadline - mach_absolute_time());
+  int64_t processingBudget = [self computeBudgetForDeadline:msg->deadline
+                                                currentTime:mach_absolute_time()];
 
   // TODO(mlw): How should we handle `deadlineNano <= timeout`. Will currently
   // result in the deadline block being dispatched immediately (and therefore
@@ -282,21 +310,20 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   __block Message processMsg = msg;
   __block Message deadlineMsg = msg;
 
-  dispatch_after(
-    dispatch_time(DISPATCH_TIME_NOW, deadlineNano - timeout), self->_authQueue, ^(void) {
-      if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
-        // Handler has already responded, nothing to do.
-        return;
-      }
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, processingBudget), self->_authQueue, ^(void) {
+    if (dispatch_semaphore_wait(processingSema, DISPATCH_TIME_NOW) != 0) {
+      // Handler has already responded, nothing to do.
+      return;
+    }
 
-      bool res = [self respondToMessage:deadlineMsg
-                         withAuthResult:ES_AUTH_RESULT_DENY
-                              cacheable:false];
+    bool res = [self respondToMessage:deadlineMsg
+                       withAuthResult:ES_AUTH_RESULT_DENY
+                            cacheable:false];
 
-      LOGE(@"SNTEndpointSecurityClient: deadline reached: deny pid=%d, event type: %d ret=%d",
-           audit_token_to_pid(deadlineMsg->process->audit_token), deadlineMsg->event_type, res);
-      dispatch_semaphore_signal(deadlineExpiredSema);
-    });
+    LOGE(@"SNTEndpointSecurityClient: deadline reached: deny pid=%d, event type: %d ret=%d",
+         audit_token_to_pid(deadlineMsg->process->audit_token), deadlineMsg->event_type, res);
+    dispatch_semaphore_signal(deadlineExpiredSema);
+  });
 
   dispatch_async(self->_authQueue, ^{
     messageHandler(processMsg);
