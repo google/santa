@@ -53,6 +53,7 @@ objc_library(
     srcs = ["process_tree_test_helpers.mm"],
     hdrs = ["process_tree_test_helpers.h"],
     deps = [
+        ":process",
         ":process_tree",
         "@com_google_absl//absl/synchronization",
     ],
