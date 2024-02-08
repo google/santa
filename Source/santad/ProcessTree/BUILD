@@ -25,6 +25,7 @@ objc_library(
     ],
     deps = [
         ":process",
+        "//Source/santad/ProcessTree:process_tree_cc_proto",
         "//Source/santad/ProcessTree/annotations:annotator",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
