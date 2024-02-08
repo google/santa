@@ -547,7 +547,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-- (void)testProcessMessageHandlerWithDeadlineTimeout {
+- (void)checkProcessMessageHandlerWithDeadlineTimeoutFailClosed:(BOOL)shouldFailClosed {
   // Set a es_message_t deadline of 750ms
   // Set a deadline leeway in the `SNTEndpointSecurityClient` of 500ms
   // Mock `RespondFlagsResult` which is called from the deadline handler
@@ -561,7 +561,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   //    deadlineSema is signaled (or a timeout waiting on deadlineSema)
   es_file_t proc_file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&proc_file);
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_OPEN, &proc, ActionType::Auth,
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth,
                                      750);  // 750ms timeout
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -570,12 +570,17 @@ using santa::santad::event_providers::endpoint_security::Message;
   dispatch_semaphore_t deadlineSema = dispatch_semaphore_create(0);
   dispatch_semaphore_t controlSema = dispatch_semaphore_create(0);
 
-  EXPECT_CALL(*mockESApi, RespondFlagsResult(testing::_, testing::_, 0x0, false))
+  es_auth_result_t wantAuthResult = shouldFailClosed ? ES_AUTH_RESULT_DENY : ES_AUTH_RESULT_ALLOW;
+  EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, wantAuthResult, false))
     .WillOnce(testing::InvokeWithoutArgs(^() {
       // Signal deadlineSema to let the handler block continue execution
       dispatch_semaphore_signal(deadlineSema);
       return true;
     }));
+
+  id mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([mockConfigurator configurator]).andReturn(mockConfigurator);
+  OCMExpect([mockConfigurator failClosed]).andReturn(shouldFailClosed);
 
   SNTEndpointSecurityClient *client =
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
@@ -613,7 +618,18 @@ using santa::santad::event_providers::endpoint_security::Message;
   // seeing the warning (but still possible)
   SleepMS(100);
 
+  XCTAssertTrue(OCMVerifyAll(mockConfigurator));
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+
+  [mockConfigurator stopMocking];
+}
+
+- (void)testProcessMessageHandlerWithDeadlineTimeoutFailClosed {
+  [self checkProcessMessageHandlerWithDeadlineTimeoutFailClosed:YES];
+}
+
+- (void)testProcessMessageHandlerWithDeadlineTimeoutFailOpen {
+  [self checkProcessMessageHandlerWithDeadlineTimeoutFailClosed:NO];
 }
 
 @end

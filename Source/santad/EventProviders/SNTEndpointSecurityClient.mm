@@ -316,9 +316,10 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
       return;
     }
 
-    bool res = [self respondToMessage:deadlineMsg
-                       withAuthResult:ES_AUTH_RESULT_DENY
-                            cacheable:false];
+    bool res = [self
+      respondToMessage:deadlineMsg
+        withAuthResult:self.configurator.failClosed ? ES_AUTH_RESULT_DENY : ES_AUTH_RESULT_ALLOW
+             cacheable:false];
 
     LOGE(@"SNTEndpointSecurityClient: deadline reached: deny pid=%d, event type: %d ret=%d",
          audit_token_to_pid(deadlineMsg->process->audit_token), deadlineMsg->event_type, res);
