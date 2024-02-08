@@ -230,7 +230,7 @@ static NSString *const kPrinterProxyPostMonterey =
   SNTFileInfo *binInfo = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetProc->executable
                                                                      error:&fileInfoError];
   if (unlikely(!binInfo)) {
-    if (config.failClosed && config.clientMode == SNTClientModeLockdown) {
+    if (config.failClosed) {
       LOGE(@"Failed to read file %@: %@ and denying action", @(targetProc->executable->path.data),
            fileInfoError.localizedDescription);
       postAction(SNTActionRespondDeny);

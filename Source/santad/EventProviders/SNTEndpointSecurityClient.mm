@@ -27,6 +27,7 @@
 #include <string_view>
 
 #include "Source/common/BranchPrediction.h"
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #include "Source/common/SystemResources.h"
@@ -302,10 +303,6 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
   int64_t processingBudget = [self computeBudgetForDeadline:msg->deadline
                                                 currentTime:mach_absolute_time()];
 
-  // TODO(mlw): How should we handle `deadlineNano <= timeout`. Will currently
-  // result in the deadline block being dispatched immediately (and therefore
-  // the event will be denied).
-
   // Workaround for compiler bug that doesn't properly close over variables
   __block Message processMsg = msg;
   __block Message deadlineMsg = msg;
@@ -316,12 +313,18 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
       return;
     }
 
-    bool res = [self respondToMessage:deadlineMsg
-                       withAuthResult:ES_AUTH_RESULT_DENY
-                            cacheable:false];
+    es_auth_result_t authResult;
+    if (self.configurator.failClosed) {
+      authResult = ES_AUTH_RESULT_DENY;
+    } else {
+      authResult = ES_AUTH_RESULT_ALLOW;
+    }
 
-    LOGE(@"SNTEndpointSecurityClient: deadline reached: deny pid=%d, event type: %d ret=%d",
-         audit_token_to_pid(deadlineMsg->process->audit_token), deadlineMsg->event_type, res);
+    bool res = [self respondToMessage:deadlineMsg withAuthResult:authResult cacheable:false];
+
+    LOGE(@"SNTEndpointSecurityClient: deadline reached: pid=%d, event type: %d, result: %@, ret=%d",
+         audit_token_to_pid(deadlineMsg->process->audit_token), deadlineMsg->event_type,
+         (authResult == ES_AUTH_RESULT_DENY ? @"denied" : @"allowed"), res);
     dispatch_semaphore_signal(deadlineExpiredSema);
   });
 

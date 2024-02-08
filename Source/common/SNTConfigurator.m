@@ -604,8 +604,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 
 - (BOOL)failClosed {
   NSNumber *n = self.configState[kFailClosedKey];
-  if (n) return [n boolValue];
-  return NO;
+  return [n boolValue] && self.clientMode == SNTClientModeLockdown;
 }
 
 - (BOOL)enableTransitiveRules {
