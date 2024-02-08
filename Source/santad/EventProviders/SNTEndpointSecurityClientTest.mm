@@ -23,6 +23,7 @@
 #include <memory>
 
 #import "Source/common/SNTConfigurator.h"
+#import "Source/common/SystemResources.h"
 #include "Source/common/TestUtils.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
@@ -48,8 +49,11 @@ using santa::santad::event_providers::endpoint_security::Message;
 - (void)handleMessage:(Message &&)esMsg
    recordEventMetrics:(void (^)(santa::santad::EventDisposition disposition))recordEventMetrics;
 - (BOOL)shouldHandleMessage:(const Message &)esMsg;
+- (int64_t)computeBudgetForDeadline:(uint64_t)deadline currentTime:(uint64_t)currentTime;
 
-@property int64_t deadlineMarginMS;
+@property(nonatomic) double defaultBudget;
+@property(nonatomic) int64_t minAllowedHeadroom;
+@property(nonatomic) int64_t maxAllowedHeadroom;
 @end
 
 @interface SNTEndpointSecurityClientTest : XCTestCase
@@ -503,6 +507,46 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
+- (void)testComputeBudgetForDeadlineCurrentTime {
+  auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
+
+  SNTEndpointSecurityClient *client =
+    [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
+                                             metrics:nullptr
+                                           processor:Processor::kUnknown];
+
+  // The test uses crafted values to make even numbers. Ensure the client has
+  // expected values for these properties so the test can fail early if not.
+  XCTAssertEqual(client.defaultBudget, 0.8);
+  XCTAssertEqual(client.minAllowedHeadroom, 1 * NSEC_PER_SEC);
+  XCTAssertEqual(client.maxAllowedHeadroom, 5 * NSEC_PER_SEC);
+
+  std::map<uint64_t, int64_t> deadlineMillisToBudgetMillis{
+    // Further out deadlines clamp processing budget to maxAllowedHeadroom
+    {45000, 40000},
+
+    // Closer deadlines allow a set percentage processing budget
+    {15000, 12000},
+
+    // Near deadlines clamp processing budget to minAllowedHeadroom
+    {3500, 2500}};
+
+  uint64_t curTime = mach_absolute_time();
+
+  for (const auto [deadlineMS, budgetMS] : deadlineMillisToBudgetMillis) {
+    int64_t got =
+      [client computeBudgetForDeadline:AddNanosecondsToMachTime(deadlineMS * NSEC_PER_MSEC, curTime)
+                           currentTime:curTime];
+
+    // Add 100us, then clip to ms to account for non-exact values due to timebase division
+    got = (int64_t)((double)(got + (100 * NSEC_PER_USEC)) / (double)NSEC_PER_MSEC);
+
+    XCTAssertEqual(got, budgetMS);
+  }
+
+  XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
+}
+
 - (void)testProcessMessageHandlerWithDeadlineTimeout {
   // Set a es_message_t deadline of 750ms
   // Set a deadline leeway in the `SNTEndpointSecurityClient` of 500ms
@@ -537,7 +581,10 @@ using santa::santad::event_providers::endpoint_security::Message;
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
                                              metrics:nullptr
                                            processor:Processor::kUnknown];
-  client.deadlineMarginMS = 500;
+
+  // Set min/max headroom the same to clamp the value for this test
+  client.minAllowedHeadroom = 500 * NSEC_PER_MSEC;
+  client.maxAllowedHeadroom = 500 * NSEC_PER_MSEC;
 
   {
     __block long result;
