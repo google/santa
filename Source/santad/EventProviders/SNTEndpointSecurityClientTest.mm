@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SystemResources.h"
 #include "Source/common/TestUtils.h"
@@ -547,7 +548,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-- (void)checkProcessMessageHandlerWithDeadlineTimeoutFailClosed:(BOOL)shouldFailClosed {
+- (void)checkDeadlineExpiredFailClosed:(BOOL)shouldFailClosed clientMode:(SNTClientMode)clientMode {
   // Set a es_message_t deadline of 750ms
   // Set a deadline leeway in the `SNTEndpointSecurityClient` of 500ms
   // Mock `RespondFlagsResult` which is called from the deadline handler
@@ -570,7 +571,9 @@ using santa::santad::event_providers::endpoint_security::Message;
   dispatch_semaphore_t deadlineSema = dispatch_semaphore_create(0);
   dispatch_semaphore_t controlSema = dispatch_semaphore_create(0);
 
-  es_auth_result_t wantAuthResult = shouldFailClosed ? ES_AUTH_RESULT_DENY : ES_AUTH_RESULT_ALLOW;
+  es_auth_result_t wantAuthResult = (shouldFailClosed && clientMode == SNTClientModeLockdown)
+                                      ? ES_AUTH_RESULT_DENY
+                                      : ES_AUTH_RESULT_ALLOW;
   EXPECT_CALL(*mockESApi, RespondAuthResult(testing::_, testing::_, wantAuthResult, false))
     .WillOnce(testing::InvokeWithoutArgs(^() {
       // Signal deadlineSema to let the handler block continue execution
@@ -581,6 +584,9 @@ using santa::santad::event_providers::endpoint_security::Message;
   id mockConfigurator = OCMClassMock([SNTConfigurator class]);
   OCMStub([mockConfigurator configurator]).andReturn(mockConfigurator);
   OCMExpect([mockConfigurator failClosed]).andReturn(shouldFailClosed);
+  if (shouldFailClosed) {
+    OCMExpect([mockConfigurator clientMode]).andReturn(clientMode);
+  }
 
   SNTEndpointSecurityClient *client =
     [[SNTEndpointSecurityClient alloc] initWithESAPI:mockESApi
@@ -624,12 +630,20 @@ using santa::santad::event_providers::endpoint_security::Message;
   [mockConfigurator stopMocking];
 }
 
-- (void)testProcessMessageHandlerWithDeadlineTimeoutFailClosed {
-  [self checkProcessMessageHandlerWithDeadlineTimeoutFailClosed:YES];
+- (void)testDeadlineExpiredFailClosedLockdown {
+  [self checkDeadlineExpiredFailClosed:YES clientMode:SNTClientModeLockdown];
 }
 
-- (void)testProcessMessageHandlerWithDeadlineTimeoutFailOpen {
-  [self checkProcessMessageHandlerWithDeadlineTimeoutFailClosed:NO];
+- (void)testDeadlineExpiredFailOpenLockdown {
+  [self checkDeadlineExpiredFailClosed:NO clientMode:SNTClientModeLockdown];
+}
+
+- (void)testDeadlineExpiredFailClosedMonitor {
+  [self checkDeadlineExpiredFailClosed:YES clientMode:SNTClientModeMonitor];
+}
+
+- (void)testDeadlineExpiredFailOpenMonitor {
+  [self checkDeadlineExpiredFailClosed:NO clientMode:SNTClientModeMonitor];
 }
 
 @end

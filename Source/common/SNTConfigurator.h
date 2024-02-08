@@ -40,7 +40,8 @@
 ///
 ///  Enable Fail Close mode. Defaults to NO.
 ///  This controls Santa's behavior when a failure occurs, such as an
-///  inability to read a file. By default, to prevent bugs or misconfiguration
+///  inability to read a file and as a default response when deadlines
+///  are about to expire. By default, to prevent bugs or misconfiguration
 ///  from rendering a machine inoperable Santa will fail open and allow
 ///  execution. With this setting enabled, Santa will fail closed if the client
 ///  is in LOCKDOWN mode, offering a higher level of security but with a higher
