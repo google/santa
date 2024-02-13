@@ -11,11 +11,12 @@
 /// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
-#ifndef SANTA__SANTAD_PROCESSTREE_ENDPOINTSECURITYADAPTER_H
-#define SANTA__SANTAD_PROCESSTREE_ENDPOINTSECURITYADAPTER_H
+#ifndef SANTA__SANTAD_PROCESSTREE_SNTENDPOINTSECURITYADAPTER_H
+#define SANTA__SANTAD_PROCESSTREE_SNTENDPOINTSECURITYADAPTER_H
 
-#include <EndpointSecurity/ESTypes.h>
+#include <EndpointSecurity/EndpointSecurity.h>
 
+#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
 namespace santa::santad::process_tree {
@@ -23,7 +24,12 @@ namespace santa::santad::process_tree {
 // Inform the tree of the ES event in msg.
 // This is idempotent on the tree, so can be called from multiple places with
 // the same msg.
-void InformFromESEvent(ProcessTree &tree, const es_message_t *msg);
+void InformFromESEvent(
+    ProcessTree &tree,
+    std::shared_ptr<
+        santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
+        esapi,
+    const es_message_t *msg);
 
 }  // namespace santa::santad::process_tree
 

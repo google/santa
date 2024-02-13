@@ -52,14 +52,15 @@ cc_proto_library(
 )
 
 objc_library(
-    name = "EndpointSecurityAdapter",
-    srcs = ["EndpointSecurityAdapter.mm"],
-    hdrs = ["EndpointSecurityAdapter.h"],
+    name = "SNTEndpointSecurityAdapter",
+    srcs = ["SNTEndpointSecurityAdapter.mm"],
+    hdrs = ["SNTEndpointSecurityAdapter.h"],
     sdk_dylibs = [
         "bsm",
     ],
     deps = [
         ":process_tree",
+        "//Source/santad:EndpointSecurityAPI",
         "@com_google_absl//absl/status:statusor",
     ],
 )
