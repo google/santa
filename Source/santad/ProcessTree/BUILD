@@ -61,6 +61,7 @@ objc_library(
     deps = [
         ":process_tree",
         "//Source/santad:EndpointSecurityAPI",
+        "//Source/santad:EndpointSecurityMessage",
         "@com_google_absl//absl/status:statusor",
     ],
 )

@@ -16,7 +16,7 @@
 
 #include <EndpointSecurity/EndpointSecurity.h>
 
-#include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
 namespace santa::santad::process_tree {
@@ -26,10 +26,7 @@ namespace santa::santad::process_tree {
 // the same msg.
 void InformFromESEvent(
     ProcessTree &tree,
-    std::shared_ptr<
-        santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
-        esapi,
-    const es_message_t *msg);
+    const santa::santad::event_providers::endpoint_security::Message &msg);
 
 }  // namespace santa::santad::process_tree
 

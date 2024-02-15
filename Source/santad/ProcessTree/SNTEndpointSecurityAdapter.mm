@@ -18,22 +18,25 @@
 #include <bsm/libbsm.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree_macos.h"
 #include "absl/status/statusor.h"
 
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa::santad::process_tree {
 
-void InformFromESEvent(ProcessTree &tree, std::shared_ptr<EndpointSecurityAPI> esapi,
-                       const es_message_t *msg) {
+void InformFromESEvent(ProcessTree &tree, const Message &msg) {
   struct Pid event_pid = PidFromAuditToken(msg->process->audit_token);
   auto proc = tree.Get(event_pid);
 
   if (!proc) {
     return;
   }
+
+  std::shared_ptr<EndpointSecurityAPI> esapi = msg.ESAPI();
 
   switch (msg->event_type) {
     case ES_EVENT_TYPE_AUTH_EXEC:
