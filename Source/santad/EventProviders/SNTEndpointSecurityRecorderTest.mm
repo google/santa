@@ -50,6 +50,7 @@ using santa::santad::logs::endpoint_security::Logger;
 
 class MockEnricher : public Enricher {
  public:
+  MockEnricher() : Enricher(nullptr) {};
   MOCK_METHOD(std::unique_ptr<EnrichedMessage>, Enrich, (Message &&));
 };
 
@@ -157,7 +158,8 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
                                               enricher:mockEnricher
                                     compilerController:mockCC
                                        authResultCache:mockAuthCache
-                                            prefixTree:prefixTree];
+                                            prefixTree:prefixTree
+                                           processTree:nullptr];
 
   testBlock(&esMsg, mockESApi, mockCC, recorderClient, prefixTree, &sema, &semaMetrics);
 

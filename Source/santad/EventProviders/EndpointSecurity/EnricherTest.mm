@@ -26,7 +26,7 @@ using santa::santad::event_providers::endpoint_security::Enricher;
 @implementation EnricherTest
 
 - (void)testUidGid {
-  Enricher enricher;
+  Enricher enricher(nullptr);
 
   std::optional<std::shared_ptr<std::string>> user = enricher.UsernameForUID(NOBODY_UID);
   XCTAssertTrue(user.has_value());

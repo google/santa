@@ -88,12 +88,13 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
 }
 
 EnrichedProcess Enricher::Enrich(const es_process_t &es_proc, EnrichOptions options) {
+
   return EnrichedProcess(UsernameForUID(audit_token_to_euid(es_proc.audit_token), options),
                          UsernameForGID(audit_token_to_egid(es_proc.audit_token), options),
                          UsernameForUID(audit_token_to_ruid(es_proc.audit_token), options),
                          UsernameForGID(audit_token_to_rgid(es_proc.audit_token), options),
                          Enrich(*es_proc.executable, options),
-                         process_tree_->ExportAnnotations(process_tree::PidFromAuditToken(es_proc.audit_token)));
+                         process_tree_ ? process_tree_->ExportAnnotations(process_tree::PidFromAuditToken(es_proc.audit_token)) : std::nullopt);
 }
 
 EnrichedFile Enricher::Enrich(const es_file_t &es_file, EnrichOptions options) {

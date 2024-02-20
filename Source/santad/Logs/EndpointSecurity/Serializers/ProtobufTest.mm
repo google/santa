@@ -224,7 +224,7 @@ void SerializeAndCheck(es_event_type_t eventType,
     messageSetup(mockESApi, &esMsg);
 
     std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, decisionCache, json);
-    std::unique_ptr<EnrichedMessage> enrichedMsg = Enricher().Enrich(Message(mockESApi, &esMsg));
+    std::unique_ptr<EnrichedMessage> enrichedMsg = Enricher(nullptr).Enrich(Message(mockESApi, &esMsg));
 
     // Copy some values we need to check later before the object is moved out of this funciton
     struct timespec enrichmentTime;
@@ -814,7 +814,7 @@ void SerializeAndCheckNonESEvents(
     },
     ^std::vector<uint8_t>(std::shared_ptr<Serializer> serializer, const Message &msg) {
       return serializer->SerializeFileAccess("policy_version", "policy_name", msg,
-                                             Enricher().Enrich(*msg->process), "target",
+                                             Enricher(nullptr).Enrich(*msg->process), "target",
                                              FileAccessPolicyDecision::kDenied);
     });
 }

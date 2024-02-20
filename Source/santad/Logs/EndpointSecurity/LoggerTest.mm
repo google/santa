@@ -146,7 +146,8 @@ class MockWriter : public Null {
     auto enrichedMsg = std::make_unique<EnrichedMessage>(
       EnrichedClose(Message(mockESApi, &msg),
                     EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
-                                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
+                                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt),
+                                    std::nullopt),
                     EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
 
     EXPECT_CALL(*mockSerializer, SerializeMessage(testing::A<const EnrichedClose &>())).Times(1);
@@ -231,7 +232,8 @@ class MockWriter : public Null {
   Logger(mockSerializer, mockWriter)
     .LogFileAccess("v1", "name", Message(mockESApi, &msg),
                    EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
-                                   EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
+                                   EnrichedFile(std::nullopt, std::nullopt, std::nullopt),
+                                   std::nullopt),
                    "tgt", FileAccessPolicyDecision::kDenied);
 
   XCTBubbleMockVerifyAndClearExpectations(mockSerializer.get());
