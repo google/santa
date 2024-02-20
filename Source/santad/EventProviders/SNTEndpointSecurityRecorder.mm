@@ -150,7 +150,6 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       }
 
       if (self->_prefixTree->HasPrefix(targetFile->path.data)) {
-        NSLog(@"doing drop from prefix tree...");
         recordEventMetrics(EventDisposition::kDropped);
         return;
       }
