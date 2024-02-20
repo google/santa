@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santad/EventProviders/SNTEndpointSecurityRecorder.h"
+#include <os/base.h>
 
 #include <EndpointSecurity/EndpointSecurity.h>
 
@@ -37,6 +38,7 @@ using santa::santad::logs::endpoint_security::Logger;
 es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   switch (msg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE: return msg->event.close.target;
+    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: return msg->event.exchangedata.file1;
     case ES_EVENT_TYPE_NOTIFY_LINK: return msg->event.link.source;
     case ES_EVENT_TYPE_NOTIFY_RENAME: return msg->event.rename.source;
     case ES_EVENT_TYPE_NOTIFY_UNLINK: return msg->event.unlink.target;
@@ -88,34 +90,47 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   // Pre-enrichment processing
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
-      BOOL shouldLogClose = esMsg->event.close.modified;
-
-#if HAVE_MACOS_13
-      if (@available(macOS 13.5, *)) {
-        // As of macSO 13.0 we have a new field for if a file was mmaped with
-        // write permissions on close events. However it did not work until
-        // 13.5.
-        //
-        // If something was mmaped writable it was probably written to. Often
-        // developer tools do this to avoid lots of write syscalls, e.g. go's
-        // tool chain. We log this so the compiler controller can take that into
-        // account.
-        shouldLogClose |= esMsg->event.close.was_mapped_writable;
-      }
-#endif
-
-      if (!shouldLogClose) {
-        // Ignore unmodified files
-        // Note: Do not record metrics in this case. These are not considered "drops"
-        // because this is not a failure case. Ideally we would tell ES to not send
-        // these events in the first place but no such mechanism currently exists.
+      // Only handle CLOSE events if the file was modified or mapped writable.
+      // If something was mmaped writable it, assume it was probably written to.
+      // developer tools do this to avoid lots of write syscalls, e.g. go's
+      // tool chain. We log this so the compiler controller can take that into
+      // account.
+      //
+      // Note: Do not record metrics in this case. These are not considered "drops"
+      // because this is not a failure case. Ideally we would tell ES to not send
+      // these events in the first place but no such mechanism currently exists.
+      //
+      // Note: `was_mapped_writable` was introduced in macOS 13.0, however due to a
+      // bug in ES, it only worked for certain conditions until macOS 13.5 (FB12094635).
+      if (!(esMsg->event.close.modified ||
+            (esMsg->version >= 6 && esMsg->event.close.was_mapped_writable))) {
         return;
       }
 
       self->_authResultCache->RemoveFromCache(esMsg->event.close.target);
 
+      break;
+    }
+
+    default: break;
+  }
+
+  [self.compilerController handleEvent:esMsg withLogger:self->_logger];
+
+  switch (esMsg->event_type) {
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: OS_FALLTHROUGH;
+    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: OS_FALLTHROUGH;
+    case ES_EVENT_TYPE_NOTIFY_LINK: OS_FALLTHROUGH;
+    case ES_EVENT_TYPE_NOTIFY_RENAME: OS_FALLTHROUGH;
+    case ES_EVENT_TYPE_NOTIFY_UNLINK: {
+      es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
+
+      if (!targetFile) {
+        break;
+      }
+
       // Only log file changes that match the given regex
-      NSString *targetPath = santa::common::StringToNSString(esMsg->event.close.target->path.data);
+      NSString *targetPath = santa::common::StringToNSString(targetFile->path.data);
       if (![[self.configurator fileChangesRegex]
             numberOfMatchesInString:targetPath
                             options:0
@@ -127,25 +142,25 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
         return;
       }
 
+      if (self->_prefixTree->HasPrefix(targetFile->path.data)) {
+        NSLog(@"doing drop from prefix tree...");
+        recordEventMetrics(EventDisposition::kDropped);
+        return;
+      }
+
       break;
     }
+
+    case ES_EVENT_TYPE_NOTIFY_FORK: OS_FALLTHROUGH;
+    case ES_EVENT_TYPE_NOTIFY_EXIT: {
+      if (self.configurator.enableForkAndExitLogging == NO) {
+        recordEventMetrics(EventDisposition::kDropped);
+        return;
+      }
+      break;
+    }
+
     default: break;
-  }
-
-  [self.compilerController handleEvent:esMsg withLogger:self->_logger];
-
-  if ((esMsg->event_type == ES_EVENT_TYPE_NOTIFY_FORK ||
-       esMsg->event_type == ES_EVENT_TYPE_NOTIFY_EXIT) &&
-      self.configurator.enableForkAndExitLogging == NO) {
-    recordEventMetrics(EventDisposition::kDropped);
-    return;
-  }
-
-  // Filter file op events matching the prefix tree.
-  es_file_t *targetFile = GetTargetFileForPrefixTree(&(*esMsg));
-  if (targetFile != NULL && self->_prefixTree->HasPrefix(targetFile->path.data)) {
-    recordEventMetrics(EventDisposition::kDropped);
-    return;
   }
 
   // Enrich the message inline with the ES handler block to capture enrichment
