@@ -90,20 +90,27 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   // Pre-enrichment processing
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE: {
-      // Only handle CLOSE events if the file was modified or mapped writable.
-      // If something was mmaped writable it, assume it was probably written to.
+      BOOL shouldLogClose = esMsg->event.close.modified;
+
+#if HAVE_MACOS_13
+      // As of macSO 13.0 we have a new field for if a file was mmaped with
+      // write permissions on close events. However due to a bug in ES, it
+      // only worked for certain conditions until macOS 13.5 (FB12094635).
+      //
+      // If something was mmaped writable it was probably written to. Often
       // developer tools do this to avoid lots of write syscalls, e.g. go's
       // tool chain. We log this so the compiler controller can take that into
       // account.
-      //
-      // Note: Do not record metrics in this case. These are not considered "drops"
-      // because this is not a failure case. Ideally we would tell ES to not send
-      // these events in the first place but no such mechanism currently exists.
-      //
-      // Note: `was_mapped_writable` was introduced in macOS 13.0, however due to a
-      // bug in ES, it only worked for certain conditions until macOS 13.5 (FB12094635).
-      if (!(esMsg->event.close.modified ||
-            (esMsg->version >= 6 && esMsg->event.close.was_mapped_writable))) {
+      if (esMsg->version >= 6) {
+        shouldLogClose |= esMsg->event.close.was_mapped_writable;
+      }
+#endif
+
+      if (!shouldLogClose) {
+        // Ignore unmodified files
+        // Note: Do not record metrics in this case. These are not considered "drops"
+        // because this is not a failure case. Ideally we would tell ES to not send
+        // these events in the first place but no such mechanism currently exists.
         return;
       }
 
