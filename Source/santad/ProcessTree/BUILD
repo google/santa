@@ -19,7 +19,10 @@ objc_library(
         "process_tree.cc",
         "process_tree_macos.mm",
     ],
-    hdrs = ["process_tree.h"],
+    hdrs = [
+        "process_tree.h",
+        "process_tree_macos.h",
+    ],
     sdk_dylibs = [
         "bsm",
     ],
@@ -46,6 +49,21 @@ cc_proto_library(
     name = "process_tree_cc_proto",
     visibility = ["//:santa_package_group"],
     deps = [":process_tree_proto"],
+)
+
+objc_library(
+    name = "SNTEndpointSecurityAdapter",
+    srcs = ["SNTEndpointSecurityAdapter.mm"],
+    hdrs = ["SNTEndpointSecurityAdapter.h"],
+    sdk_dylibs = [
+        "bsm",
+    ],
+    deps = [
+        ":process_tree",
+        "//Source/santad:EndpointSecurityAPI",
+        "//Source/santad:EndpointSecurityMessage",
+        "@com_google_absl//absl/status:statusor",
+    ],
 )
 
 objc_library(
