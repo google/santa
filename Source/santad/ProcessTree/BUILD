@@ -64,6 +64,7 @@ objc_library(
         "//Source/santad:EndpointSecurityMessage",
         "@com_google_absl//absl/status:statusor",
     ],
+    visibility = ["//:santa_package_group"],
 )
 
 objc_library(

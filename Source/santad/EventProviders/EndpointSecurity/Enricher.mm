@@ -27,7 +27,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree_macos.h"
-#include "Source/santad/ProcessTree/EndpointSecurityAdapter.h"
+#include "Source/santad/ProcessTree/SNTEndpointSecurityAdapter.h"
 
 namespace santa::santad::event_providers::endpoint_security {
 

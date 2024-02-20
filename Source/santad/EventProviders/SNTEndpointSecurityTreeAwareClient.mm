@@ -20,7 +20,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree_macos.h"
-#include "Source/santad/ProcessTree/EndpointSecurityAdapter.h"
+#include "Source/santad/ProcessTree/SNTEndpointSecurityAdapter.h"
 #include "Source/santad/Metrics.h"
 
 using santa::santad::EventDisposition;
@@ -74,7 +74,7 @@ using santa::santad::event_providers::endpoint_security::Message;
     case ES_EVENT_TYPE_NOTIFY_EXEC:
     case ES_EVENT_TYPE_AUTH_EXEC:
     case ES_EVENT_TYPE_NOTIFY_EXIT:
-      santa::santad::process_tree::InformFromESEvent(*_processTree, &*esMsg);
+      santa::santad::process_tree::InformFromESEvent(*_processTree, esMsg);
       break;
     default:
       break;
