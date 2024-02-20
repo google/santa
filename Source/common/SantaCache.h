@@ -320,7 +320,8 @@ class SantaCache {
     Lock a bucket. Spins until the lock is acquired.
   */
   inline void lock(struct bucket *bucket) const {
-    while (OSAtomicTestAndSet(7, (volatile uint8_t *)&bucket->head));
+    while (OSAtomicTestAndSet(7, (volatile uint8_t *)&bucket->head)) {
+    }
   }
 
   /**
