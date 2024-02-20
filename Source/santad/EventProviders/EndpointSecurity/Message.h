@@ -43,8 +43,8 @@ class Message {
 
   // Helper to get the API associated with this message.
   // Used for things like es_exec_arg_count.
-  // We should ideally rework this to somehow present these functions as methods on the Message,
-  // however this would be a bit of a bigger lift.
+  // We should ideally rework this to somehow present these functions as
+  // methods on the Message, however this would be a bit of a bigger lift.
   std::shared_ptr<EndpointSecurityAPI> ESAPI() const { return esapi_; }
 
   std::string ParentProcessName() const;
