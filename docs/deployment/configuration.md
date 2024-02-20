@@ -114,6 +114,17 @@ them to. The following sequences will be replaced in the final URL:
 
 For example: `https://sync-server-hostname/%machine_id%/%file_sha%`
 
+### AllowedPathRegex/BlockedPathRegex
+
+These regexes can be used to allow/block binaries based on the executable path.
+We strongly discourage the use of this as it can be relatively trivial to bypass
+but there are some circumstances where it is the only option.
+
+It's important to note that the path matched against these regexes is the full
+absolute path of the binary file. Symlinks in the path will have already been
+followed by the time Santa processes the execution and matches against the
+regex.
+
 ### Static Rules
 
 Static rules are rules that are defined inline in the Santa configuration. These
