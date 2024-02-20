@@ -93,15 +93,15 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       BOOL shouldLogClose = esMsg->event.close.modified;
 
 #if HAVE_MACOS_13
-      // As of macSO 13.0 we have a new field for if a file was mmaped with
-      // write permissions on close events. However due to a bug in ES, it
-      // only worked for certain conditions until macOS 13.5 (FB12094635).
-      //
-      // If something was mmaped writable it was probably written to. Often
-      // developer tools do this to avoid lots of write syscalls, e.g. go's
-      // tool chain. We log this so the compiler controller can take that into
-      // account.
       if (esMsg->version >= 6) {
+        // As of macSO 13.0 we have a new field for if a file was mmaped with
+        // write permissions on close events. However due to a bug in ES, it
+        // only worked for certain conditions until macOS 13.5 (FB12094635).
+        //
+        // If something was mmaped writable it was probably written to. Often
+        // developer tools do this to avoid lots of write syscalls, e.g. go's
+        // tool chain. We log this so the compiler controller can take that into
+        // account.
         shouldLogClose |= esMsg->event.close.was_mapped_writable;
       }
 #endif
