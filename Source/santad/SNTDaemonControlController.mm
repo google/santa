@@ -24,6 +24,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTStrengthify.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
@@ -97,11 +98,18 @@ double watchdogRAMPeak = 0;
 
 #pragma mark Database ops
 
-- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,
-                                     int64_t transitive, int64_t teamID, int64_t signingID))reply {
+- (void)databaseRuleCounts:(void (^)(RuleCounts ruleTypeCounts))reply {
   SNTRuleTable *rdb = [SNTDatabaseController ruleTable];
-  reply([rdb binaryRuleCount], [rdb certificateRuleCount], [rdb compilerRuleCount],
-        [rdb transitiveRuleCount], [rdb teamIDRuleCount], [rdb signingIDRuleCount]);
+  RuleCounts ruleCounts{
+    .binary = [rdb binaryRuleCount],
+    .certificate = [rdb certificateRuleCount],
+    .compiler = [rdb compilerRuleCount],
+    .transitive = [rdb transitiveRuleCount],
+    .teamID = [rdb teamIDRuleCount],
+    .signingID = [rdb signingIDRuleCount],
+  };
+
+  reply(ruleCounts);
 }
 
 - (void)databaseRuleAddRules:(NSArray *)rules
@@ -130,7 +138,7 @@ double watchdogRAMPeak = 0;
   reply(error);
 }
 
-- (void)databaseEventCount:(void (^)(int64_t count))reply {
+- (void)databaseEventCount:(void (^)(NSUInteger count))reply {
   reply([[SNTDatabaseController eventTable] pendingEventsCount]);
 }
 
@@ -142,15 +150,13 @@ double watchdogRAMPeak = 0;
   [[SNTDatabaseController eventTable] deleteEventsWithIds:ids];
 }
 
-- (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
-                  certificateSHA256:(NSString *)certificateSHA256
-                             teamID:(NSString *)teamID
-                          signingID:(NSString *)signingID
-                              reply:(void (^)(SNTRule *))reply {
-  reply([[SNTDatabaseController ruleTable] ruleForBinarySHA256:binarySHA256
-                                                     signingID:signingID
-                                             certificateSHA256:certificateSHA256
-                                                        teamID:teamID]);
+- (void)databaseRuleForIdentifiers:(SNTRuleIdentifiers *)identifiers
+                             reply:(void (^)(SNTRule *))reply {
+  reply([[SNTDatabaseController ruleTable]
+    ruleForIdentifiers:(struct RuleIdentifiers){.binarySHA256 = identifiers.binarySHA256,
+                                                .signingID = identifiers.signingID,
+                                                .certificateSHA256 = identifiers.certificateSHA256,
+                                                .teamID = identifiers.teamID}]);
 }
 
 - (void)staticRuleCount:(void (^)(int64_t count))reply {

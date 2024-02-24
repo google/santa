@@ -90,14 +90,13 @@ The following table expands upon the above logic to list most of the permutation
 
   // dispatch_group_t group = dispatch_group_create();
   // dispatch_group_enter(group);
-  [rop databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler,
-                            int64_t transitive, int64_t teamID, int64_t signingID) {
-    requestDict[kBinaryRuleCount] = @(binary);
-    requestDict[kCertificateRuleCount] = @(certificate);
-    requestDict[kCompilerRuleCount] = @(compiler);
-    requestDict[kTransitiveRuleCount] = @(transitive);
-    requestDict[kTeamIDRuleCount] = @(teamID);
-    requestDict[kSigningIDRuleCount] = @(signingID);
+  [rop databaseRuleCounts:^(struct RuleCounts counts) {
+    requestDict[kBinaryRuleCount] = @(counts.binary);
+    requestDict[kCertificateRuleCount] = @(counts.certificate);
+    requestDict[kCompilerRuleCount] = @(counts.compiler);
+    requestDict[kTransitiveRuleCount] = @(counts.transitive);
+    requestDict[kTeamIDRuleCount] = @(counts.teamID);
+    requestDict[kSigningIDRuleCount] = @(counts.signingID);
   }];
 
   [rop clientMode:^(SNTClientMode cm) {

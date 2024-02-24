@@ -22,6 +22,15 @@
 @class SNTStoredEvent;
 @class MOLXPCConnection;
 
+struct RuleCounts {
+  NSUInteger binary;
+  NSUInteger certificate;
+  NSUInteger compiler;
+  NSUInteger transitive;
+  NSUInteger teamID;
+  NSUInteger signingID;
+};
+
 ///
 ///  Protocol implemented by santad and utilized by santactl (unprivileged operations)
 ///
@@ -36,9 +45,8 @@
 ///
 ///  Database ops
 ///
-- (void)databaseRuleCounts:(void (^)(int64_t binary, int64_t certificate, int64_t compiler,
-                                     int64_t transitive, int64_t teamID, int64_t signingID))reply;
-- (void)databaseEventCount:(void (^)(int64_t count))reply;
+- (void)databaseRuleCounts:(void (^)(struct RuleCounts ruleCounts))reply;
+- (void)databaseEventCount:(void (^)(NSUInteger count))reply;
 - (void)staticRuleCount:(void (^)(int64_t count))reply;
 
 ///

@@ -91,23 +91,14 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   // Database counts
-  __block int64_t eventCount = -1;
-  __block int64_t binaryRuleCount = -1;
-  __block int64_t certRuleCount = -1;
-  __block int64_t teamIDRuleCount = -1;
-  __block int64_t signingIDRuleCount = -1;
-  __block int64_t compilerRuleCount = -1;
-  __block int64_t transitiveRuleCount = -1;
-  [rop databaseRuleCounts:^(int64_t binary, int64_t certificate, int64_t compiler,
-                            int64_t transitive, int64_t teamID, int64_t signingID) {
-    binaryRuleCount = binary;
-    certRuleCount = certificate;
-    teamIDRuleCount = teamID;
-    signingIDRuleCount = signingID;
-    compilerRuleCount = compiler;
-    transitiveRuleCount = transitive;
+  __block struct RuleCounts ruleCounts;
+  memset(&ruleCounts, NSUIntegerMax, sizeof(ruleCounts));
+  [rop databaseRuleCounts:^(struct RuleCounts counts) {
+    ruleCounts = counts;
   }];
-  [rop databaseEventCount:^(int64_t count) {
+
+  __block NSUInteger eventCount = NSUIntegerMax;
+  [rop databaseEventCount:^(NSUInteger count) {
     eventCount = count;
   }];
 
@@ -212,12 +203,12 @@ REGISTER_COMMAND_NAME(@"status")
         @"on_start_usb_options" : StartupOptionToString(configurator.onStartUSBOptions),
       },
       @"database" : @{
-        @"binary_rules" : @(binaryRuleCount),
-        @"certificate_rules" : @(certRuleCount),
-        @"teamid_rules" : @(teamIDRuleCount),
-        @"signingid_rules" : @(signingIDRuleCount),
-        @"compiler_rules" : @(compilerRuleCount),
-        @"transitive_rules" : @(transitiveRuleCount),
+        @"binary_rules" : @(ruleCounts.binary),
+        @"certificate_rules" : @(ruleCounts.certificate),
+        @"teamid_rules" : @(ruleCounts.teamID),
+        @"signingid_rules" : @(ruleCounts.signingID),
+        @"compiler_rules" : @(ruleCounts.compiler),
+        @"transitive_rules" : @(ruleCounts.transitive),
         @"events_pending_upload" : @(eventCount),
       },
       @"static_rules" : @{
@@ -284,13 +275,13 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
 
     printf(">>> Database Info\n");
-    printf("  %-25s | %lld\n", "Binary Rules", binaryRuleCount);
-    printf("  %-25s | %lld\n", "Certificate Rules", certRuleCount);
-    printf("  %-25s | %lld\n", "TeamID Rules", teamIDRuleCount);
-    printf("  %-25s | %lld\n", "SigningID Rules", signingIDRuleCount);
-    printf("  %-25s | %lld\n", "Compiler Rules", compilerRuleCount);
-    printf("  %-25s | %lld\n", "Transitive Rules", transitiveRuleCount);
-    printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);
+    printf("  %-25s | %lu\n", "Binary Rules", ruleCounts.binary);
+    printf("  %-25s | %lu\n", "Certificate Rules", ruleCounts.certificate);
+    printf("  %-25s | %lu\n", "TeamID Rules", ruleCounts.teamID);
+    printf("  %-25s | %lu\n", "SigningID Rules", ruleCounts.signingID);
+    printf("  %-25s | %lu\n", "Compiler Rules", ruleCounts.compiler);
+    printf("  %-25s | %lu\n", "Transitive Rules", ruleCounts.transitive);
+    printf("  %-25s | %lu\n", "Events Pending Upload", eventCount);
 
     if ([SNTConfigurator configurator].staticRules.count) {
       printf(">>> Static Rules\n");

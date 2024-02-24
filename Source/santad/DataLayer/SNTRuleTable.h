@@ -15,6 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/santad/DataLayer/SNTDatabaseTable.h"
 
 @class SNTCachedDecision;
@@ -62,13 +63,11 @@
 - (NSUInteger)signingIDRuleCount;
 
 ///
-///  @return Rule for binary, signingID, certificate or teamID (in that order).
+///  @return Rule for given identifiers.
+///          Currently: binary, signingID, certificate or teamID (in that order).
 ///          The first matching rule found is returned.
 ///
-- (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
-                       signingID:(NSString *)signingID
-               certificateSHA256:(NSString *)certificateSHA256
-                          teamID:(NSString *)teamID;
+- (SNTRule *)ruleForIdentifiers:(struct RuleIdentifiers)identifiers;
 
 ///
 ///  Add an array of rules to the database. The rules will be added within a transaction and the

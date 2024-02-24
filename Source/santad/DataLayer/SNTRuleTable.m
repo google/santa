@@ -323,10 +323,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return r;
 }
 
-- (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
-                       signingID:(NSString *)signingID
-               certificateSHA256:(NSString *)certificateSHA256
-                          teamID:(NSString *)teamID {
+- (SNTRule *)ruleForIdentifiers:(struct RuleIdentifiers)identifiers {
   __block SNTRule *rule;
 
   // Look for a static rule that matches.
@@ -334,22 +331,22 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   if (staticRules.count) {
     // IMPORTANT: The order static rules are checked here should be the same
     // order as given by the SQL query for the rules database.
-    rule = staticRules[binarySHA256];
+    rule = staticRules[identifiers.binarySHA256];
     if (rule.type == SNTRuleTypeBinary) {
       return rule;
     }
 
-    rule = staticRules[signingID];
+    rule = staticRules[identifiers.signingID];
     if (rule.type == SNTRuleTypeSigningID) {
       return rule;
     }
 
-    rule = staticRules[certificateSHA256];
+    rule = staticRules[identifiers.certificateSHA256];
     if (rule.type == SNTRuleTypeCertificate) {
       return rule;
     }
 
-    rule = staticRules[teamID];
+    rule = staticRules[identifiers.teamID];
     if (rule.type == SNTRuleTypeTeamID) {
       return rule;
     }
@@ -380,7 +377,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
                                        @"OR (identifier=? AND type=2000) "
                                        @"OR (identifier=? AND type=3000) "
                                        @"OR (identifier=? AND type=4000) LIMIT 1",
-                                       binarySHA256, signingID, certificateSHA256, teamID];
+                                       identifiers.binarySHA256, identifiers.signingID,
+                                       identifiers.certificateSHA256, identifiers.teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }
@@ -389,8 +387,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
   // Allow binaries signed by the "Software Signing" cert used to sign launchd
   // if no existing rule has matched.
-  if (!rule && [certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
-    rule = [[SNTRule alloc] initWithIdentifier:certificateSHA256
+  if (!rule && [identifiers.certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
+    rule = [[SNTRule alloc] initWithIdentifier:identifiers.certificateSHA256
                                          state:SNTRuleStateAllow
                                           type:SNTRuleTypeCertificate
                                      customMsg:nil
