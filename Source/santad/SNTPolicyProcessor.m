@@ -127,10 +127,11 @@
     cd.signingID = nil;
   }
 
-  SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
-                                            signingID:cd.signingID
-                                    certificateSHA256:cd.certSHA256
-                                               teamID:cd.teamID];
+  SNTRule *rule =
+    [self.ruleTable ruleForIdentifiers:(struct RuleIdentifiers){.binarySHA256 = cd.sha256,
+                                                                .signingID = cd.signingID,
+                                                                .certificateSHA256 = cd.certSHA256,
+                                                                .teamID = cd.teamID}];
   if (rule) {
     switch (rule.type) {
       case SNTRuleTypeBinary:

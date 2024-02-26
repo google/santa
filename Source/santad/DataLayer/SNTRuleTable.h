@@ -15,6 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/santad/DataLayer/SNTDatabaseTable.h"
 
 @class SNTCachedDecision;
@@ -29,46 +30,44 @@
 ///
 ///  @return Number of rules in the database
 ///
-- (NSUInteger)ruleCount;
+- (int64_t)ruleCount;
 
 ///
 ///  @return Number of binary rules in the database
 ///
-- (NSUInteger)binaryRuleCount;
+- (int64_t)binaryRuleCount;
 
 ///
 ///  @return Number of compiler rules in the database
 ///
-- (NSUInteger)compilerRuleCount;
+- (int64_t)compilerRuleCount;
 
 ///
 ///  @return Number of transitive rules in the database
 ///
-- (NSUInteger)transitiveRuleCount;
+- (int64_t)transitiveRuleCount;
 
 ///
 ///  @return Number of certificate rules in the database
 ///
-- (NSUInteger)certificateRuleCount;
+- (int64_t)certificateRuleCount;
 
 ///
 /// @return Number of team ID rules in the database
 ///
-- (NSUInteger)teamIDRuleCount;
+- (int64_t)teamIDRuleCount;
 
 ///
 /// @return Number of signing ID rules in the database
 ///
-- (NSUInteger)signingIDRuleCount;
+- (int64_t)signingIDRuleCount;
 
 ///
-///  @return Rule for binary, signingID, certificate or teamID (in that order).
+///  @return Rule for given identifiers.
+///          Currently: binary, signingID, certificate or teamID (in that order).
 ///          The first matching rule found is returned.
 ///
-- (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
-                       signingID:(NSString *)signingID
-               certificateSHA256:(NSString *)certificateSHA256
-                          teamID:(NSString *)teamID;
+- (SNTRule *)ruleForIdentifiers:(struct RuleIdentifiers)identifiers;
 
 ///
 ///  Add an array of rules to the database. The rules will be added within a transaction and the

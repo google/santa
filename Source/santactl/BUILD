@@ -68,6 +68,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",
         "//Source/common:SNTRule",
+        "//Source/common:SNTRuleIdentifiers",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTStrengthify",
         "//Source/common:SNTSystemInfo",

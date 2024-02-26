@@ -313,6 +313,12 @@ santa_unit_test(
 )
 
 objc_library(
+    name = "SNTRuleIdentifiers",
+    srcs = ["SNTRuleIdentifiers.m"],
+    hdrs = ["SNTRuleIdentifiers.h"],
+)
+
+objc_library(
     name = "SNTStoredEvent",
     srcs = ["SNTStoredEvent.m"],
     hdrs = ["SNTStoredEvent.h"],
@@ -377,6 +383,7 @@ objc_library(
         ":SNTCommonEnums",
         ":SNTConfigurator",
         ":SNTRule",
+        ":SNTRuleIdentifiers",
         ":SNTStoredEvent",
         ":SNTXPCUnprivilegedControlInterface",
         "@MOLCodesignChecker",

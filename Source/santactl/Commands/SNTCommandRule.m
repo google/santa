@@ -22,6 +22,7 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santactl/Commands/SNTCommandRule.h"
 #import "Source/santactl/SNTCommand.h"
@@ -365,20 +366,20 @@ REGISTER_COMMAND_NAME(@"rule")
 
 - (void)printStateOfRule:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
   id<SNTDaemonControlXPC> rop = [daemonConn synchronousRemoteObjectProxy];
-  NSString *fileSHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil;
-  NSString *certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil;
-  NSString *teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil;
-  NSString *signingID = (rule.type == SNTRuleTypeSigningID) ? rule.identifier : nil;
   __block NSString *output;
 
-  [rop databaseRuleForBinarySHA256:fileSHA256
-                 certificateSHA256:certificateSHA256
-                            teamID:teamID
-                         signingID:signingID
-                             reply:^(SNTRule *r) {
-                               output = [SNTCommandRule stringifyRule:r
-                                                            withColor:(isatty(STDOUT_FILENO) == 1)];
-                             }];
+  struct RuleIdentifiers identifiers = {
+    .binarySHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil,
+    .certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil,
+    .teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil,
+    .signingID = (rule.type == SNTRuleTypeSigningID) ? rule.identifier : nil,
+  };
+
+  [rop databaseRuleForIdentifiers:[[SNTRuleIdentifiers alloc] initWithRuleIdentifiers:identifiers]
+                            reply:^(SNTRule *r) {
+                              output = [SNTCommandRule stringifyRule:r
+                                                           withColor:(isatty(STDOUT_FILENO) == 1)];
+                            }];
 
   printf("%s\n", output.UTF8String);
   exit(0);
