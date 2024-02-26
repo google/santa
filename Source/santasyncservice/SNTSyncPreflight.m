@@ -88,8 +88,6 @@ The following table expands upon the above logic to list most of the permutation
 
   id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 
-  // dispatch_group_t group = dispatch_group_create();
-  // dispatch_group_enter(group);
   [rop databaseRuleCounts:^(struct RuleCounts counts) {
     requestDict[kBinaryRuleCount] = @(counts.binary);
     requestDict[kCertificateRuleCount] = @(counts.certificate);
