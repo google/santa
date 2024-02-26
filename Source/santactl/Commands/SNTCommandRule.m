@@ -368,13 +368,14 @@ REGISTER_COMMAND_NAME(@"rule")
   id<SNTDaemonControlXPC> rop = [daemonConn synchronousRemoteObjectProxy];
   __block NSString *output;
 
-  SNTRuleIdentifiers *identifiers = [[SNTRuleIdentifiers alloc] init];
-  identifiers.binarySHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil;
-  identifiers.certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil;
-  identifiers.teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil;
-  identifiers.signingID = (rule.type == SNTRuleTypeSigningID) ? rule.identifier : nil;
+  struct RuleIdentifiers identifiers = {
+    .binarySHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil,
+    .certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil,
+    .teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil,
+    .signingID = (rule.type == SNTRuleTypeSigningID) ? rule.identifier : nil,
+  };
 
-  [rop databaseRuleForIdentifiers:identifiers
+  [rop databaseRuleForIdentifiers:[[SNTRuleIdentifiers alloc] initWithRuleIdentifiers:identifiers]
                             reply:^(SNTRule *r) {
                               output = [SNTCommandRule stringifyRule:r
                                                            withColor:(isatty(STDOUT_FILENO) == 1)];

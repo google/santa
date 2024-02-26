@@ -91,14 +91,20 @@ REGISTER_COMMAND_NAME(@"status")
   }];
 
   // Database counts
-  __block struct RuleCounts ruleCounts;
-  memset(&ruleCounts, NSUIntegerMax, sizeof(ruleCounts));
+  __block struct RuleCounts ruleCounts = {
+    .binary = -1,
+    .certificate = -1,
+    .compiler = -1,
+    .transitive = -1,
+    .teamID = -1,
+    .signingID = -1,
+  };
   [rop databaseRuleCounts:^(struct RuleCounts counts) {
     ruleCounts = counts;
   }];
 
-  __block NSUInteger eventCount = NSUIntegerMax;
-  [rop databaseEventCount:^(NSUInteger count) {
+  __block int64_t eventCount = -1;
+  [rop databaseEventCount:^(int64_t count) {
     eventCount = count;
   }];
 
@@ -275,13 +281,13 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %lld\n", "Non-root cache count", nonRootCacheCount);
 
     printf(">>> Database Info\n");
-    printf("  %-25s | %lu\n", "Binary Rules", ruleCounts.binary);
-    printf("  %-25s | %lu\n", "Certificate Rules", ruleCounts.certificate);
-    printf("  %-25s | %lu\n", "TeamID Rules", ruleCounts.teamID);
-    printf("  %-25s | %lu\n", "SigningID Rules", ruleCounts.signingID);
-    printf("  %-25s | %lu\n", "Compiler Rules", ruleCounts.compiler);
-    printf("  %-25s | %lu\n", "Transitive Rules", ruleCounts.transitive);
-    printf("  %-25s | %lu\n", "Events Pending Upload", eventCount);
+    printf("  %-25s | %lld\n", "Binary Rules", ruleCounts.binary);
+    printf("  %-25s | %lld\n", "Certificate Rules", ruleCounts.certificate);
+    printf("  %-25s | %lld\n", "TeamID Rules", ruleCounts.teamID);
+    printf("  %-25s | %lld\n", "SigningID Rules", ruleCounts.signingID);
+    printf("  %-25s | %lld\n", "Compiler Rules", ruleCounts.compiler);
+    printf("  %-25s | %lld\n", "Transitive Rules", ruleCounts.transitive);
+    printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);
 
     if ([SNTConfigurator configurator].staticRules.count) {
       printf(">>> Static Rules\n");

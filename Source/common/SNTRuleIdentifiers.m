@@ -1,4 +1,4 @@
-/// Copyright 2022 Google LLC
+/// Copyright 2024 Google LLC
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,4 +15,23 @@
 #import "Source/common/SNTRuleIdentifiers.h"
 
 @implementation SNTRuleIdentifiers
+
+- (instancetype)initWithRuleIdentifiers:(struct RuleIdentifiers)identifiers {
+  self = [super init];
+  if (self) {
+    _binarySHA256 = identifiers.binarySHA256;
+    _signingID = identifiers.signingID;
+    _certificateSHA256 = identifiers.certificateSHA256;
+    _teamID = identifiers.teamID;
+  }
+  return self;
+}
+
+- (struct RuleIdentifiers)toStruct {
+  return (struct RuleIdentifiers){.binarySHA256 = self.binarySHA256,
+                                  .signingID = self.signingID,
+                                  .certificateSHA256 = self.certificateSHA256,
+                                  .teamID = self.teamID};
+}
+
 @end

@@ -138,7 +138,7 @@ double watchdogRAMPeak = 0;
   reply(error);
 }
 
-- (void)databaseEventCount:(void (^)(NSUInteger count))reply {
+- (void)databaseEventCount:(void (^)(int64_t count))reply {
   reply([[SNTDatabaseController eventTable] pendingEventsCount]);
 }
 
@@ -152,11 +152,7 @@ double watchdogRAMPeak = 0;
 
 - (void)databaseRuleForIdentifiers:(SNTRuleIdentifiers *)identifiers
                              reply:(void (^)(SNTRule *))reply {
-  reply([[SNTDatabaseController ruleTable]
-    ruleForIdentifiers:(struct RuleIdentifiers){.binarySHA256 = identifiers.binarySHA256,
-                                                .signingID = identifiers.signingID,
-                                                .certificateSHA256 = identifiers.certificateSHA256,
-                                                .teamID = identifiers.teamID}]);
+  reply([[SNTDatabaseController ruleTable] ruleForIdentifiers:[identifiers toStruct]]);
 }
 
 - (void)staticRuleCount:(void (^)(int64_t count))reply {

@@ -29,7 +29,7 @@ static const uint32_t kRuleTableCurrentVersion = 7;
 
 // TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.
-static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
+static const int64_t kTransitiveRuleCullingThreshold = 500000;
 // Consider transitive rules out of date if they haven't been used in six months.
 static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
@@ -263,7 +263,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
 #pragma mark Entry Counts
 
-- (NSUInteger)ruleCount {
+- (int64_t)ruleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules"];
@@ -271,23 +271,23 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
-- (NSUInteger)ruleCountForRuleType:(SNTRuleType)ruleType {
-  __block NSUInteger count = 0;
+- (int64_t)ruleCountForRuleType:(SNTRuleType)ruleType {
+  __block int64_t count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=?", @(ruleType)];
   }];
   return count;
 }
 
-- (NSUInteger)binaryRuleCount {
+- (int64_t)binaryRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeBinary];
 }
 
-- (NSUInteger)certificateRuleCount {
+- (int64_t)certificateRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeCertificate];
 }
 
-- (NSUInteger)compilerRuleCount {
+- (int64_t)compilerRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count =
@@ -296,7 +296,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
-- (NSUInteger)transitiveRuleCount {
+- (int64_t)transitiveRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count =
@@ -305,11 +305,11 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
-- (NSUInteger)teamIDRuleCount {
+- (int64_t)teamIDRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeTeamID];
 }
 
-- (NSUInteger)signingIDRuleCount {
+- (int64_t)signingIDRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeSigningID];
 }
 

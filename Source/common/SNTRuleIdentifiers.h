@@ -1,4 +1,4 @@
-/// Copyright 2022 Google LLC
+/// Copyright 2024 Google LLC
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,8 +33,17 @@ struct RuleIdentifiers {
 };
 
 @interface SNTRuleIdentifiers : NSObject
-@property NSString *binarySHA256;
-@property NSString *signingID;
-@property NSString *certificateSHA256;
-@property NSString *teamID;
+@property(readonly) NSString *binarySHA256;
+@property(readonly) NSString *signingID;
+@property(readonly) NSString *certificateSHA256;
+@property(readonly) NSString *teamID;
+
+/// Please use `initWithRuleIdentifiers:`
+- (instancetype)init NS_UNAVAILABLE;
+
+- (instancetype)initWithRuleIdentifiers:(struct RuleIdentifiers)identifiers
+  NS_DESIGNATED_INITIALIZER;
+
+- (struct RuleIdentifiers)toStruct;
+
 @end
