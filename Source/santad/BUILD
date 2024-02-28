@@ -1163,6 +1163,7 @@ santa_unit_test(
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTRule",
+        "//Source/common:SantaVnode",
         "//Source/common:TestUtils",
         "@OCMock",
     ],
