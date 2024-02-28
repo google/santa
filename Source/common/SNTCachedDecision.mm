@@ -17,10 +17,18 @@
 
 @implementation SNTCachedDecision
 
+- (instancetype)init {
+  return [self initWithVnode:(SantaVnode){}];
+}
+
 - (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile {
+  return [self initWithVnode:SantaVnode::VnodeForFile(esFile)];
+}
+
+- (instancetype)initWithVnode:(SantaVnode)vnode {
   self = [super init];
   if (self) {
-    _vnodeId = SantaVnode::VnodeForFile(esFile);
+    _vnodeId = vnode;
   }
   return self;
 }
