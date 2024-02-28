@@ -15,6 +15,8 @@
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <Foundation/Foundation.h>
 
+#import "Source/common/SantaVnode.h"
+
 @class MOLCodesignChecker;
 
 ///
@@ -219,6 +221,11 @@
 ///  @return The size of the file in bytes.
 ///
 - (NSUInteger)fileSize;
+
+///
+///  @return The devno/ino pair of the file
+///
+- (SantaVnode)vnode;
 
 ///
 ///  @return The underlying file handle.

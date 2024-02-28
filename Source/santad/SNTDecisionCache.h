@@ -17,6 +17,7 @@
 #import <Foundation/Foundation.h>
 
 #import "Source/common/SNTCachedDecision.h"
+#import "Source/common/SantaVnode.h"
 
 @interface SNTDecisionCache : NSObject
 
@@ -24,7 +25,7 @@
 
 - (void)cacheDecision:(SNTCachedDecision *)cd;
 - (SNTCachedDecision *)cachedDecisionForFile:(const struct stat &)statInfo;
-- (void)forgetCachedDecisionForFile:(const struct stat &)statInfo;
+- (void)forgetCachedDecisionForVnode:(SantaVnode)vnode;
 - (SNTCachedDecision *)resetTimestampForCachedDecision:(const struct stat &)statInfo;
 
 @end

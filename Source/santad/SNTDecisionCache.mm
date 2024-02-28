@@ -58,8 +58,8 @@
   return self->_decisionCache.get(SantaVnode::VnodeForFile(statInfo));
 }
 
-- (void)forgetCachedDecisionForFile:(const struct stat &)statInfo {
-  self->_decisionCache.remove(SantaVnode::VnodeForFile(statInfo));
+- (void)forgetCachedDecisionForVnode:(SantaVnode)vnode {
+  self->_decisionCache.remove(vnode);
 }
 
 // Whenever a cached decision resulting from a transitive allowlist rule is used to allow the

@@ -25,7 +25,9 @@
 ///
 @interface SNTCachedDecision : NSObject
 
+- (instancetype)init;
 - (instancetype)initWithEndpointSecurityFile:(const es_file_t *)esFile;
+- (instancetype)initWithVnode:(SantaVnode)vnode NS_DESIGNATED_INITIALIZER;
 
 @property SantaVnode vnodeId;
 @property SNTEventState decision;
