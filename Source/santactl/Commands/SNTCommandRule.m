@@ -127,7 +127,7 @@ REGISTER_COMMAND_NAME(@"rule")
   NSString *path;
   NSString *jsonFilePath;
   BOOL check = NO;
-  SNTRuleCleanup cleanupType;
+  SNTRuleCleanup cleanupType = SNTRuleCleanupNone;
   BOOL importRules = NO;
   BOOL exportRules = NO;
 
@@ -190,14 +190,8 @@ REGISTER_COMMAND_NAME(@"rule")
       }
       jsonFilePath = arguments[i];
     } else if ([arg caseInsensitiveCompare:@"--clean"] == NSOrderedSame) {
-      if (!importRules) {
-        [self printErrorUsageAndExit:@"--clean requires --import"];
-      }
       cleanupType = SNTRuleCleanupNonTransitive;
     } else if ([arg caseInsensitiveCompare:@"--clean-all"] == NSOrderedSame) {
-      if (!importRules) {
-        [self printErrorUsageAndExit:@"--clean-all requires --import"];
-      }
       cleanupType = SNTRuleCleanupAll;
     } else if ([arg caseInsensitiveCompare:@"--export"] == NSOrderedSame) {
       if (importRules) {
@@ -214,6 +208,21 @@ REGISTER_COMMAND_NAME(@"rule")
       exit(0);
     } else {
       [self printErrorUsageAndExit:[@"Unknown argument: " stringByAppendingString:arg]];
+    }
+  }
+
+  if (!importRules && cleanupType != SNTRuleCleanupNone) {
+    switch (cleanupType) {
+      case SNTRuleCleanupNonTransitive:
+        [self printErrorUsageAndExit:@"--clean can only be used with --import"];
+        break;
+      case SNTRuleCleanupAll:
+        [self printErrorUsageAndExit:@"--clean-all can only be used with --import"];
+        break;
+      default:
+        // This is a programming error.
+        LOGE(@"Unexpected SNTRuleCleanupType %ld", cleanupType);
+        exit(EXIT_FAILURE);
     }
   }
 
