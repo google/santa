@@ -443,6 +443,7 @@ void SerializeAndCheckNonESEvents(
     {SNTEventStateBlockScope, ::pbv1::Execution::REASON_SCOPE},
     {SNTEventStateBlockTeamID, ::pbv1::Execution::REASON_TEAM_ID},
     {SNTEventStateBlockSigningID, ::pbv1::Execution::REASON_SIGNING_ID},
+    {SNTEventStateBlockCDHash, ::pbv1::Execution::REASON_CDHASH},
     {SNTEventStateBlockLongPath, ::pbv1::Execution::REASON_LONG_PATH},
     {SNTEventStateAllowUnknown, ::pbv1::Execution::REASON_UNKNOWN},
     {SNTEventStateAllowBinary, ::pbv1::Execution::REASON_BINARY},
@@ -453,6 +454,7 @@ void SerializeAndCheckNonESEvents(
     {SNTEventStateAllowPendingTransitive, ::pbv1::Execution::REASON_PENDING_TRANSITIVE},
     {SNTEventStateAllowTeamID, ::pbv1::Execution::REASON_TEAM_ID},
     {SNTEventStateAllowSigningID, ::pbv1::Execution::REASON_SIGNING_ID},
+    {SNTEventStateAllowCDHash, ::pbv1::Execution::REASON_CDHASH},
   };
 
   for (const auto &kv : stateToReason) {

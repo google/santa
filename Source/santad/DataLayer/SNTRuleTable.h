@@ -63,6 +63,11 @@
 - (int64_t)signingIDRuleCount;
 
 ///
+/// @return Number of cdhash rules in the database
+///
+- (int64_t)cdhashRuleCount;
+
+///
 ///  @return Rule for given identifiers.
 ///          Currently: binary, signingID, certificate or teamID (in that order).
 ///          The first matching rule found is returned.

@@ -95,6 +95,7 @@ The following table expands upon the above logic to list most of the permutation
     requestDict[kTransitiveRuleCount] = @(counts.transitive);
     requestDict[kTeamIDRuleCount] = @(counts.teamID);
     requestDict[kSigningIDRuleCount] = @(counts.signingID);
+    requestDict[kCDHashRuleCount] = @(counts.cdhash);
   }];
 
   [rop clientMode:^(SNTClientMode cm) {

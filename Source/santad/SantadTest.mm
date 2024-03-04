@@ -21,7 +21,9 @@
 #import <dispatch/dispatch.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <string.h>
 
+#include <cctype>
 #include <memory>
 
 #import "Source/common/SNTCachedDecision.h"
@@ -39,12 +41,43 @@
 using santa::santad::SantadDeps;
 using santa::santad::event_providers::endpoint_security::Message;
 
-NSString *testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
+static int HexCharToInt(char hex) {
+  if (hex >= '0' && hex <= '9') {
+    return hex - '0';
+  } else if (hex >= 'A' && hex <= 'F') {
+    return hex - 'A' + 10;
+  } else if (hex >= 'a' && hex <= 'f') {
+    return hex - 'a' + 10;
+  } else {
+    return -1;
+  }
+}
+void SetBinaryDataFromHexString(const char *hexStr, uint8_t *buf, size_t bufLen) {
+  assert(hexStr != NULL);
+  size_t hexStrLen = strlen(hexStr);
+  assert(hexStrLen > 0);
+  assert(hexStrLen % 2 == 0);
+  assert(hexStrLen / 2 == bufLen);
+
+  for (size_t i = 0; i < hexStrLen; i += 2) {
+    int upper = HexCharToInt(hexStr[i]);
+    int lower = HexCharToInt(hexStr[i + 1]);
+
+    assert(upper != -1);
+    assert(lower != -1);
+
+    buf[i / 2] = (uint8_t)(upper << 4) | lower;
+  }
+}
+
+static NSString *const testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 static const char *kAllowedSigningID = "com.google.allowed_signing_id";
 static const char *kBlockedSigningID = "com.google.blocked_signing_id";
 static const char *kNoRuleMatchSigningID = "com.google.no_rule_match_signing_id";
 static const char *kBlockedTeamID = "EQHXZ8M8AV";
 static const char *kAllowedTeamID = "TJNVEKW352";
+static const char *kAllowedCDHash = "dedebf2eac732d873008b17b3e44a56599dd614b";
+static const char *kBlockedCDHash = "7218eddfee4d3eba4873dedf22d1391d79aea25f";
 
 @interface SNTEndpointSecurityClient (Testing)
 @property(nonatomic) double defaultBudget;
@@ -92,9 +125,8 @@ static const char *kAllowedTeamID = "TJNVEKW352";
   OCMStub([mockConfigurator failClosed]).andReturn(NO);
   OCMStub([mockConfigurator fileAccessPolicyUpdateIntervalSec]).andReturn(600);
 
-  NSString *baseTestPath = @"santa/Source/santad/testdata/binaryrules";
   NSString *testPath = [NSString pathWithComponents:@[
-    [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], baseTestPath
+    [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testBinariesPath
   ]];
 
   OCMStub([self.mockSNTDatabaseController databasePath]).andReturn(testPath);
@@ -121,10 +153,11 @@ static const char *kAllowedTeamID = "TJNVEKW352";
   NSString *binaryPath =
     [[NSString pathWithComponents:@[ testPath, binaryName ]] stringByResolvingSymlinksInPath];
   struct stat fileStat;
-  lstat(binaryPath.UTF8String, &fileStat);
+  XCTAssertEqual(lstat(binaryPath.UTF8String, &fileStat), 0);
   es_file_t file = MakeESFile([binaryPath UTF8String], fileStat);
   es_process_t proc = MakeESProcess(&file);
   proc.is_platform_binary = false;
+  proc.codesigning_flags = CS_SIGNED | CS_VALID;
 
   // Set a 6.5 second deadline for the message and clamp deadline headroom to 5
   // seconds. This means there is a 1.5 second leeway given for the processing block
@@ -366,6 +399,58 @@ static const char *kAllowedTeamID = "TJNVEKW352";
     messageSetup:^(es_message_t *msg) {
       msg->event.exec.target->team_id = MakeESStringToken(kBlockedTeamID);
       msg->event.exec.target->signing_id = MakeESStringToken(kAllowedSigningID);
+    }];
+}
+
+- (void)testBinaryWithCDHashBlockRuleIsBlockedInLockdownMode {
+  [self checkBinaryExecution:@"banned_cdhash"
+    wantResult:ES_AUTH_RESULT_DENY
+    clientMode:SNTClientModeLockdown
+    cdValidator:^BOOL(SNTCachedDecision *cd) {
+      return cd.decision == SNTEventStateBlockCDHash;
+    }
+    messageSetup:^(es_message_t *msg) {
+      SetBinaryDataFromHexString(kBlockedCDHash, msg->event.exec.target->cdhash,
+                                 sizeof(msg->event.exec.target->cdhash));
+    }];
+}
+
+- (void)testBinaryWithCDHashBlockRuleIsBlockedInMonitorMode {
+  [self checkBinaryExecution:@"banned_cdhash"
+    wantResult:ES_AUTH_RESULT_DENY
+    clientMode:SNTClientModeMonitor
+    cdValidator:^BOOL(SNTCachedDecision *cd) {
+      return cd.decision == SNTEventStateBlockCDHash;
+    }
+    messageSetup:^(es_message_t *msg) {
+      SetBinaryDataFromHexString(kBlockedCDHash, msg->event.exec.target->cdhash,
+                                 sizeof(msg->event.exec.target->cdhash));
+    }];
+}
+
+- (void)testBinaryWithCDHashAllowRuleIsAllowedInMonitorMode {
+  [self checkBinaryExecution:@"allowed_cdhash"
+    wantResult:ES_AUTH_RESULT_ALLOW
+    clientMode:SNTClientModeMonitor
+    cdValidator:^BOOL(SNTCachedDecision *cd) {
+      return cd.decision == SNTEventStateAllowCDHash;
+    }
+    messageSetup:^(es_message_t *msg) {
+      SetBinaryDataFromHexString(kAllowedCDHash, msg->event.exec.target->cdhash,
+                                 sizeof(msg->event.exec.target->cdhash));
+    }];
+}
+
+- (void)testBinaryWithCDHashAllowRuleIsAllowedInLockdownMode {
+  [self checkBinaryExecution:@"allowed_cdhash"
+    wantResult:ES_AUTH_RESULT_ALLOW
+    clientMode:SNTClientModeMonitor
+    cdValidator:^BOOL(SNTCachedDecision *cd) {
+      return cd.decision == SNTEventStateAllowCDHash;
+    }
+    messageSetup:^(es_message_t *msg) {
+      SetBinaryDataFromHexString(kAllowedCDHash, msg->event.exec.target->cdhash,
+                                 sizeof(msg->event.exec.target->cdhash));
     }];
 }
 

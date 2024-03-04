@@ -19,6 +19,7 @@
 - (instancetype)initWithRuleIdentifiers:(struct RuleIdentifiers)identifiers {
   self = [super init];
   if (self) {
+    _cdhash = identifiers.cdhash;
     _binarySHA256 = identifiers.binarySHA256;
     _signingID = identifiers.signingID;
     _certificateSHA256 = identifiers.certificateSHA256;
@@ -28,7 +29,8 @@
 }
 
 - (struct RuleIdentifiers)toStruct {
-  return (struct RuleIdentifiers){.binarySHA256 = self.binarySHA256,
+  return (struct RuleIdentifiers){.cdhash = self.cdhash,
+                                  .binarySHA256 = self.binarySHA256,
                                   .signingID = self.signingID,
                                   .certificateSHA256 = self.certificateSHA256,
                                   .teamID = self.teamID};

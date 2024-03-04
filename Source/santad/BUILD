@@ -204,6 +204,7 @@ objc_library(
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
+        "//Source/common:SNTRuleIdentifiers",
         "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",

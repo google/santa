@@ -40,6 +40,7 @@
 @property NSArray<MOLCertificate *> *certChain;
 @property NSString *teamID;
 @property NSString *signingID;
+@property NSString *cdhash;
 @property NSDictionary *entitlements;
 @property BOOL entitlementsFiltered;
 

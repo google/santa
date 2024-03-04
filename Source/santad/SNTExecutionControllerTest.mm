@@ -202,6 +202,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
                                          });
   es_process_t procExec = MakeESProcess(&fileExec);
   procExec.is_platform_binary = false;
+  procExec.codesigning_flags = CS_SIGNED | CS_VALID;
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
   esMsg.event.exec.target = &procExec;
 
@@ -228,12 +229,20 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *myRule = [[SNTRule alloc] init];
   myRule.state = rule.state;
   myRule.type = rule.type;
+
+  // Most tests do not set a specific cdhash, however an es_process_t created
+  // from MakeESProcess will have an all zeroes cdhash, not nil. To alleviate
+  // the need for all tests to specifiy the default cdhash, fix it up here.
+  static NSString *const zeroCDHash = RepeatedString(@"0", CS_CDHASH_LEN * 2);
+  wantIdentifiers.cdhash = wantIdentifiers.cdhash ?: zeroCDHash;
+
   OCMStub([self.mockRuleDatabase ruleForIdentifiers:wantIdentifiers])
     .ignoringNonObjectArgs()
     .andDo(^(NSInvocation *inv) {
       struct RuleIdentifiers gotIdentifiers = {};
       [inv getArgument:&gotIdentifiers atIndex:2];
 
+      XCTAssertEqualObjects(gotIdentifiers.cdhash, wantIdentifiers.cdhash);
       XCTAssertEqualObjects(gotIdentifiers.binarySHA256, wantIdentifiers.binarySHA256);
       XCTAssertEqualObjects(gotIdentifiers.signingID, wantIdentifiers.signingID);
       XCTAssertEqualObjects(gotIdentifiers.certificateSHA256, wantIdentifiers.certificateSHA256);
@@ -268,6 +277,68 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
 
   [self validateExecEvent:SNTActionRespondDeny];
   [self checkMetricCounters:kBlockBinary expected:@1];
+}
+
+- (void)testCDHashAllowRule {
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondAllow
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+             }];
+  [self checkMetricCounters:kAllowCDHash expected:@1];
+}
+
+- (void)testCDHashBlockRule {
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateBlock;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondDeny
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+             }];
+  [self checkMetricCounters:kBlockCDHash expected:@1];
+}
+
+- (void)testCDHashAllowCompilerRule {
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowCompiler;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondAllowCompiler
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+             }];
+
+  [self checkMetricCounters:kAllowCompiler expected:@1];
+}
+
+- (void)testCDHashAllowCompilerRuleTransitiveRuleDisabled {
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowCompiler;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondAllow
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+             }];
+
+  [self checkMetricCounters:kAllowCDHash expected:@1];
 }
 
 - (void)testSigningIDAllowRule {
