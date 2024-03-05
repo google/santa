@@ -436,6 +436,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     {SNTEventStateBlockScope, "SCOPE"},
     {SNTEventStateBlockTeamID, "TEAMID"},
     {SNTEventStateBlockSigningID, "SIGNINGID"},
+    {SNTEventStateBlockCDHash, "CDHASH"},
     {SNTEventStateBlockLongPath, "LONG_PATH"},
     {SNTEventStateAllowUnknown, "UNKNOWN"},
     {SNTEventStateAllowBinary, "BINARY"},
@@ -446,6 +447,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
     {SNTEventStateAllowPendingTransitive, "PENDING_TRANSITIVE"},
     {SNTEventStateAllowTeamID, "TEAMID"},
     {SNTEventStateAllowSigningID, "SIGNINGID"},
+    {SNTEventStateAllowCDHash, "CDHASH"},
   };
 
   for (const auto &kv : stateToReason) {

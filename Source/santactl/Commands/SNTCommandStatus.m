@@ -98,6 +98,7 @@ REGISTER_COMMAND_NAME(@"status")
     .transitive = -1,
     .teamID = -1,
     .signingID = -1,
+    .cdhash = -1,
   };
   [rop databaseRuleCounts:^(struct RuleCounts counts) {
     ruleCounts = counts;
@@ -213,6 +214,7 @@ REGISTER_COMMAND_NAME(@"status")
         @"certificate_rules" : @(ruleCounts.certificate),
         @"teamid_rules" : @(ruleCounts.teamID),
         @"signingid_rules" : @(ruleCounts.signingID),
+        @"cdhash_rules" : @(ruleCounts.cdhash),
         @"compiler_rules" : @(ruleCounts.compiler),
         @"transitive_rules" : @(ruleCounts.transitive),
         @"events_pending_upload" : @(eventCount),
@@ -285,6 +287,7 @@ REGISTER_COMMAND_NAME(@"status")
     printf("  %-25s | %lld\n", "Certificate Rules", ruleCounts.certificate);
     printf("  %-25s | %lld\n", "TeamID Rules", ruleCounts.teamID);
     printf("  %-25s | %lld\n", "SigningID Rules", ruleCounts.signingID);
+    printf("  %-25s | %lld\n", "CDHash Rules", ruleCounts.cdhash);
     printf("  %-25s | %lld\n", "Compiler Rules", ruleCounts.compiler);
     printf("  %-25s | %lld\n", "Transitive Rules", ruleCounts.transitive);
     printf("  %-25s | %lld\n", "Events Pending Upload", eventCount);

@@ -284,6 +284,7 @@ message Execution {
     REASON_LONG_PATH = 9;
     REASON_NOT_RUNNING = 10;
     REASON_SIGNING_ID = 11;
+    REASON_CDHASH = 12;
   }
   optional Reason reason = 10;
 

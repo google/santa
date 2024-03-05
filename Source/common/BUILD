@@ -427,6 +427,7 @@ objc_library(
     deps = [
         ":SNTCommonEnums",
         ":SNTRule",
+        ":SNTRuleIdentifiers",
         ":SNTStoredEvent",
         ":SNTXPCBundleServiceInterface",
         ":SantaVnode",

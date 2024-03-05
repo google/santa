@@ -22,6 +22,7 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/common/SNTXPCControlInterface.h"
@@ -45,6 +46,7 @@ static NSString *const kSigningChain = @"Signing Chain";
 static NSString *const kUniversalSigningChain = @"Universal Signing Chain";
 static NSString *const kTeamID = @"Team ID";
 static NSString *const kSigningID = @"Signing ID";
+static NSString *const kCDHash = @"CDHash";
 
 // signing chain keys
 static NSString *const kCommonName = @"Common Name";
@@ -123,6 +125,7 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 @property(readonly, copy, nonatomic) SNTAttributeBlock downloadAgent;
 @property(readonly, copy, nonatomic) SNTAttributeBlock teamID;
 @property(readonly, copy, nonatomic) SNTAttributeBlock signingID;
+@property(readonly, copy, nonatomic) SNTAttributeBlock cdhash;
 @property(readonly, copy, nonatomic) SNTAttributeBlock type;
 @property(readonly, copy, nonatomic) SNTAttributeBlock pageZero;
 @property(readonly, copy, nonatomic) SNTAttributeBlock codeSigned;
@@ -201,8 +204,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 + (NSArray<NSString *> *)fileInfoKeys {
   return @[
     kPath, kSHA256, kSHA1, kBundleName, kBundleVersion, kBundleVersionStr, kDownloadReferrerURL,
-    kDownloadURL, kDownloadTimestamp, kDownloadAgent, kTeamID, kSigningID, kType, kPageZero,
-    kCodeSigned, kRule, kSigningChain, kUniversalSigningChain
+    kDownloadURL, kDownloadTimestamp, kDownloadAgent, kTeamID, kSigningID, kCDHash, kType,
+    kPageZero, kCodeSigned, kRule, kSigningChain, kUniversalSigningChain
   ];
 }
 
@@ -236,6 +239,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       kUniversalSigningChain : self.universalSigningChain,
       kTeamID : self.teamID,
       kSigningID : self.signingID,
+      kCDHash : self.cdhash,
     };
 
     _printQueue = dispatch_queue_create("com.google.santactl.print_queue", DISPATCH_QUEUE_SERIAL);
@@ -376,6 +380,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     NSError *err;
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
 
+    NSString *cdhash =
+      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
     NSString *teamID =
       [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
     NSString *identifier =
@@ -394,15 +400,21 @@ REGISTER_COMMAND_NAME(@"fileinfo")
       }
     }
 
-    [[cmd.daemonConn remoteObjectProxy] decisionForFilePath:fileInfo.path
-                                                 fileSHA256:fileInfo.SHA256
-                                          certificateSHA256:err ? nil : csc.leafCertificate.SHA256
-                                                     teamID:teamID
-                                                  signingID:signingID
-                                                      reply:^(SNTEventState s) {
-                                                        state = s;
-                                                        dispatch_semaphore_signal(sema);
-                                                      }];
+    struct RuleIdentifiers identifiers = {
+      .cdhash = cdhash,
+      .binarySHA256 = fileInfo.SHA256,
+      .signingID = signingID,
+      .certificateSHA256 = err ? nil : csc.leafCertificate.SHA256,
+      .teamID = teamID,
+    };
+
+    [[cmd.daemonConn remoteObjectProxy]
+      decisionForFilePath:fileInfo.path
+              identifiers:[[SNTRuleIdentifiers alloc] initWithRuleIdentifiers:identifiers]
+                    reply:^(SNTEventState s) {
+                      state = s;
+                      dispatch_semaphore_signal(sema);
+                    }];
     if (dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC))) {
       cmd.daemonUnavailable = YES;
       return kCommunicationErrorMsg;
@@ -420,6 +432,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
         case SNTEventStateBlockTeamID: [output appendString:@" (TeamID)"]; break;
         case SNTEventStateAllowSigningID:
         case SNTEventStateBlockSigningID: [output appendString:@" (SigningID)"]; break;
+        case SNTEventStateAllowCDHash:
+        case SNTEventStateBlockCDHash: [output appendString:@" (CDHash)"]; break;
         case SNTEventStateAllowScope:
         case SNTEventStateBlockScope: [output appendString:@" (Scope)"]; break;
         case SNTEventStateAllowCompiler: [output appendString:@" (Compiler)"]; break;
@@ -516,6 +530,13 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
     return [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
+  };
+}
+
+- (SNTAttributeBlock)cdhash {
+  return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
+    MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
+    return [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
   };
 }
 

@@ -94,12 +94,14 @@ std::string GetReasonString(SNTEventState event_state) {
     case SNTEventStateAllowScope: return "SCOPE";
     case SNTEventStateAllowTeamID: return "TEAMID";
     case SNTEventStateAllowSigningID: return "SIGNINGID";
+    case SNTEventStateAllowCDHash: return "CDHASH";
     case SNTEventStateAllowUnknown: return "UNKNOWN";
     case SNTEventStateBlockBinary: return "BINARY";
     case SNTEventStateBlockCertificate: return "CERT";
     case SNTEventStateBlockScope: return "SCOPE";
     case SNTEventStateBlockTeamID: return "TEAMID";
     case SNTEventStateBlockSigningID: return "SIGNINGID";
+    case SNTEventStateBlockCDHash: return "CDHASH";
     case SNTEventStateBlockLongPath: return "LONG_PATH";
     case SNTEventStateBlockUnknown: return "UNKNOWN";
     default: return "NOTRUNNING";

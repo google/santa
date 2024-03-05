@@ -299,12 +299,14 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
     case SNTEventStateAllowScope: return ::pbv1::Execution::REASON_SCOPE;
     case SNTEventStateAllowTeamID: return ::pbv1::Execution::REASON_TEAM_ID;
     case SNTEventStateAllowSigningID: return ::pbv1::Execution::REASON_SIGNING_ID;
+    case SNTEventStateAllowCDHash: return ::pbv1::Execution::REASON_CDHASH;
     case SNTEventStateAllowUnknown: return ::pbv1::Execution::REASON_UNKNOWN;
     case SNTEventStateBlockBinary: return ::pbv1::Execution::REASON_BINARY;
     case SNTEventStateBlockCertificate: return ::pbv1::Execution::REASON_CERT;
     case SNTEventStateBlockScope: return ::pbv1::Execution::REASON_SCOPE;
     case SNTEventStateBlockTeamID: return ::pbv1::Execution::REASON_TEAM_ID;
     case SNTEventStateBlockSigningID: return ::pbv1::Execution::REASON_SIGNING_ID;
+    case SNTEventStateBlockCDHash: return ::pbv1::Execution::REASON_CDHASH;
     case SNTEventStateBlockLongPath: return ::pbv1::Execution::REASON_LONG_PATH;
     case SNTEventStateBlockUnknown: return ::pbv1::Execution::REASON_UNKNOWN;
     default: return ::pbv1::Execution::REASON_NOT_RUNNING;

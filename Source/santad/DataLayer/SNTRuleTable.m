@@ -313,6 +313,10 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return [self ruleCountForRuleType:SNTRuleTypeSigningID];
 }
 
+- (int64_t)cdhashRuleCount {
+  return [self ruleCountForRuleType:SNTRuleTypeCDHash];
+}
+
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
   SNTRule *r = [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
                                              state:[rs intForColumn:@"state"]
@@ -331,6 +335,11 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   if (staticRules.count) {
     // IMPORTANT: The order static rules are checked here should be the same
     // order as given by the SQL query for the rules database.
+    rule = staticRules[identifiers.cdhash];
+    if (rule.type == SNTRuleTypeCDHash) {
+      return rule;
+    }
+
     rule = staticRules[identifiers.binarySHA256];
     if (rule.type == SNTRuleTypeBinary) {
       return rule;
@@ -357,7 +366,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // NOTE: This code is written with the intention that the binary rule is searched for first
   // as Santa is designed to go with the most-specific rule possible.
   //
-  // The intended order of precedence is Binaries > Signing IDs > Certificates > Team IDs.
+  // The intended order of precedence is CDHash > Binaries > Signing IDs > Certificates > Team IDs.
   //
   // As such the query should have "ORDER BY type DESC" before the LIMIT, to ensure that is the
   // case. However, in all tested versions of SQLite that ORDER BY clause is unnecessary: the query
@@ -372,13 +381,15 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // There is a test for this in SNTRuleTableTests in case SQLite behavior changes in the future.
   //
   [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules WHERE "
-                                       @"   (identifier=? and type=1000) "
-                                       @"OR (identifier=? AND type=2000) "
-                                       @"OR (identifier=? AND type=3000) "
-                                       @"OR (identifier=? AND type=4000) LIMIT 1",
-                                       identifiers.binarySHA256, identifiers.signingID,
-                                       identifiers.certificateSHA256, identifiers.teamID];
+    FMResultSet *rs =
+      [db executeQuery:@"SELECT * FROM rules WHERE "
+                       @"   (identifier=? and type=500) "
+                       @"OR (identifier=? and type=1000) "
+                       @"OR (identifier=? AND type=2000) "
+                       @"OR (identifier=? AND type=3000) "
+                       @"OR (identifier=? AND type=4000) LIMIT 1",
+                       identifiers.cdhash, identifiers.binarySHA256, identifiers.signingID,
+                       identifiers.certificateSHA256, identifiers.teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }

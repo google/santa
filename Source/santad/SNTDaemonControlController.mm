@@ -107,6 +107,7 @@ double watchdogRAMPeak = 0;
     .transitive = [rdb transitiveRuleCount],
     .teamID = [rdb teamIDRuleCount],
     .signingID = [rdb signingIDRuleCount],
+    .cdhash = [rdb cdhashRuleCount],
   };
 
   reply(ruleCounts);
@@ -177,17 +178,9 @@ double watchdogRAMPeak = 0;
 #pragma mark Decision Ops
 
 - (void)decisionForFilePath:(NSString *)filePath
-                 fileSHA256:(NSString *)fileSHA256
-          certificateSHA256:(NSString *)certificateSHA256
-                     teamID:(NSString *)teamID
-                  signingID:(NSString *)signingID
+                identifiers:(SNTRuleIdentifiers *)identifiers
                       reply:(void (^)(SNTEventState))reply {
-  reply([self.policyProcessor decisionForFilePath:filePath
-                                       fileSHA256:fileSHA256
-                                certificateSHA256:certificateSHA256
-                                           teamID:teamID
-                                        signingID:signingID]
-          .decision);
+  reply([self.policyProcessor decisionForFilePath:filePath identifiers:identifiers].decision);
 }
 
 #pragma mark Config Ops

@@ -17,6 +17,7 @@
 #import <MOLCertificate/MOLCertificate.h>
 
 #import "Source/common/SNTCommonEnums.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 
 @class MOLCodesignChecker;
 @class SNTCachedDecision;
@@ -57,9 +58,6 @@
 ///  calculated, use the fileSHA256 parameter to save a second calculation of the hash.
 ///
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
-                                        fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID
-                                         signingID:(nullable NSString *)signingID;
+                                       identifiers:(nonnull SNTRuleIdentifiers *)identifiers;
 
 @end

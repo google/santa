@@ -12,7 +12,9 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import <CommonCrypto/CommonDigest.h>
 #import <Foundation/Foundation.h>
+#import <Kernel/kern/cs_blobs.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -62,13 +64,14 @@ REGISTER_COMMAND_NAME(@"rule")
     @"                   Will add the hash of the file currently at that path.\n"
     @"                   Does not work with --check. Use the fileinfo verb to check.\n"
     @"                   the rule state of a file.\n"
-    @"    --identifier {sha256|teamID|signingID}: identifier to add/remove/check\n"
+    @"    --identifier {sha256|teamID|signingID|cdhash}: identifier to add/remove/check\n"
     @"    --sha256 {sha256}: hash to add/remove/check [deprecated]\n"
     @"\n"
     @"  Optionally:\n"
     @"    --teamid: add or check a team ID rule instead of binary\n"
     @"    --signingid: add or check a signing ID rule instead of binary (see notes)\n"
     @"    --certificate: add or check a certificate sha256 rule instead of binary\n"
+    @"    --cdhash: add or check a cdhash rule instead of binary\n"
 #ifdef DEBUG
     @"    --force: allow manual changes even when SyncBaseUrl is set\n"
 #endif
@@ -156,6 +159,8 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.type = SNTRuleTypeTeamID;
     } else if ([arg caseInsensitiveCompare:@"--signingid"] == NSOrderedSame) {
       newRule.type = SNTRuleTypeSigningID;
+    } else if ([arg caseInsensitiveCompare:@"--cdhash"] == NSOrderedSame) {
+      newRule.type = SNTRuleTypeCDHash;
     } else if ([arg caseInsensitiveCompare:@"--path"] == NSOrderedSame) {
       if (++i > arguments.count - 1) {
         [self printErrorUsageAndExit:@"--path requires an argument"];
@@ -252,17 +257,29 @@ REGISTER_COMMAND_NAME(@"rule")
     } else if (newRule.type == SNTRuleTypeCertificate) {
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       newRule.identifier = cs.leafCertificate.SHA256;
+    } else if (newRule.type == SNTRuleTypeCDHash) {
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
+      newRule.identifier =
+        [cs.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
     } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
       // noop
     }
   }
 
-  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) {
+  if (newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate ||
+      newRule.type == SNTRuleTypeCDHash) {
     NSCharacterSet *nonHex =
       [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"] invertedSet];
-    if ([[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length !=
-        64) {
+    NSUInteger length =
+      [[newRule.identifier uppercaseString] stringByTrimmingCharactersInSet:nonHex].length;
+
+    if ((newRule.type == SNTRuleTypeBinary || newRule.type == SNTRuleTypeCertificate) &&
+        length != CC_SHA256_DIGEST_LENGTH * 2) {
       [self printErrorUsageAndExit:@"BINARY or CERTIFICATE rules require a valid SHA-256"];
+    } else if (newRule.type == SNTRuleTypeCDHash && length != CS_CDHASH_LEN * 2) {
+      [self printErrorUsageAndExit:
+              [NSString stringWithFormat:@"CDHASH rules require a valid hex string of length %d",
+                                         CS_CDHASH_LEN * 2]];
     }
   }
 
@@ -289,13 +306,21 @@ REGISTER_COMMAND_NAME(@"rule")
                      } else {
                        NSString *ruleType;
                        switch (newRule.type) {
-                         case SNTRuleTypeCertificate:
+                         case SNTRuleTypeCertificate: ruleType = @"Certificate SHA-256"; break;
                          case SNTRuleTypeBinary: {
                            ruleType = @"SHA-256";
                            break;
                          }
                          case SNTRuleTypeTeamID: {
                            ruleType = @"Team ID";
+                           break;
+                         }
+                         case SNTRuleTypeSigningID: {
+                           ruleType = @"Signing ID";
+                           break;
+                         }
+                         case SNTRuleTypeCDHash: {
+                           ruleType = @"CDHash";
                            break;
                          }
                          default: ruleType = @"(Unknown type)";
@@ -351,6 +376,7 @@ REGISTER_COMMAND_NAME(@"rule")
 
   switch (rule.type) {
     case SNTRuleTypeUnknown: [output appendString:@"Unknown"]; break;
+    case SNTRuleTypeCDHash: [output appendString:@"CDHash"]; break;
     case SNTRuleTypeBinary: [output appendString:@"Binary"]; break;
     case SNTRuleTypeSigningID: [output appendString:@"SigningID"]; break;
     case SNTRuleTypeCertificate: [output appendString:@"Certificate"]; break;
@@ -396,6 +422,7 @@ REGISTER_COMMAND_NAME(@"rule")
   __block NSString *output;
 
   struct RuleIdentifiers identifiers = {
+    .cdhash = (rule.type == SNTRuleTypeCDHash) ? rule.identifier : nil,
     .binarySHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil,
     .certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil,
     .teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil,
