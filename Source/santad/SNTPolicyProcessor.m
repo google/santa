@@ -157,6 +157,7 @@
             // intentional fallthrough
           case SNTRuleStateBlock:
             cd.customMsg = rule.customMsg;
+            cd.customURL = rule.customURL;
             cd.decision = SNTEventStateBlockCDHash;
             return cd;
           default: break;

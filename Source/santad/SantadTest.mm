@@ -52,7 +52,8 @@ static int HexCharToInt(char hex) {
     return -1;
   }
 }
-void SetBinaryDataFromHexString(const char *hexStr, uint8_t *buf, size_t bufLen) {
+
+static void SetBinaryDataFromHexString(const char *hexStr, uint8_t *buf, size_t bufLen) {
   assert(hexStr != NULL);
   size_t hexStrLen = strlen(hexStr);
   assert(hexStrLen > 0);

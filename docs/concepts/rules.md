@@ -1,4 +1,3 @@
-
 ---
 parent: Concepts
 ---
@@ -12,8 +11,8 @@ binaries with Santa on macOS.
 
 ### CDHash Rules
 
-CDHash rules use the a binary's code directory hash as an identifier. This is
-the most specific rule in Santa. The code directory hash identifies a specific
+CDHash rules use a binary's code directory hash as an identifier. This is the
+most specific rule in Santa. The code directory hash identifies a specific
 version of a program, similar to a file hash. Note that the operating system
 evaluates the cdhash lazily, only verifying pages of code when they're mapped
 in. This means that it is possible for a file hash to change, but a binary could
