@@ -226,16 +226,6 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
 }
 
 - (void)stubRule:(SNTRule *)rule forIdentifiers:(struct RuleIdentifiers)wantIdentifiers {
-  SNTRule *myRule = [[SNTRule alloc] init];
-  myRule.state = rule.state;
-  myRule.type = rule.type;
-
-  // Most tests do not set a specific cdhash, however an es_process_t created
-  // from MakeESProcess will have an all zeroes cdhash, not nil. To alleviate
-  // the need for all tests to specifiy the default cdhash, fix it up here.
-  static NSString *const zeroCDHash = RepeatedString(@"0", CS_CDHASH_LEN * 2);
-  wantIdentifiers.cdhash = wantIdentifiers.cdhash ?: zeroCDHash;
-
   OCMStub([self.mockRuleDatabase ruleForIdentifiers:wantIdentifiers])
     .ignoringNonObjectArgs()
     .andDo(^(NSInvocation *inv) {
@@ -289,6 +279,24 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self validateExecEvent:SNTActionRespondAllow
              messageSetup:^(es_message_t *msg) {
                msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
+             }];
+  [self checkMetricCounters:kAllowCDHash expected:@1];
+}
+
+- (void)testCDHashNoHardenedRuntimeRule {
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeCDHash;
+
+  // No CDHash should be set when hardened runtime CS flags are not set
+  [self stubRule:rule forIdentifiers:{.cdhash = nil}];
+
+  [self validateExecEvent:SNTActionRespondAllow
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+               // Ensure CS_HARD and CS_KILL are not set
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID;
              }];
   [self checkMetricCounters:kAllowCDHash expected:@1];
 }
@@ -303,6 +311,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self validateExecEvent:SNTActionRespondDeny
              messageSetup:^(es_message_t *msg) {
                msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
              }];
   [self checkMetricCounters:kBlockCDHash expected:@1];
 }
@@ -319,6 +328,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self validateExecEvent:SNTActionRespondAllowCompiler
              messageSetup:^(es_message_t *msg) {
                msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
              }];
 
   [self checkMetricCounters:kAllowCompiler expected:@1];
@@ -336,6 +346,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self validateExecEvent:SNTActionRespondAllow
              messageSetup:^(es_message_t *msg) {
                msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
              }];
 
   [self checkMetricCounters:kAllowCDHash expected:@1];

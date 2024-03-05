@@ -73,6 +73,7 @@ JSON blob. Here is an example of Firefox being blocked and sent for upload:
       ],
       "team_id": "43AQ936H96",
       "signing_id": "org.mozilla.firefox",
+      "cdhash": "ac14c49901a9cd05ff7bceea122f534d3c6c6ab7",
       "file_bundle_name": "Firefox",
       "executing_user": "bur",
       "ppid": 1,

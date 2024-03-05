@@ -307,14 +307,19 @@
       }
     }
 
-    static NSString *const kCDHashFormatString = @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-                                                  "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+    // Only consider the CDHash for processes that have CS_KILL or CS_HARD set.
+    // This ensures that the OS will kill the process if the CDHash was tampered
+    // with and code was loaded that didn't match a page hash.
+    if (targetProc->codesigning_flags & CS_KILL || targetProc->codesigning_flags & CS_HARD) {
+      static NSString *const kCDHashFormatString = @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+                                                    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
 
-    const uint8_t *buf = targetProc->cdhash;
-    cdhash = [[NSString alloc] initWithFormat:kCDHashFormatString, buf[0], buf[1], buf[2], buf[3],
-                                              buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-                                              buf[10], buf[11], buf[12], buf[13], buf[14], buf[15],
-                                              buf[16], buf[17], buf[18], buf[19]];
+      const uint8_t *buf = targetProc->cdhash;
+      cdhash = [[NSString alloc] initWithFormat:kCDHashFormatString, buf[0], buf[1], buf[2], buf[3],
+                                                buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
+                                                buf[10], buf[11], buf[12], buf[13], buf[14],
+                                                buf[15], buf[16], buf[17], buf[18], buf[19]];
+    }
   }
 
   return [self decisionForFileInfo:fileInfo

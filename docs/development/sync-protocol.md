@@ -97,6 +97,8 @@ The request consists of the following JSON keys:
 | compiler_rule_count | NO | int | Number of compiler rules the client has time of sync |
 | transitive_rule_count | NO | int | Number of transitive rules the client has at the time of sync |
 | teamid_rule_count | NO | int | Number of TeamID rules the client has at the time of sync | 24 |
+| signingid_rule_count | NO | int | Number of SigningID rules the client has at the time of sync | 11 |
+| cdhash_rule_count | NO | int | Number of CDHash rules the client has at the time of sync | 22 |
 | client_mode | YES | string | The mode the client is operating in, either "LOCKDOWN" or "MONITOR" | LOCKDOWN |
 | request_clean_sync | NO | bool | The client has requested a clean sync of its rules from the server | true |
 
@@ -114,6 +116,8 @@ The request consists of the following JSON keys:
   "primary_user" : "markowsky",
   "certificate_rule_count" : 2364,
   "teamid_rule_count" : 0,
+  "signingid_rule_count" : 12,
+  "cdhash_rule_count" : 34,
   "os_build" : "21F5048e",
   "transitive_rule_count" : 0,
   "os_version" : "12.4",
@@ -208,7 +212,7 @@ sequenceDiagram
 | execution_time | NO | float64 | Unix timestamp of when the execution occurred | 23344234232 |
 | loggedin_users | NO | list of strings | List of usernames logged in according to utmp | ["markowsky"] |
 | current_sessions | NO | list of strings | List of user sessions | ["markowsky@console", "markowsky@ttys000"] |
-| decision | YES | string | The decision Santa made for this binary, BUNDLE_BINARY is used to preemptively report binaries in a bundle. **Must be one of the examples** | "ALLOW_BINARY", "ALLOW_CERTIFICATE", "ALLOW_SCOPE", "ALLOW_TEAMID", "ALLOW_UNKNOWN", "BLOCK_BINARY", "BLOCK_CERTIFICATE", "BLOCK_SCOPE", "BLOCK_TEAMID", "BLOCK_UNKNOWN", "BUNDLE_BINARY" |
+| decision | YES | string | The decision Santa made for this binary, BUNDLE_BINARY is used to preemptively report binaries in a bundle. **Must be one of the examples** | "ALLOW_BINARY", "ALLOW_CERTIFICATE", "ALLOW_SCOPE", "ALLOW_TEAMID", "ALLOW_SIGNINGID", "ALLOW_CDHASH" "ALLOW_UNKNOWN", "BLOCK_BINARY", "BLOCK_CERTIFICATE", "BLOCK_SCOPE", "BLOCK_TEAMID", "BLOCK_SIGNINGID", "BLOCK_CDHASH", "BLOCK_UNKNOWN", "BUNDLE_BINARY" |
 | file_bundle_id | NO | string |  The executable's containing bundle's identifier as specified in the Info.plist | "com.apple.safari" |
 | file_bundle_path | NO | string | The path that the bundle resids in | /Applications/Santa.app |
 | file_bundle_executable_rel_path | NO | string | The relative path of the binary within the Bundle | "Contents/MacOS/AppName" |
@@ -228,6 +232,7 @@ sequenceDiagram
 | signing_chain | NO | list of signing chain objects | Certs used to code sign the executable | See next section |
 | signing_id | NO | string | Signing ID of the binary that was executed | "EQHXZ8M8AV:com.google.Chrome" |
 | team_id | NO | string | Team ID of the binary that was executed | "EQHXZ8M8AV" |
+| cdhash | NO | string | CDHash of the binary that was executed | "dbe8c39801f93e05fc7bc53a02af5b4d3cfc670a" |
 
 #### Signing Chain Objects
 
@@ -296,7 +301,8 @@ sequenceDiagram
       "markowsky@ttys003"
     ],
     "team_id": "EQHXZ8M8AV",
-    "signing_id": "EQHXZ8M8AV:com.google.santa"
+    "signing_id": "EQHXZ8M8AV:com.google.santa",
+    "cdhash": "dbe8c39801f93e05fc7bc53a02af5b4d3cfc670a"
   }]
 }
 ```
@@ -380,9 +386,9 @@ downloading if the rules need to be downloaded in multiple batches.
 
 | Key | Required | Type | Meaning | Example Value |
 |---|---|---|---|---|
-| identifier | YES | string | The attribute of the binary the rule should match on e.g. the team ID of a binary or sha256 hash value | "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c" |
+| identifier | YES | string | The attribute of the binary the rule should match on e.g. the signing ID, team ID, or CDHash of a binary or sha256 hash value | "ff2a7daa4c25cbd5b057e4471c6a22aba7d154dadfb5cce139c37cf795f41c9c" |
 | policy | YES | string | Identifies the action to perform in response to the rule matching (must be one of the examples) | "ALLOWLIST","ALLOWLIST_COMPILER", "BLOCKLIST", "REMOVE",  "SILENT_BLOCKLIST" |
-| rule\_type | YES | string | Identifies the type of rule (must be one of the examples) | "BINARY", "CERTIFICATE", "SIGNINGID", "TEAMID" |
+| rule\_type | YES | string | Identifies the type of rule (must be one of the examples) | "BINARY", "CERTIFICATE", "SIGNINGID", "TEAMID", "CDHASH"  |
 | custom\_msg | NO | string | A custom message to display when the rule matches | "Hello" |
 | custom\_url | NO | string | A custom URL to use for the open button when the rule matches | http://lmgtfy.app/?q=dont+download+malware |
 | creation\_time | NO | float64 | Time the rule was created | 1573543803.349378 |

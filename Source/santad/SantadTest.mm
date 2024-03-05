@@ -157,7 +157,7 @@ static const char *kBlockedCDHash = "7218eddfee4d3eba4873dedf22d1391d79aea25f";
   es_file_t file = MakeESFile([binaryPath UTF8String], fileStat);
   es_process_t proc = MakeESProcess(&file);
   proc.is_platform_binary = false;
-  proc.codesigning_flags = CS_SIGNED | CS_VALID;
+  proc.codesigning_flags = CS_SIGNED | CS_VALID | CS_HARD | CS_KILL;
 
   // Set a 6.5 second deadline for the message and clamp deadline headroom to 5
   // seconds. This means there is a 1.5 second leeway given for the processing block

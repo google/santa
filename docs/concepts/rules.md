@@ -1,3 +1,4 @@
+
 ---
 parent: Concepts
 ---
@@ -9,11 +10,20 @@ parent: Concepts
 Rules provide the primary evaluation mechanism for allowing and blocking
 binaries with Santa on macOS.
 
+### CDHash Rules
+
+CDHash rules use the a binary's code directory hash as an identifier. This is
+the most specific rule in Santa. The code directory hash identifies a specific
+version of a program, similar to a file hash. Note that the operating system
+evaluates the cdhash lazily, only verifying pages of code when they're mapped
+in. This means that it is possible for a file hash to change, but a binary could
+still execute as long as modified pages are not mapped in. Santa only considers
+CDHash rules for processes that have `CS_KILL` or `CS_HARD` codesigning flags
+set to ensure that a process will be killed if the CDHash was tampered with.
+
 ### Binary Rules
 
-Binary rules use the SHA-256 hash of the entire binary as an identifier. This is
-the most specific rule in Santa. Even a small change in the binary will alter
-the SHA-256 hash, invalidating the rule.
+Binary rules use the SHA-256 hash of the entire binary file as an identifier.
 
 ### Signing ID Rules
 
