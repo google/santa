@@ -18,7 +18,8 @@ evaluates the cdhash lazily, only verifying pages of code when they're mapped
 in. This means that it is possible for a file hash to change, but a binary could
 still execute as long as modified pages are not mapped in. Santa only considers
 CDHash rules for processes that have `CS_KILL` or `CS_HARD` codesigning flags
-set to ensure that a process will be killed if the CDHash was tampered with.
+set to ensure that a process will be killed if the CDHash was tampered with
+(assuming the system has SIP enabled).
 
 ### Binary Rules
 
