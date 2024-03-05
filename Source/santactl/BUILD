@@ -117,6 +117,7 @@ santa_unit_test(
         "//Source/common:SNTFileInfo",
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
+        "//Source/common:SNTRuleIdentifiers",
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCControlInterface",
