@@ -162,6 +162,7 @@
 
   // Allocate a new cached decision for the execution.
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+  cd.cdhash = cdhash;
   cd.sha256 = fileHash;
   cd.teamID = teamID;
   cd.signingID = signingID;
