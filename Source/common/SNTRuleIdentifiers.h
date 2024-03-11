@@ -33,7 +33,7 @@ struct RuleIdentifiers {
   NSString *teamID;
 };
 
-@interface SNTRuleIdentifiers : NSObject
+@interface SNTRuleIdentifiers : NSObject <NSSecureCoding>
 @property(readonly) NSString *cdhash;
 @property(readonly) NSString *binarySHA256;
 @property(readonly) NSString *signingID;

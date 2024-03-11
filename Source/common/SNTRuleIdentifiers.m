@@ -36,4 +36,38 @@
                                   .teamID = self.teamID};
 }
 
+#pragma mark NSSecureCoding
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wobjc-literal-conversion"
+#define ENCODE(obj, key) \
+  if (obj) [coder encodeObject:obj forKey:key]
+#define DECODE(cls, key) [decoder decodeObjectOfClass:[cls class] forKey:key]
+
++ (BOOL)supportsSecureCoding {
+  return YES;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)decoder {
+  self = [self init];
+  if (self) {
+    _cdhash = DECODE(NSString, @"cdhash");
+    _binarySHA256 = DECODE(NSString, @"binarySHA256");
+    _signingID = DECODE(NSString, @"signingID");
+    _certificateSHA256 = DECODE(NSString, @"certificateSHA256");
+    _teamID = DECODE(NSString, @"teamID");
+  }
+  return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder {
+  ENCODE(self.cdhash, @"cdhash");
+  ENCODE(self.binarySHA256, @"binarySHA256");
+  ENCODE(self.signingID, @"signingID");
+  ENCODE(self.certificateSHA256, @"certificateSHA256");
+  ENCODE(self.teamID, @"teamID");
+}
+
+#pragma clang diagnostic pop
+
 @end
