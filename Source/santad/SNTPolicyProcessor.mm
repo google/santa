@@ -32,7 +32,6 @@
 @interface SNTPolicyProcessor ()
 @property SNTRuleTable *ruleTable;
 @property SNTConfigurator *configurator;
-@property absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState> decisions;
 @end
 
 @implementation SNTPolicyProcessor
@@ -42,7 +41,16 @@
   if (self) {
     _ruleTable = ruleTable;
     _configurator = [SNTConfigurator configurator];
-    _decisions = absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState>{
+  }
+  return self;
+}
+
+// This method applies the rules to the cached decision object.
+inline SNTCachedDecision *updateCachedDecisionForRule(SNTCachedDecision *cd, SNTRule *rule,
+                                                      SNTClientMode mode,
+                                                      bool enableTransitiveRules) {
+  static const absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState> decisions =
+    absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState>{
       {{SNTRuleTypeCDHash, SNTRuleStateAllow}, SNTEventStateAllowCDHash},
       {{SNTRuleTypeCDHash, SNTRuleStateAllowCompiler}, SNTEventStateAllowCompiler},
       {{SNTRuleTypeCDHash, SNTRuleStateAllowTransitive}, SNTEventStateAllowTransitive},
@@ -63,19 +71,23 @@
       {{SNTRuleTypeTeamID, SNTRuleStateSilentBlock}, SNTEventStateBlockTeamID},
       {{SNTRuleTypeTeamID, SNTRuleStateBlock}, SNTEventStateBlockTeamID},
     };
-  }
-  return self;
-}
 
-// This method applies the rules to the cached decision object.
-- (nonnull SNTCachedDecision *)updateCachedDecision:(SNTCachedDecision *)cd
-                                            forRule:(SNTRule *)rule {
-  cd.decision = _decisions[std::pair<SNTRuleType, SNTRuleState>{rule.type, rule.state}];
+  auto iterator = decisions.find(std::pair<SNTRuleType, SNTRuleState>{rule.type, rule.state});
+  if (iterator != decisions.end()) {
+    cd.decision = iterator->second;
+  } else {
+    // We don't have a matching rule type, rule state for this.
+    if (mode == SNTClientModeMonitor) {
+      cd.decision = SNTEventStateAllowUnknown;
+    } else {
+      cd.decision = SNTEventStateBlockUnknown;
+    }
+  }
 
   if (rule.state == SNTRuleStateSilentBlock) {
     cd.silentBlock = YES;
   } else if (rule.state == SNTRuleStateAllowCompiler) {
-    if (![self.configurator enableTransitiveRules]) {
+    if (!enableTransitiveRules) {
       switch (rule.type) {
         case SNTRuleTypeCDHash: cd.decision = SNTEventStateAllowCDHash; break;
         case SNTRuleTypeBinary: cd.decision = SNTEventStateAllowBinary; break;
@@ -86,7 +98,7 @@
           LOGE(@"Invalid compiler rule type %ld", rule.type);
           [NSException
              raise:@"Invalid compiler rule type"
-            format:@"updateCachedDecision:ForRule: Unexpected compiler rule type: %ld", rule.type];
+            format:@"updateCachedDecisionForRule: Unexpected compiler rule type: %ld", rule.type];
           break;
       }
     }
@@ -94,9 +106,8 @@
     // If transitive rules are enabled, then SNTRuleStateAllowTransitive rules
     // become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
     // rule as if it were SNTRuleStateUnknown.
-    if (![self.configurator enableTransitiveRules]) {
+    if (!enableTransitiveRules) {
       // check operating mode.
-      SNTClientMode mode = [self.configurator clientMode];
       if (mode == SNTClientModeMonitor) {
         cd.decision = SNTEventStateAllowUnknown;
       } else {
@@ -116,11 +127,9 @@
   return cd;
 }
 
-- (nonnull SNTCachedDecision *)updateCachedDecision:(SNTCachedDecision *)cd
-                                    withSigningInfo:(MOLCodesignChecker *)csInfo
-                      withEntitlementFilterCallback:
-                        (NSDictionary *_Nullable (^_Nullable)(NSDictionary *_Nullable entitlements))
-                          entitlementsFilterCallback {
+inline SNTCachedDecision *updateCachedDecisionSigningInfo(
+  SNTCachedDecision *cd, MOLCodesignChecker *csInfo,
+  NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements)) {
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.certChain = csInfo.certificates;
@@ -200,9 +209,7 @@
       cd.signingID = nil;
       cd.cdhash = nil;
     } else {
-      cd = [self updateCachedDecision:cd
-                      withSigningInfo:csInfo
-        withEntitlementFilterCallback:entitlementsFilterCallback];
+      cd = updateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback);
     }
   }
 
@@ -226,7 +233,7 @@
                                                                 .certificateSHA256 = cd.certSHA256,
                                                                 .teamID = cd.teamID}];
   if (rule) {
-    cd = [self updateCachedDecision:cd forRule:rule];
+    cd = updateCachedDecisionForRule(cd, rule, mode, self.configurator.enableTransitiveRules);
     if (cd.decision != SNTEventStateBlockUnknown || cd.decision != SNTEventStateAllowUnknown) {
       return cd;
     }
