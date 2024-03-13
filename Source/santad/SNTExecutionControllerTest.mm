@@ -25,6 +25,7 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTMetricSet.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 #include "Source/common/TestUtils.h"
 #import "Source/santad/DataLayer/SNTEventTable.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
@@ -201,6 +202,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
                                          });
   es_process_t procExec = MakeESProcess(&fileExec);
   procExec.is_platform_binary = false;
+  procExec.codesigning_flags = CS_SIGNED | CS_VALID;
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc);
   esMsg.event.exec.target = &procExec;
 
@@ -223,6 +225,22 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   [self validateExecEvent:wantAction messageSetup:nil];
 }
 
+- (void)stubRule:(SNTRule *)rule forIdentifiers:(struct RuleIdentifiers)wantIdentifiers {
+  OCMStub([self.mockRuleDatabase ruleForIdentifiers:wantIdentifiers])
+    .ignoringNonObjectArgs()
+    .andDo(^(NSInvocation *inv) {
+      struct RuleIdentifiers gotIdentifiers = {};
+      [inv getArgument:&gotIdentifiers atIndex:2];
+
+      XCTAssertEqualObjects(gotIdentifiers.cdhash, wantIdentifiers.cdhash);
+      XCTAssertEqualObjects(gotIdentifiers.binarySHA256, wantIdentifiers.binarySHA256);
+      XCTAssertEqualObjects(gotIdentifiers.signingID, wantIdentifiers.signingID);
+      XCTAssertEqualObjects(gotIdentifiers.certificateSHA256, wantIdentifiers.certificateSHA256);
+      XCTAssertEqualObjects(gotIdentifiers.teamID, wantIdentifiers.teamID);
+    })
+    .andReturn(rule);
+}
+
 - (void)testBinaryAllowRule {
   OCMStub([self.mockFileInfo isMachO]).andReturn(YES);
   OCMStub([self.mockFileInfo SHA256]).andReturn(@"a");
@@ -230,11 +248,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowBinary expected:@1];
@@ -247,14 +262,94 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   [self validateExecEvent:SNTActionRespondDeny];
   [self checkMetricCounters:kBlockBinary expected:@1];
+}
+
+- (void)testCDHashAllowRule {
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondAllow
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
+             }];
+  [self checkMetricCounters:kAllowCDHash expected:@1];
+}
+
+- (void)testCDHashNoHardenedRuntimeRule {
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllow;
+  rule.type = SNTRuleTypeCDHash;
+
+  // No CDHash should be set when hardened runtime CS flags are not set
+  [self stubRule:rule forIdentifiers:{.cdhash = nil}];
+
+  [self validateExecEvent:SNTActionRespondAllow
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+               // Ensure CS_HARD and CS_KILL are not set
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID;
+             }];
+  [self checkMetricCounters:kAllowCDHash expected:@1];
+}
+
+- (void)testCDHashBlockRule {
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateBlock;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondDeny
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
+             }];
+  [self checkMetricCounters:kBlockCDHash expected:@1];
+}
+
+- (void)testCDHashAllowCompilerRule {
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(YES);
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowCompiler;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondAllowCompiler
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
+             }];
+
+  [self checkMetricCounters:kAllowCompiler expected:@1];
+}
+
+- (void)testCDHashAllowCompilerRuleTransitiveRuleDisabled {
+  OCMStub([self.mockConfigurator enableTransitiveRules]).andReturn(NO);
+
+  SNTRule *rule = [[SNTRule alloc] init];
+  rule.state = SNTRuleStateAllowCompiler;
+  rule.type = SNTRuleTypeCDHash;
+
+  [self stubRule:rule forIdentifiers:{.cdhash = @"aa00000000000000000000000000000000000000"}];
+
+  [self validateExecEvent:SNTActionRespondAllow
+             messageSetup:^(es_message_t *msg) {
+               msg->event.exec.target->cdhash[0] = 0xaa;
+               msg->event.exec.target->codesigning_flags = CS_SIGNED | CS_VALID | CS_KILL | CS_HARD;
+             }];
+
+  [self checkMetricCounters:kAllowCDHash expected:@1];
 }
 
 - (void)testSigningIDAllowRule {
@@ -264,17 +359,14 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
 
   NSString *signingID = [NSString stringWithFormat:@"%s:%s", kExampleTeamID, kExampleSigningID];
 
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
-                                           signingID:signingID
-                                   certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)])
-    .andReturn(rule);
+  [self stubRule:rule forIdentifiers:{ .signingID = signingID, .teamID = @(kExampleTeamID) }];
 
   [self validateExecEvent:SNTActionRespondAllow
              messageSetup:^(es_message_t *msg) {
                msg->event.exec.target->signing_id = MakeESStringToken(kExampleSigningID);
                msg->event.exec.target->team_id = MakeESStringToken(kExampleTeamID);
              }];
+
   [self checkMetricCounters:kAllowSigningID expected:@1];
 }
 
@@ -284,12 +376,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.type = SNTRuleTypeSigningID;
 
   NSString *signingID = [NSString stringWithFormat:@"%s:%s", kExampleTeamID, kExampleSigningID];
-
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
-                                           signingID:signingID
-                                   certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)])
-    .andReturn(rule);
+  [self stubRule:rule forIdentifiers:{ .signingID = signingID, .teamID = @(kExampleTeamID) }];
 
   [self validateExecEvent:SNTActionRespondDeny
              messageSetup:^(es_message_t *msg) {
@@ -308,11 +395,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeTeamID;
 
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)])
-    .andReturn(rule);
+  [self stubRule:rule forIdentifiers:{ .teamID = @(kExampleTeamID) }];
 
   [self validateExecEvent:SNTActionRespondAllow
              messageSetup:^(es_message_t *msg) {
@@ -330,11 +413,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeTeamID;
 
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)])
-    .andReturn(rule);
+  [self stubRule:rule forIdentifiers:{ .teamID = @(kExampleTeamID) }];
 
   [self validateExecEvent:SNTActionRespondDeny
              messageSetup:^(es_message_t *msg) {
@@ -353,11 +432,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeCertificate;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
-                                           signingID:nil
-                                   certificateSHA256:@"a"
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.certificateSHA256 = @"a"}];
 
   [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowCertificate expected:@1];
@@ -373,11 +449,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateBlock;
   rule.type = SNTRuleTypeCertificate;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:nil
-                                           signingID:nil
-                                   certificateSHA256:@"a"
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.certificateSHA256 = @"a"}];
 
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
@@ -395,11 +468,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   [self validateExecEvent:SNTActionRespondAllowCompiler];
   [self checkMetricCounters:kAllowCompiler expected:@1];
@@ -413,11 +483,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowBinary expected:@1];
@@ -431,11 +498,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   [self validateExecEvent:SNTActionRespondAllow];
   [self checkMetricCounters:kAllowTransitive expected:@1];
@@ -450,11 +514,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
@@ -477,11 +538,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllowCompiler;
   rule.type = SNTRuleTypeSigningID;
 
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:signingID
-                                   certificateSHA256:nil
-                                              teamID:@(kExampleTeamID)])
-    .andReturn(rule);
+  [self stubRule:rule
+    forIdentifiers:{ .binarySHA256 = @"a", .signingID = signingID, .teamID = @(kExampleTeamID) }];
 
   [self validateExecEvent:SNTActionRespondAllowCompiler
              messageSetup:^(es_message_t *msg) {
@@ -502,20 +560,11 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   rule.state = SNTRuleStateAllowTransitive;
   rule.type = SNTRuleTypeSigningID;
 
-  NSString *signingID = [NSString stringWithFormat:@"%s:%s", kExampleTeamID, kExampleSigningID];
-
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:signingID
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   OCMExpect([self.mockEventDatabase addStoredEvent:OCMOCK_ANY]);
 
-  [self validateExecEvent:SNTActionRespondDeny
-             messageSetup:^(es_message_t *msg) {
-               msg->event.exec.target->signing_id = MakeESStringToken("com.google.santa.test");
-             }];
+  [self validateExecEvent:SNTActionRespondDeny];
 
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);
   [self checkMetricCounters:kAllowSigningID expected:@0];
@@ -618,11 +667,8 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllow;
   rule.type = SNTRuleTypeBinary;
-  OCMStub([self.mockRuleDatabase ruleForBinarySHA256:@"a"
-                                           signingID:nil
-                                   certificateSHA256:nil
-                                              teamID:nil])
-    .andReturn(rule);
+
+  [self stubRule:rule forIdentifiers:{.binarySHA256 = @"a"}];
 
   [self validateExecEvent:SNTActionRespondAllow];
   OCMVerifyAllWithDelay(self.mockEventDatabase, 1);

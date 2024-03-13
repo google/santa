@@ -106,6 +106,11 @@
 @property NSString *signingID;
 
 ///
+/// If the executed file was signed, this is the CDHash of the binary.
+///
+@property NSString *cdhash;
+
+///
 ///  The user who executed the binary.
 ///
 @property NSString *executingUser;

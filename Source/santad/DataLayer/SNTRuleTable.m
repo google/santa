@@ -29,7 +29,7 @@ static const uint32_t kRuleTableCurrentVersion = 7;
 
 // TODO(nguyenphillip): this should be configurable.
 // How many rules must be in database before we start trying to remove transitive rules.
-static const NSUInteger kTransitiveRuleCullingThreshold = 500000;
+static const int64_t kTransitiveRuleCullingThreshold = 500000;
 // Consider transitive rules out of date if they haven't been used in six months.
 static const NSUInteger kTransitiveRuleExpirationSeconds = 6 * 30 * 24 * 3600;
 
@@ -263,7 +263,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
 #pragma mark Entry Counts
 
-- (NSUInteger)ruleCount {
+- (int64_t)ruleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules"];
@@ -271,23 +271,23 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
-- (NSUInteger)ruleCountForRuleType:(SNTRuleType)ruleType {
-  __block NSUInteger count = 0;
+- (int64_t)ruleCountForRuleType:(SNTRuleType)ruleType {
+  __block int64_t count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count = [db longForQuery:@"SELECT COUNT(*) FROM rules WHERE type=?", @(ruleType)];
   }];
   return count;
 }
 
-- (NSUInteger)binaryRuleCount {
+- (int64_t)binaryRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeBinary];
 }
 
-- (NSUInteger)certificateRuleCount {
+- (int64_t)certificateRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeCertificate];
 }
 
-- (NSUInteger)compilerRuleCount {
+- (int64_t)compilerRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count =
@@ -296,7 +296,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
-- (NSUInteger)transitiveRuleCount {
+- (int64_t)transitiveRuleCount {
   __block NSUInteger count = 0;
   [self inDatabase:^(FMDatabase *db) {
     count =
@@ -305,12 +305,16 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return count;
 }
 
-- (NSUInteger)teamIDRuleCount {
+- (int64_t)teamIDRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeTeamID];
 }
 
-- (NSUInteger)signingIDRuleCount {
+- (int64_t)signingIDRuleCount {
   return [self ruleCountForRuleType:SNTRuleTypeSigningID];
+}
+
+- (int64_t)cdhashRuleCount {
+  return [self ruleCountForRuleType:SNTRuleTypeCDHash];
 }
 
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
@@ -323,10 +327,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   return r;
 }
 
-- (SNTRule *)ruleForBinarySHA256:(NSString *)binarySHA256
-                       signingID:(NSString *)signingID
-               certificateSHA256:(NSString *)certificateSHA256
-                          teamID:(NSString *)teamID {
+- (SNTRule *)ruleForIdentifiers:(struct RuleIdentifiers)identifiers {
   __block SNTRule *rule;
 
   // Look for a static rule that matches.
@@ -334,22 +335,27 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   if (staticRules.count) {
     // IMPORTANT: The order static rules are checked here should be the same
     // order as given by the SQL query for the rules database.
-    rule = staticRules[binarySHA256];
+    rule = staticRules[identifiers.cdhash];
+    if (rule.type == SNTRuleTypeCDHash) {
+      return rule;
+    }
+
+    rule = staticRules[identifiers.binarySHA256];
     if (rule.type == SNTRuleTypeBinary) {
       return rule;
     }
 
-    rule = staticRules[signingID];
+    rule = staticRules[identifiers.signingID];
     if (rule.type == SNTRuleTypeSigningID) {
       return rule;
     }
 
-    rule = staticRules[certificateSHA256];
+    rule = staticRules[identifiers.certificateSHA256];
     if (rule.type == SNTRuleTypeCertificate) {
       return rule;
     }
 
-    rule = staticRules[teamID];
+    rule = staticRules[identifiers.teamID];
     if (rule.type == SNTRuleTypeTeamID) {
       return rule;
     }
@@ -360,7 +366,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // NOTE: This code is written with the intention that the binary rule is searched for first
   // as Santa is designed to go with the most-specific rule possible.
   //
-  // The intended order of precedence is Binaries > Signing IDs > Certificates > Team IDs.
+  // The intended order of precedence is CDHash > Binaries > Signing IDs > Certificates > Team IDs.
   //
   // As such the query should have "ORDER BY type DESC" before the LIMIT, to ensure that is the
   // case. However, in all tested versions of SQLite that ORDER BY clause is unnecessary: the query
@@ -375,12 +381,15 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // There is a test for this in SNTRuleTableTests in case SQLite behavior changes in the future.
   //
   [self inDatabase:^(FMDatabase *db) {
-    FMResultSet *rs = [db executeQuery:@"SELECT * FROM rules WHERE "
-                                       @"   (identifier=? and type=1000) "
-                                       @"OR (identifier=? AND type=2000) "
-                                       @"OR (identifier=? AND type=3000) "
-                                       @"OR (identifier=? AND type=4000) LIMIT 1",
-                                       binarySHA256, signingID, certificateSHA256, teamID];
+    FMResultSet *rs =
+      [db executeQuery:@"SELECT * FROM rules WHERE "
+                       @"   (identifier=? and type=500) "
+                       @"OR (identifier=? and type=1000) "
+                       @"OR (identifier=? AND type=2000) "
+                       @"OR (identifier=? AND type=3000) "
+                       @"OR (identifier=? AND type=4000) LIMIT 1",
+                       identifiers.cdhash, identifiers.binarySHA256, identifiers.signingID,
+                       identifiers.certificateSHA256, identifiers.teamID];
     if ([rs next]) {
       rule = [self ruleFromResultSet:rs];
     }
@@ -389,8 +398,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
   // Allow binaries signed by the "Software Signing" cert used to sign launchd
   // if no existing rule has matched.
-  if (!rule && [certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
-    rule = [[SNTRule alloc] initWithIdentifier:certificateSHA256
+  if (!rule && [identifiers.certificateSHA256 isEqual:self.launchdCSInfo.leafCertificate.SHA256]) {
+    rule = [[SNTRule alloc] initWithIdentifier:identifiers.certificateSHA256
                                          state:SNTRuleStateAllow
                                           type:SNTRuleTypeCertificate
                                      customMsg:nil

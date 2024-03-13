@@ -12,6 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/common/SNTXPCUnprivilegedControlInterface.h"
 
 ///
@@ -32,11 +33,8 @@
                        reply:(void (^)(NSError *error))reply;
 - (void)databaseEventsPending:(void (^)(NSArray *events))reply;
 - (void)databaseRemoveEventsWithIDs:(NSArray *)ids;
-- (void)databaseRuleForBinarySHA256:(NSString *)binarySHA256
-                  certificateSHA256:(NSString *)certificateSHA256
-                             teamID:(NSString *)teamID
-                          signingID:(NSString *)signingID
-                              reply:(void (^)(SNTRule *))reply;
+- (void)databaseRuleForIdentifiers:(SNTRuleIdentifiers *)identifiers
+                             reply:(void (^)(SNTRule *))reply;
 - (void)retrieveAllRules:(void (^)(NSArray<SNTRule *> *rules, NSError *error))reply;
 
 ///

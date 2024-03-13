@@ -103,7 +103,7 @@ class MockLogger : public Logger {
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
-typedef void (^testHelperBlock)(es_message_t *message,
+typedef void (^TestHelperBlock)(es_message_t *message,
                                 std::shared_ptr<MockEndpointSecurityAPI> mockESApi, id mockCC,
                                 SNTEndpointSecurityRecorder *recorderClient,
                                 std::shared_ptr<PrefixTree<Unit>> prefixTree,
@@ -114,7 +114,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 
 - (void)handleMessageShouldLog:(BOOL)shouldLog
          shouldRemoveFromCache:(BOOL)shouldRemoveFromCache
-                     withBlock:(testHelperBlock)testBlock {
+                     withBlock:(TestHelperBlock)testBlock {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_CLOSE, &proc, ActionType::Auth);
@@ -177,7 +177,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
   if (@available(macOS 13.0, *)) {
     // CLOSE not modified, but was_mapped_writable, should remove from cache,
     // and matches fileChangesRegex
-    testHelperBlock testBlock =
+    TestHelperBlock testBlock =
       ^(es_message_t *esMsg, std::shared_ptr<MockEndpointSecurityAPI> mockESApi, id mockCC,
         SNTEndpointSecurityRecorder *recorderClient, std::shared_ptr<PrefixTree<Unit>> prefixTree,
         __autoreleasing dispatch_semaphore_t *sema,
@@ -209,7 +209,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
   if (@available(macOS 13.0, *)) {
     // CLOSE not modified, but was_mapped_writable, remove from cache, and does not match
     // fileChangesRegex
-    testHelperBlock testBlock =
+    TestHelperBlock testBlock =
       ^(es_message_t *esMsg, std::shared_ptr<MockEndpointSecurityAPI> mockESApi, id mockCC,
         SNTEndpointSecurityRecorder *recorderClient, std::shared_ptr<PrefixTree<Unit>> prefixTree,
         __autoreleasing dispatch_semaphore_t *sema,
@@ -233,7 +233,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
 
 - (void)testHandleMessage {
   // CLOSE not modified, bail early
-  testHelperBlock testBlock = ^(
+  TestHelperBlock testBlock = ^(
     es_message_t *esMsg, std::shared_ptr<MockEndpointSecurityAPI> mockESApi, id mockCC,
     SNTEndpointSecurityRecorder *recorderClient, std::shared_ptr<PrefixTree<Unit>> prefixTree,
     __autoreleasing dispatch_semaphore_t *sema, __autoreleasing dispatch_semaphore_t *semaMetrics) {
@@ -282,6 +282,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
     esMsg->event.close.modified = true;
     esMsg->event.close.target = &targetFileMissesRegex;
     Message msg(mockESApi, esMsg);
+    OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
     XCTAssertNoThrow([recorderClient handleMessage:Message(mockESApi, esMsg)
                                 recordEventMetrics:^(EventDisposition d) {
                                   XCTFail("Metrics record callback should not be called here");
@@ -289,6 +290,44 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
   };
 
   [self handleMessageShouldLog:NO shouldRemoveFromCache:YES withBlock:testBlock];
+
+  // UNLINK, remove from cache, but doesn't match fileChangesRegex
+  testBlock = ^(
+    es_message_t *esMsg, std::shared_ptr<MockEndpointSecurityAPI> mockESApi, id mockCC,
+    SNTEndpointSecurityRecorder *recorderClient, std::shared_ptr<PrefixTree<Unit>> prefixTree,
+    __autoreleasing dispatch_semaphore_t *sema, __autoreleasing dispatch_semaphore_t *semaMetrics) {
+    esMsg->event_type = ES_EVENT_TYPE_NOTIFY_UNLINK;
+    esMsg->event.unlink.target = &targetFileMissesRegex;
+    Message msg(mockESApi, esMsg);
+    OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
+    XCTAssertNoThrow([recorderClient handleMessage:Message(mockESApi, esMsg)
+                                recordEventMetrics:^(EventDisposition d) {
+                                  XCTFail("Metrics record callback should not be called here");
+                                }]);
+  };
+
+  [self handleMessageShouldLog:NO shouldRemoveFromCache:NO withBlock:testBlock];
+
+  // EXCHANGEDATA, Prefix match, bail early
+  testBlock = ^(
+    es_message_t *esMsg, std::shared_ptr<MockEndpointSecurityAPI> mockESApi, id mockCC,
+    SNTEndpointSecurityRecorder *recorderClient, std::shared_ptr<PrefixTree<Unit>> prefixTree,
+    __autoreleasing dispatch_semaphore_t *sema, __autoreleasing dispatch_semaphore_t *semaMetrics) {
+    esMsg->event_type = ES_EVENT_TYPE_NOTIFY_UNLINK;
+    esMsg->event.exchangedata.file1 = &targetFileMatchesRegex;
+    prefixTree->InsertPrefix(esMsg->event.exchangedata.file1->path.data, Unit{});
+    Message msg(mockESApi, esMsg);
+    OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
+    XCTAssertNoThrow([recorderClient handleMessage:Message(mockESApi, esMsg)
+                                recordEventMetrics:^(EventDisposition d) {
+                                  XCTAssertEqual(d, EventDisposition::kDropped);
+                                  dispatch_semaphore_signal(*semaMetrics);
+                                }]);
+
+    XCTAssertSemaTrue(*semaMetrics, 5, "Metrics not recorded within expected window");
+  };
+
+  [self handleMessageShouldLog:NO shouldRemoveFromCache:NO withBlock:testBlock];
 
   // LINK, Prefix match, bail early
   testBlock =
@@ -372,6 +411,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
   extern es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg);
 
   es_file_t closeFile = MakeESFile("close");
+  es_file_t exchangedataFile = MakeESFile("exchangedata");
   es_file_t linkFile = MakeESFile("link");
   es_file_t renameFile = MakeESFile("rename");
   es_file_t unlinkFile = MakeESFile("unlink");
@@ -394,7 +434,8 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
   XCTAssertEqual(GetTargetFileForPrefixTree(&esMsg), &unlinkFile);
 
   esMsg.event_type = ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA;
-  XCTAssertEqual(GetTargetFileForPrefixTree(&esMsg), nullptr);
+  esMsg.event.exchangedata.file1 = &exchangedataFile;
+  XCTAssertEqual(GetTargetFileForPrefixTree(&esMsg), &exchangedataFile);
 
   esMsg.event_type = ES_EVENT_TYPE_NOTIFY_EXEC;
   XCTAssertEqual(GetTargetFileForPrefixTree(&esMsg), nullptr);

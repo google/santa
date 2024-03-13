@@ -264,6 +264,7 @@ objc_library(
     hdrs = ["SNTFileInfo.h"],
     deps = [
         ":SNTLogging",
+        ":SantaVnode",
         "@FMDB",
         "@MOLCodesignChecker",
     ],
@@ -311,6 +312,12 @@ santa_unit_test(
         ":SNTRule",
         ":SNTSyncConstants",
     ],
+)
+
+objc_library(
+    name = "SNTRuleIdentifiers",
+    srcs = ["SNTRuleIdentifiers.m"],
+    hdrs = ["SNTRuleIdentifiers.h"],
 )
 
 objc_library(
@@ -378,6 +385,7 @@ objc_library(
         ":SNTCommonEnums",
         ":SNTConfigurator",
         ":SNTRule",
+        ":SNTRuleIdentifiers",
         ":SNTStoredEvent",
         ":SNTXPCUnprivilegedControlInterface",
         "@MOLCodesignChecker",
@@ -420,6 +428,7 @@ objc_library(
     deps = [
         ":SNTCommonEnums",
         ":SNTRule",
+        ":SNTRuleIdentifiers",
         ":SNTStoredEvent",
         ":SNTXPCBundleServiceInterface",
         ":SantaVnode",

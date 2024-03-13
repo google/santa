@@ -12,16 +12,16 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include "Source/santad/SNTCompilerController.h"
+
 #include <EndpointSecurity/EndpointSecurity.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <cstdio>
-#include <memory>
-#include "Source/santad/SNTCompilerController.h"
+#include <sys/stat.h>
 
-#include <string_view>
+#include <memory>
 
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTFileInfo.h"
@@ -39,10 +39,10 @@ static const pid_t PID_MAX = 99999;
 
 @interface SNTCompilerController (Testing)
 - (BOOL)isCompiler:(const audit_token_t &)tok;
-- (void)saveFakeDecision:(const es_file_t *)esFile;
-- (void)removeFakeDecision:(const es_file_t *)esFile;
+- (void)saveFakeDecision:(SNTFileInfo *)esFile;
+- (void)removeFakeDecision:(SNTFileInfo *)esFile;
 - (void)createTransitiveRule:(const Message &)esMsg
-                      target:(const es_file_t *)targetFile
+                      target:(SNTFileInfo *)targetFile
                       logger:(std::shared_ptr<Logger>)logger;
 @end
 
@@ -117,34 +117,39 @@ static const pid_t PID_MAX = 99999;
 }
 
 - (void)testSaveFakeDecision {
-  es_file_t file = MakeESFile("foo", {
-                                       .st_dev = 12,
-                                       .st_ino = 34,
-                                     });
+  SantaVnode vnode{
+    .fsid = 12,
+    .fileid = 34,
+  };
 
   OCMExpect([self.mockDecisionCache
     cacheDecision:[OCMArg checkWithBlock:^BOOL(SNTCachedDecision *cd) {
-      return cd.vnodeId.fsid == file.stat.st_dev && cd.vnodeId.fileid == file.stat.st_ino &&
-             cd.decision == SNTEventStateAllowPendingTransitive &&
+      return cd.vnodeId == vnode && cd.decision == SNTEventStateAllowPendingTransitive &&
              [cd.sha256 isEqualToString:@"pending"];
     }]]);
 
+  id mockFileInfo = OCMClassMock([SNTFileInfo class]);
+  OCMExpect([mockFileInfo vnode]).andReturn(vnode);
+
   SNTCompilerController *cc = [[SNTCompilerController alloc] init];
-  [cc saveFakeDecision:&file];
+  [cc saveFakeDecision:mockFileInfo];
 
   XCTAssertTrue(OCMVerifyAll(self.mockDecisionCache), "Unable to verify all expectations");
 }
 
 - (void)testRemoveFakeDecision {
-  es_file_t file = MakeESFile("foo", {
-                                       .st_dev = 12,
-                                       .st_ino = 34,
-                                     });
+  SantaVnode vnode{
+    .fsid = 12,
+    .fileid = 34,
+  };
 
-  OCMExpect([self.mockDecisionCache forgetCachedDecisionForFile:file.stat]);
+  id mockFileInfo = OCMClassMock([SNTFileInfo class]);
+  OCMExpect([mockFileInfo vnode]).andReturn(vnode);
+
+  OCMExpect([self.mockDecisionCache forgetCachedDecisionForVnode:vnode]);
 
   SNTCompilerController *cc = [[SNTCompilerController alloc] init];
-  [cc removeFakeDecision:&file];
+  [cc removeFakeDecision:mockFileInfo];
 
   XCTAssertTrue(OCMVerifyAll(self.mockDecisionCache), "Unable to verify all expectations");
 }
@@ -153,6 +158,7 @@ static const pid_t PID_MAX = 99999;
   es_file_t file = MakeESFile("foo");
   es_file_t ignoredFile = MakeESFile("/dev/bar");
   es_file_t normalFile = MakeESFile("bar");
+  SantaVnode vnodeNormal = SantaVnode::VnodeForFile(&normalFile);
   audit_token_t compilerTok = MakeAuditToken(12, 34);
   audit_token_t notCompilerTok = MakeAuditToken(56, 78);
   es_process_t compilerProc = MakeESProcess(&file, compilerTok, {});
@@ -221,33 +227,140 @@ static const pid_t PID_MAX = 99999;
     Message msg(mockESApi, &esMsg);
 
     id mockCompilerController = OCMPartialMock(cc);
+    id mockFileInfo = OCMClassMock([SNTFileInfo class]);
+    OCMStub([mockFileInfo alloc]).andReturn(mockFileInfo);
+    OCMStub([mockFileInfo initWithEndpointSecurityFile:&normalFile error:[OCMArg anyObjectRef]])
+      .ignoringNonObjectArgs()
+      .andReturn(mockFileInfo);
+    OCMStub([mockFileInfo vnode]).andReturn(vnodeNormal);
 
-    OCMExpect([mockCompilerController createTransitiveRule:msg
-                                                    target:esMsg.event.close.target
-                                                    logger:nullptr])
+    OCMExpect([mockCompilerController
+                createTransitiveRule:msg
+                              target:[OCMArg checkWithBlock:^BOOL(SNTFileInfo *fi) {
+                                return fi.vnode.fsid == normalFile.stat.st_dev &&
+                                       fi.vnode.fileid == normalFile.stat.st_ino;
+                              }]
+                              logger:nullptr])
       .ignoringNonObjectArgs();
 
     XCTAssertTrue([cc handleEvent:msg withLogger:nullptr]);
 
     XCTAssertTrue(OCMVerifyAll(mockCompilerController), "Unable to verify all expectations");
     [mockCompilerController stopMocking];
+    [mockFileInfo stopMocking];
   }
+  // Ensure transitive rules are created for RENAME events from the source path
   {
     esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &compilerProc);
     esMsg.event.rename.source = &normalFile;
     Message msg(mockESApi, &esMsg);
 
     id mockCompilerController = OCMPartialMock(cc);
+    id mockFileInfo = OCMClassMock([SNTFileInfo class]);
+    OCMStub([mockFileInfo alloc]).andReturn(mockFileInfo);
+    OCMStub([mockFileInfo initWithEndpointSecurityFile:&normalFile error:[OCMArg anyObjectRef]])
+      .ignoringNonObjectArgs()
+      .andReturn(mockFileInfo);
+    OCMStub([mockFileInfo vnode]).andReturn(vnodeNormal);
 
-    OCMExpect([mockCompilerController createTransitiveRule:msg
-                                                    target:esMsg.event.close.target
-                                                    logger:nullptr])
+    OCMExpect([mockCompilerController
+                createTransitiveRule:msg
+                              target:[OCMArg checkWithBlock:^BOOL(SNTFileInfo *fi) {
+                                return fi.vnode.fsid == normalFile.stat.st_dev &&
+                                       fi.vnode.fileid == normalFile.stat.st_ino;
+                              }]
+                              logger:nullptr])
       .ignoringNonObjectArgs();
 
     XCTAssertTrue([cc handleEvent:msg withLogger:nullptr]);
 
     XCTAssertTrue(OCMVerifyAll(mockCompilerController), "Unable to verify all expectations");
     [mockCompilerController stopMocking];
+    [mockFileInfo stopMocking];
+  }
+  // Ensure transitive rules are created for RENAME events from the existing destinatio path as a
+  // fallback
+  {
+    es_file_t destFile = MakeESFile("dest", MakeStat(1000));
+    esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &compilerProc);
+    esMsg.event.rename.source = &normalFile;
+    esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_EXISTING_FILE;
+    esMsg.event.rename.destination.existing_file = &destFile;
+    Message msg(mockESApi, &esMsg);
+    SantaVnode vnodeDest = SantaVnode::VnodeForFile(&destFile);
+
+    id mockCompilerController = OCMPartialMock(cc);
+    id mockFileInfo = OCMClassMock([SNTFileInfo class]);
+    OCMStub([mockFileInfo alloc]).andReturn(mockFileInfo);
+    // Return nil the first time when the source path is looked up
+    OCMExpect([mockFileInfo initWithEndpointSecurityFile:&normalFile error:[OCMArg anyObjectRef]])
+      .ignoringNonObjectArgs()
+      .andReturn(nil);
+    OCMExpect([mockFileInfo initWithEndpointSecurityFile:&destFile error:[OCMArg anyObjectRef]])
+      .ignoringNonObjectArgs()
+      .andReturn(mockFileInfo);
+    OCMStub([mockFileInfo vnode]).andReturn(vnodeDest);
+
+    OCMExpect([mockCompilerController
+                createTransitiveRule:msg
+                              target:[OCMArg checkWithBlock:^BOOL(SNTFileInfo *fi) {
+                                return fi.vnode.fsid == destFile.stat.st_dev &&
+                                       fi.vnode.fileid == destFile.stat.st_ino;
+                              }]
+                              logger:nullptr])
+      .ignoringNonObjectArgs();
+
+    XCTAssertTrue([cc handleEvent:msg withLogger:nullptr]);
+
+    XCTAssertTrue(OCMVerifyAll(mockCompilerController), "Unable to verify all expectations");
+    [mockCompilerController stopMocking];
+    [mockFileInfo stopMocking];
+  }
+  // Ensure transitive rules are created for RENAME events from the existing destinatio path as a
+  // fallback
+  {
+    es_file_t destDir = MakeESFile("/usr/bin", MakeStat(1000));
+    es_string_token_t destFilename = MakeESStringToken("true");
+    esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_RENAME, &compilerProc);
+    esMsg.event.rename.source = &normalFile;
+    esMsg.event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
+    esMsg.event.rename.destination.new_path.dir = &destDir;
+    esMsg.event.rename.destination.new_path.filename = destFilename;
+    Message msg(mockESApi, &esMsg);
+    NSString *expectedTarget =
+      [NSString stringWithFormat:@"%s/%s", destDir.path.data, destFilename.data];
+
+    struct stat sbNewFile;
+    XCTAssertEqual(stat("/usr/bin/true", &sbNewFile), 0);
+    SantaVnode vnodeDest = SantaVnode::VnodeForFile(sbNewFile);
+
+    id mockCompilerController = OCMPartialMock(cc);
+    id mockFileInfo = OCMClassMock([SNTFileInfo class]);
+    OCMStub([mockFileInfo alloc]).andReturn(mockFileInfo);
+    OCMStub([mockFileInfo vnode]).andReturn(vnodeDest);
+
+    // Return nil the first time when the source path is looked up
+    OCMExpect([mockFileInfo initWithEndpointSecurityFile:&normalFile error:[OCMArg anyObjectRef]])
+      .ignoringNonObjectArgs()
+      .andReturn(nil);
+    OCMExpect([mockFileInfo initWithPath:expectedTarget error:[OCMArg anyObjectRef]])
+      .ignoringNonObjectArgs()
+      .andReturn(mockFileInfo);
+
+    OCMExpect([mockCompilerController
+                createTransitiveRule:msg
+                              target:[OCMArg checkWithBlock:^BOOL(SNTFileInfo *fi) {
+                                return fi.vnode.fsid == sbNewFile.st_dev &&
+                                       fi.vnode.fileid == sbNewFile.st_ino;
+                              }]
+                              logger:nullptr])
+      .ignoringNonObjectArgs();
+
+    XCTAssertTrue([cc handleEvent:msg withLogger:nullptr]);
+
+    XCTAssertTrue(OCMVerifyAll(mockCompilerController), "Unable to verify all expectations");
+    [mockCompilerController stopMocking];
+    [mockFileInfo stopMocking];
   }
 }
 

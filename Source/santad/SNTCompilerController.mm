@@ -65,19 +65,21 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 // Adds a fake cached decision to SNTDecisionCache for pending files. If the file
 // is executed before we can create a transitive rule for it, then we can at
 // least log the pending decision info.
-- (void)saveFakeDecision:(const es_file_t *)esFile {
-  SNTCachedDecision *cd = [[SNTCachedDecision alloc] initWithEndpointSecurityFile:esFile];
+- (void)saveFakeDecision:(SNTFileInfo *)fileInfo {
+  SNTCachedDecision *cd = [[SNTCachedDecision alloc] initWithVnode:fileInfo.vnode];
   cd.decision = SNTEventStateAllowPendingTransitive;
   cd.sha256 = @"pending";
   [[SNTDecisionCache sharedCache] cacheDecision:cd];
 }
 
-- (void)removeFakeDecision:(const es_file_t *)esFile {
-  [[SNTDecisionCache sharedCache] forgetCachedDecisionForFile:esFile->stat];
+- (void)removeFakeDecision:(SNTFileInfo *)fileInfo {
+  [[SNTDecisionCache sharedCache] forgetCachedDecisionForVnode:fileInfo.vnode];
 }
 
 - (BOOL)handleEvent:(const Message &)esMsg withLogger:(std::shared_ptr<Logger>)logger {
-  const es_file_t *targetFile = NULL;
+  SNTFileInfo *targetFile;
+  NSString *targetPath;
+  NSError *error;
 
   switch (esMsg->event_type) {
     case ES_EVENT_TYPE_NOTIFY_CLOSE:
@@ -90,7 +92,9 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
         return NO;
       }
 
-      targetFile = esMsg->event.close.target;
+      targetPath = @(esMsg->event.close.target->path.data);
+      targetFile = [[SNTFileInfo alloc] initWithEndpointSecurityFile:esMsg->event.close.target
+                                                               error:&error];
 
       break;
     case ES_EVENT_TYPE_NOTIFY_RENAME:
@@ -105,7 +109,24 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
         return NO;
       }
 
-      targetFile = esMsg->event.rename.source;
+      targetFile = [[SNTFileInfo alloc] initWithEndpointSecurityFile:esMsg->event.rename.source
+                                                               error:&error];
+      if (!targetFile) {
+        LOGD(@"Unable to locate source file for rename event while creating transitive. Falling "
+             @"back to destination. Path: %s, Error: %@",
+             esMsg->event.rename.source->path.data, error);
+        if (esMsg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
+          targetPath = @(esMsg->event.rename.destination.existing_file->path.data);
+          targetFile = [[SNTFileInfo alloc]
+            initWithEndpointSecurityFile:esMsg->event.rename.destination.existing_file
+                                   error:&error];
+        } else {
+          targetPath = [NSString
+            stringWithFormat:@"%s/%s", esMsg->event.rename.destination.new_path.dir->path.data,
+                             esMsg->event.rename.destination.new_path.filename.data];
+          targetFile = [[SNTFileInfo alloc] initWithPath:targetPath error:&error];
+        }
+      }
 
       break;
     case ES_EVENT_TYPE_NOTIFY_EXIT:
@@ -119,6 +140,9 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
     [self createTransitiveRule:esMsg target:targetFile logger:logger];
     return YES;
   } else {
+    LOGD(@"Unable to create SNTFileInfo while attempting to create transitive rule. Event: %d | "
+         @"Path: %@ | Error: %@",
+         (int)esMsg->event_type, targetPath, error);
     return NO;
   }
 }
@@ -127,31 +151,21 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
 // compiler.  It checks if the closed file is executable, and if so, transitively allowlists it.
 // The passed in message contains the pid of the writing process and path of closed file.
 - (void)createTransitiveRule:(const Message &)esMsg
-                      target:(const es_file_t *)targetFile
+                      target:(SNTFileInfo *)targetFile
                       logger:(std::shared_ptr<Logger>)logger {
-  NSError *error = nil;
-  SNTFileInfo *fi = [[SNTFileInfo alloc] initWithEndpointSecurityFile:targetFile error:&error];
-  if (error) {
-    LOGD(@"Unable to create SNTFileInfo while attempting to create transitive rule. Event: %d | "
-         @"Path: %@ | Error: %@",
-         (int)esMsg->event_type, @(targetFile->path.data), error);
-    return;
-  }
-
   [self saveFakeDecision:targetFile];
 
   // Check if this file is an executable.
-  if (fi.isExecutable) {
+  if (targetFile.isExecutable) {
     // Check if there is an existing (non-transitive) rule for this file.  We leave existing rules
     // alone, so that a allowlist or blocklist rule can't be overwritten by a transitive one.
     SNTRuleTable *ruleTable = [SNTDatabaseController ruleTable];
-    SNTRule *prevRule = [ruleTable ruleForBinarySHA256:fi.SHA256
-                                             signingID:nil
-                                     certificateSHA256:nil
-                                                teamID:nil];
+    SNTRule *prevRule = [ruleTable ruleForIdentifiers:(struct RuleIdentifiers){
+                                                        .binarySHA256 = targetFile.SHA256,
+                                                      }];
     if (!prevRule || prevRule.state == SNTRuleStateAllowTransitive) {
       // Construct a new transitive allowlist rule for the executable.
-      SNTRule *rule = [[SNTRule alloc] initWithIdentifier:fi.SHA256
+      SNTRule *rule = [[SNTRule alloc] initWithIdentifier:targetFile.SHA256
                                                     state:SNTRuleStateAllowTransitive
                                                      type:SNTRuleTypeBinary
                                                 customMsg:@""];
@@ -161,7 +175,7 @@ static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";
       if (![ruleTable addRules:@[ rule ] ruleCleanup:SNTRuleCleanupNone error:&err]) {
         LOGE(@"unable to add new transitive rule to database: %@", err.localizedDescription);
       } else {
-        logger->LogAllowlist(esMsg, [fi.SHA256 UTF8String]);
+        logger->LogAllowlist(esMsg, [targetFile.SHA256 UTF8String]);
       }
     }
   }

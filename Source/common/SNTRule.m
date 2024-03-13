@@ -15,6 +15,7 @@
 #import "Source/common/SNTRule.h"
 
 #include <CommonCrypto/CommonCrypto.h>
+#include <Kernel/kern/cs_blobs.h>
 #include <os/base.h>
 
 #import "Source/common/SNTSyncConstants.h"
@@ -103,6 +104,14 @@ static const NSUInteger kExpectedTeamIDLength = 10;
         break;
       }
 
+      case SNTRuleTypeCDHash: {
+        identifier = [[identifier lowercaseString] stringByTrimmingCharactersInSet:nonHex];
+        if (identifier.length != CS_CDHASH_LEN * 2) {
+          return nil;
+        }
+        break;
+      }
+
       default: {
         break;
       }
@@ -173,6 +182,8 @@ static const NSUInteger kExpectedTeamIDLength = 10;
     type = SNTRuleTypeTeamID;
   } else if ([ruleTypeString isEqual:kRuleTypeSigningID]) {
     type = SNTRuleTypeSigningID;
+  } else if ([ruleTypeString isEqual:kRuleTypeCDHash]) {
+    type = SNTRuleTypeCDHash;
   } else {
     return nil;
   }

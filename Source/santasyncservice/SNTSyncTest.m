@@ -147,14 +147,9 @@
 }
 
 - (void)setupDefaultDaemonConnResponses {
+  struct RuleCounts ruleCounts = {0};
   OCMStub([self.daemonConnRop
-    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(0),  // binary
-                                                    OCMOCK_VALUE(0),  // cert
-                                                    OCMOCK_VALUE(0),  // compiler
-                                                    OCMOCK_VALUE(0),  // transitive
-                                                    OCMOCK_VALUE(0),  // teamID
-                                                    OCMOCK_VALUE(0),  // signingID
-                                                    nil])]);
+    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(ruleCounts), nil])]);
   OCMStub([self.daemonConnRop
     syncTypeRequired:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTSyncTypeNormal), nil])]);
   OCMStub([self.daemonConnRop
@@ -350,29 +345,31 @@
 - (void)testPreflightDatabaseCounts {
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
-  int64_t bin = 5;
-  int64_t cert = 8;
-  int64_t compiler = 2;
-  int64_t transitive = 19;
-  int64_t teamID = 3;
-  int64_t signingID = 123;
+  struct RuleCounts ruleCounts = {
+    .cdhash = 11,
+    .binary = 5,
+    .certificate = 8,
+    .compiler = 2,
+    .transitive = 19,
+    .teamID = 3,
+    .signingID = 123,
+  };
+
   OCMStub([self.daemonConnRop
-    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(bin), OCMOCK_VALUE(cert),
-                                                    OCMOCK_VALUE(compiler),
-                                                    OCMOCK_VALUE(transitive), OCMOCK_VALUE(teamID),
-                                                    OCMOCK_VALUE(signingID), nil])]);
+    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(ruleCounts), nil])]);
 
   [self stubRequestBody:nil
                response:nil
                   error:nil
           validateBlock:^BOOL(NSURLRequest *req) {
             NSDictionary *requestDict = [self dictFromRequest:req];
-            XCTAssertEqualObjects(requestDict[kBinaryRuleCount], @(5));
-            XCTAssertEqualObjects(requestDict[kCertificateRuleCount], @(8));
-            XCTAssertEqualObjects(requestDict[kCompilerRuleCount], @(2));
-            XCTAssertEqualObjects(requestDict[kTransitiveRuleCount], @(19));
-            XCTAssertEqualObjects(requestDict[kTeamIDRuleCount], @(3));
-            XCTAssertEqualObjects(requestDict[kSigningIDRuleCount], @(123));
+            XCTAssertEqualObjects(requestDict[kCDHashRuleCount], @(ruleCounts.cdhash));
+            XCTAssertEqualObjects(requestDict[kBinaryRuleCount], @(ruleCounts.binary));
+            XCTAssertEqualObjects(requestDict[kCertificateRuleCount], @(ruleCounts.certificate));
+            XCTAssertEqualObjects(requestDict[kCompilerRuleCount], @(ruleCounts.compiler));
+            XCTAssertEqualObjects(requestDict[kTransitiveRuleCount], @(ruleCounts.transitive));
+            XCTAssertEqualObjects(requestDict[kTeamIDRuleCount], @(ruleCounts.teamID));
+            XCTAssertEqualObjects(requestDict[kSigningIDRuleCount], @(ruleCounts.signingID));
             return YES;
           }];
 
@@ -387,14 +384,9 @@
                                   response:(NSDictionary *)resp {
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
+  struct RuleCounts ruleCounts = {0};
   OCMStub([self.daemonConnRop
-    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(0),  // binary
-                                                    OCMOCK_VALUE(0),  // cert
-                                                    OCMOCK_VALUE(0),  // compiler
-                                                    OCMOCK_VALUE(0),  // transitive
-                                                    OCMOCK_VALUE(0),  // teamID
-                                                    OCMOCK_VALUE(0),  // signingID
-                                                    nil])]);
+    databaseRuleCounts:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(ruleCounts), nil])]);
   OCMStub([self.daemonConnRop
     clientMode:([OCMArg invokeBlockWithArgs:OCMOCK_VALUE(SNTClientModeMonitor), nil])]);
   OCMStub([self.daemonConnRop
@@ -601,6 +593,7 @@
 
         XCTAssertEqualObjects(event[kTeamID], @"012345678910");
         XCTAssertEqualObjects(event[kSigningID], @"signing.id");
+        XCTAssertEqualObjects(event[kCDHash], @"abc123");
 
         event = events[1];
         XCTAssertEqualObjects(event[kFileName], @"hub");

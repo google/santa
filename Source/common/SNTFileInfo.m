@@ -49,6 +49,7 @@
 @property NSString *path;
 @property NSFileHandle *fileHandle;
 @property NSUInteger fileSize;
+@property SantaVnode vnode;
 @property NSString *fileOwnerHomeDir;
 @property NSString *sha256Storage;
 
@@ -110,6 +111,7 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     }
 
     _fileSize = fileStat->st_size;
+    _vnode = (SantaVnode){.fsid = fileStat->st_dev, .fileid = fileStat->st_ino};
 
     if (_fileSize == 0) return nil;
 

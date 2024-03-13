@@ -104,6 +104,7 @@
     case SNTEventStateAllowScope: ADDKEY(newEvent, kDecision, kDecisionAllowScope); break;
     case SNTEventStateAllowTeamID: ADDKEY(newEvent, kDecision, kDecisionAllowTeamID); break;
     case SNTEventStateAllowSigningID: ADDKEY(newEvent, kDecision, kDecisionAllowSigningID); break;
+    case SNTEventStateAllowCDHash: ADDKEY(newEvent, kDecision, kDecisionAllowCDHash); break;
     case SNTEventStateBlockUnknown: ADDKEY(newEvent, kDecision, kDecisionBlockUnknown); break;
     case SNTEventStateBlockBinary: ADDKEY(newEvent, kDecision, kDecisionBlockBinary); break;
     case SNTEventStateBlockCertificate:
@@ -112,6 +113,7 @@
     case SNTEventStateBlockScope: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
     case SNTEventStateBlockTeamID: ADDKEY(newEvent, kDecision, kDecisionBlockTeamID); break;
     case SNTEventStateBlockSigningID: ADDKEY(newEvent, kDecision, kDecisionBlockSigningID); break;
+    case SNTEventStateBlockCDHash: ADDKEY(newEvent, kDecision, kDecisionBlockCDHash); break;
     case SNTEventStateBundleBinary:
       ADDKEY(newEvent, kDecision, kDecisionBundleBinary);
       [newEvent removeObjectForKey:kExecutionTime];
@@ -155,6 +157,7 @@
   newEvent[kSigningChain] = signingChain;
   ADDKEY(newEvent, kTeamID, event.teamID);
   ADDKEY(newEvent, kSigningID, event.signingID);
+  ADDKEY(newEvent, kCDHash, event.cdhash);
 
   return newEvent;
 #undef ADDKEY

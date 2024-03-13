@@ -45,6 +45,7 @@
 }
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                            cdhash:(nullable NSString *)cdhash
                                         fileSHA256:(nullable NSString *)fileSHA256
                                  certificateSHA256:(nullable NSString *)certificateSHA256
                                             teamID:(nullable NSString *)teamID
@@ -54,6 +55,7 @@
                           (NSDictionary *_Nullable (^_Nullable)(
                             NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+  cd.cdhash = cdhash;
   cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
   cd.teamID = teamID;
   cd.signingID = signingID;
@@ -74,7 +76,8 @@
     cd.certSHA256 = certificateSHA256;
   } else {
     // Grab the code signature, if there's an error don't try to capture
-    // any of the signature details.
+    // any of the signature details. Also clear out any rule lookup parameters
+    // that would require being validly signed.
     MOLCodesignChecker *csInfo = [fileInfo codesignCheckerWithError:&csInfoError];
     if (csInfoError) {
       csInfo = nil;
@@ -82,6 +85,7 @@
         [NSString stringWithFormat:@"Signature ignored due to error: %ld", (long)csInfoError.code];
       cd.teamID = nil;
       cd.signingID = nil;
+      cd.cdhash = nil;
     } else {
       cd.certSHA256 = csInfo.leafCertificate.SHA256;
       cd.certCommonName = csInfo.leafCertificate.commonName;
@@ -127,12 +131,37 @@
     cd.signingID = nil;
   }
 
-  SNTRule *rule = [self.ruleTable ruleForBinarySHA256:cd.sha256
-                                            signingID:cd.signingID
-                                    certificateSHA256:cd.certSHA256
-                                               teamID:cd.teamID];
+  SNTRule *rule =
+    [self.ruleTable ruleForIdentifiers:(struct RuleIdentifiers){.cdhash = cd.cdhash,
+                                                                .binarySHA256 = cd.sha256,
+                                                                .signingID = cd.signingID,
+                                                                .certificateSHA256 = cd.certSHA256,
+                                                                .teamID = cd.teamID}];
   if (rule) {
     switch (rule.type) {
+      case SNTRuleTypeCDHash:
+        switch (rule.state) {
+          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowCDHash; return cd;
+          case SNTRuleStateAllowCompiler:
+            // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
+            // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
+            // it were SNTRuleStateAllowCDHash.
+            if ([self.configurator enableTransitiveRules]) {
+              cd.decision = SNTEventStateAllowCompiler;
+            } else {
+              cd.decision = SNTEventStateAllowCDHash;
+            }
+            return cd;
+          case SNTRuleStateSilentBlock:
+            cd.silentBlock = YES;
+            // intentional fallthrough
+          case SNTRuleStateBlock:
+            cd.customMsg = rule.customMsg;
+            cd.customURL = rule.customURL;
+            cd.decision = SNTEventStateBlockCDHash;
+            return cd;
+          default: break;
+        }
       case SNTRuleTypeBinary:
         switch (rule.state) {
           case SNTRuleStateAllow: cd.decision = SNTEventStateAllowBinary; return cd;
@@ -259,25 +288,43 @@
                             NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   NSString *signingID;
   NSString *teamID;
+  NSString *cdhash;
 
   const char *entitlementsFilterTeamID = NULL;
 
-  if (targetProc->signing_id.length > 0) {
-    if (targetProc->team_id.length > 0) {
-      entitlementsFilterTeamID = targetProc->team_id.data;
-      teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
-      signingID =
-        [NSString stringWithFormat:@"%@:%@", teamID,
-                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
-    } else if (targetProc->is_platform_binary) {
-      entitlementsFilterTeamID = "platform";
-      signingID =
-        [NSString stringWithFormat:@"platform:%@",
-                                   [NSString stringWithUTF8String:targetProc->signing_id.data]];
+  if (targetProc->codesigning_flags & CS_SIGNED && targetProc->codesigning_flags & CS_VALID) {
+    if (targetProc->signing_id.length > 0) {
+      if (targetProc->team_id.length > 0) {
+        entitlementsFilterTeamID = targetProc->team_id.data;
+        teamID = [NSString stringWithUTF8String:targetProc->team_id.data];
+        signingID =
+          [NSString stringWithFormat:@"%@:%@", teamID,
+                                     [NSString stringWithUTF8String:targetProc->signing_id.data]];
+      } else if (targetProc->is_platform_binary) {
+        entitlementsFilterTeamID = "platform";
+        signingID =
+          [NSString stringWithFormat:@"platform:%@",
+                                     [NSString stringWithUTF8String:targetProc->signing_id.data]];
+      }
+    }
+
+    // Only consider the CDHash for processes that have CS_KILL or CS_HARD set.
+    // This ensures that the OS will kill the process if the CDHash was tampered
+    // with and code was loaded that didn't match a page hash.
+    if (targetProc->codesigning_flags & CS_KILL || targetProc->codesigning_flags & CS_HARD) {
+      static NSString *const kCDHashFormatString = @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+                                                    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x";
+
+      const uint8_t *buf = targetProc->cdhash;
+      cdhash = [[NSString alloc] initWithFormat:kCDHashFormatString, buf[0], buf[1], buf[2], buf[3],
+                                                buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
+                                                buf[10], buf[11], buf[12], buf[13], buf[14],
+                                                buf[15], buf[16], buf[17], buf[18], buf[19]];
     }
   }
 
   return [self decisionForFileInfo:fileInfo
+    cdhash:cdhash
     fileSHA256:nil
     certificateSHA256:nil
     teamID:teamID
@@ -292,10 +339,7 @@
 
 // Used by `$ santactl fileinfo`.
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
-                                        fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID
-                                         signingID:(nullable NSString *)signingID {
+                                       identifiers:(nonnull SNTRuleIdentifiers *)identifiers {
   MOLCodesignChecker *csInfo;
   NSError *error;
 
@@ -310,10 +354,11 @@
   }
 
   return [self decisionForFileInfo:fileInfo
-                        fileSHA256:fileSHA256
-                 certificateSHA256:certificateSHA256
-                            teamID:teamID
-                         signingID:signingID
+                            cdhash:identifiers.cdhash
+                        fileSHA256:identifiers.binarySHA256
+                 certificateSHA256:identifiers.certificateSHA256
+                            teamID:identifiers.teamID
+                         signingID:identifiers.signingID
               isProdSignedCallback:^BOOL {
                 if (csInfo) {
                   // Development OID values defined by Apple and used by the Security Framework

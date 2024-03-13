@@ -21,6 +21,7 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SantaVnode.h"
 #include "Source/common/TestUtils.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #import "Source/santad/SNTDatabaseController.h"
@@ -70,7 +71,7 @@ SNTCachedDecision *MakeCachedDecision(struct stat sb, SNTEventState decision) {
   XCTAssertEqual(cachedCD.vnodeId.fileid, cd.vnodeId.fileid);
 
   // Delete the item from the cache and ensure it no longer exists
-  [dc forgetCachedDecisionForFile:sb];
+  [dc forgetCachedDecisionForVnode:SantaVnode::VnodeForFile(sb)];
   XCTAssertNil([dc cachedDecisionForFile:sb]);
 }
 

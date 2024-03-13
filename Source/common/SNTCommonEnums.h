@@ -46,6 +46,7 @@ typedef NS_ENUM(NSInteger, SNTAction) {
 typedef NS_ENUM(NSInteger, SNTRuleType) {
   SNTRuleTypeUnknown = 0,
 
+  SNTRuleTypeCDHash = 500,
   SNTRuleTypeBinary = 1000,
   SNTRuleTypeSigningID = 2000,
   SNTRuleTypeCertificate = 3000,
@@ -84,6 +85,7 @@ typedef NS_ENUM(uint64_t, SNTEventState) {
   SNTEventStateBlockTeamID = 1ULL << 20,
   SNTEventStateBlockLongPath = 1ULL << 21,
   SNTEventStateBlockSigningID = 1ULL << 22,
+  SNTEventStateBlockCDHash = 1ULL << 23,
 
   // Bits 40-63 store allow decision types
   SNTEventStateAllowUnknown = 1ULL << 40,
@@ -95,6 +97,7 @@ typedef NS_ENUM(uint64_t, SNTEventState) {
   SNTEventStateAllowPendingTransitive = 1ULL << 46,
   SNTEventStateAllowTeamID = 1ULL << 47,
   SNTEventStateAllowSigningID = 1ULL << 48,
+  SNTEventStateAllowCDHash = 1ULL << 49,
 
   // Block and Allow masks
   SNTEventStateBlock = 0xFFFFFFULL << 16,
