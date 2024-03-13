@@ -46,7 +46,7 @@ using santa::santad::event_providers::endpoint_security::Message;
   return self;
 }
 
-// ES guarantees logical consistency within a client (e.g. forks always preceed exits),
+// ES guarantees logical consistency within a client (e.g. forks always precede exits),
 // however there are no guarantees about the ordering of when messages are delivered _across_
 // clients, meaning any client might be the first one to receive process events, and therefore would
 // need to be the one to inform the tree. However not all clients are interested in or subscribe to
