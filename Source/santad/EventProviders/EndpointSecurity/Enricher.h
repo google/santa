@@ -32,7 +32,7 @@ enum class EnrichOptions {
 
 class Enricher {
  public:
-  Enricher(std::shared_ptr<process_tree::ProcessTree> pt);
+  Enricher(std::shared_ptr<process_tree::ProcessTree> pt = nullptr);
   virtual ~Enricher() = default;
   virtual std::unique_ptr<EnrichedMessage> Enrich(Message &&msg);
   virtual EnrichedProcess Enrich(

@@ -50,7 +50,6 @@ using santa::santad::logs::endpoint_security::Logger;
 
 class MockEnricher : public Enricher {
  public:
-  MockEnricher() : Enricher(nullptr) {};
   MOCK_METHOD(std::unique_ptr<EnrichedMessage>, Enrich, (Message &&));
 };
 

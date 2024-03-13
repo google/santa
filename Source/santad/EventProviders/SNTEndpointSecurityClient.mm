@@ -146,10 +146,11 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
     // sequence numbers are processed in order.
     self->_metrics->UpdateEventStats(self->_processor, esMsg.operator->());
 
-    es_event_type_t eventType = esMsg->event_type;
     if ([self handleContextMessage:esMsg]) {
       return;
     }
+
+    es_event_type_t eventType = esMsg->event_type;
     if ([self shouldHandleMessage:esMsg]) {
       [self handleMessage:std::move(esMsg)
         recordEventMetrics:^(EventDisposition disposition) {

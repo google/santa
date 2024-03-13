@@ -60,7 +60,7 @@ std::string BasicStringSerializeMessage(std::shared_ptr<MockEndpointSecurityAPI>
   mockESApi->SetExpectationsRetainReleaseMessage();
 
   std::shared_ptr<Serializer> bs = BasicString::Create(mockESApi, decisionCache, false);
-  std::vector<uint8_t> ret = bs->SerializeMessage(Enricher(nullptr).Enrich(Message(mockESApi, esMsg)));
+  std::vector<uint8_t> ret = bs->SerializeMessage(Enricher().Enrich(Message(mockESApi, esMsg)));
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 
@@ -306,7 +306,7 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::vector<uint8_t> ret =
     BasicString::Create(nullptr, nil, false)
       ->SerializeFileAccess("v1.0", "pol_name", Message(mockESApi, &esMsg),
-                            Enricher(nullptr).Enrich(*esMsg.process), "file_target",
+                            Enricher().Enrich(*esMsg.process), "file_target",
                             FileAccessPolicyDecision::kAllowedAuditOnly);
   std::string got(ret.begin(), ret.end());
   std::string want =

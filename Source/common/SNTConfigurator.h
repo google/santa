@@ -657,6 +657,7 @@
 
 ///
 /// List of enabled process annotations.
+/// This property is not KVO compliant.
 ///
 @property(readonly, nonatomic) NSArray<NSString *> *enabledProcessAnnotations;
 

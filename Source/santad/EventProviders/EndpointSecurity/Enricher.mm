@@ -88,7 +88,6 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
 }
 
 EnrichedProcess Enricher::Enrich(const es_process_t &es_proc, EnrichOptions options) {
-
   return EnrichedProcess(UsernameForUID(audit_token_to_euid(es_proc.audit_token), options),
                          UsernameForGID(audit_token_to_egid(es_proc.audit_token), options),
                          UsernameForUID(audit_token_to_ruid(es_proc.audit_token), options),

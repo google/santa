@@ -47,7 +47,7 @@ Message::Message(const Message &other) {
   process_token_ = other.process_token_;
 }
 
-void Message::SetProcessToken(process_tree::ProcessToken &&tok) {
+void Message::SetProcessToken(process_tree::ProcessToken tok) {
   process_token_ = std::move(tok);
 }
 

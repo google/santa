@@ -278,7 +278,7 @@ void ProcessTree::DebugDumpLocked(std::ostream &stream, int depth,
 #endif
 
 absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(
-    std::vector<std::unique_ptr<Annotator>> &&annotations) {
+    std::vector<std::unique_ptr<Annotator>> annotations) {
   absl::flat_hash_set<std::type_index> seen;
   for (const auto &annotator : annotations) {
     if (seen.count(std::type_index(typeid(annotator)))) {
@@ -287,6 +287,11 @@ absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(
     }
     seen.emplace(std::type_index(typeid(annotator)));
   }
+
+  if (seen.empty()) {
+    return nullptr;
+  }
+
   auto tree = std::make_shared<ProcessTree>(std::move(annotations));
   if (auto status = tree->Backfill(); !status.ok()) {
     return status;

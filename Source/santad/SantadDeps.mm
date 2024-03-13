@@ -163,14 +163,12 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     (void)annotation;
   }
 
-  if (!annotators.empty()) {
-    auto tree_status = process_tree::CreateTree(std::move(annotators));
-    if (!tree_status.ok()) {
-      LOGE(@"Failed to create process tree: %@", @(tree_status.status().ToString().c_str()));
-      exit(EXIT_FAILURE);
-    }
-    process_tree = *tree_status;
+  auto tree_status = process_tree::CreateTree(std::move(annotators));
+  if (!tree_status.ok()) {
+    LOGE(@"Failed to create process tree: %@", @(tree_status.status().ToString().c_str()));
+    exit(EXIT_FAILURE);
   }
+  process_tree = *tree_status;
 
   return std::make_unique<SantadDeps>(
     esapi, std::move(logger), std::move(metrics), std::move(watch_items),

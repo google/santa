@@ -39,7 +39,7 @@ class Message {
   Message(const Message& other);
   Message& operator=(const Message& other) = delete;
 
-  void SetProcessToken(process_tree::ProcessToken&& tok);
+  void SetProcessToken(process_tree::ProcessToken tok);
 
   // Operators to access underlying es_message_t
   const es_message_t* operator->() const { return es_msg_; }

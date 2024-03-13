@@ -152,7 +152,7 @@ std::optional<std::shared_ptr<const T>> ProcessTree::GetAnnotation(
 // Create a new tree, ensuring the provided annotations are valid and that
 // backfill is successful.
 absl::StatusOr<std::shared_ptr<ProcessTree>> CreateTree(
-    std::vector<std::unique_ptr<Annotator>> &&annotations);
+    std::vector<std::unique_ptr<Annotator>> annotations);
 
 // ProcessTokens provide a lifetime based approach to retaining processes
 // in a ProcessTree. When a token is created with a list of pids that may need
