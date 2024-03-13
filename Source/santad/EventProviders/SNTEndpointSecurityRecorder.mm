@@ -69,7 +69,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
                     processor:santa::santad::Processor::kRecorder
-                                processTree:std::move(processTree)];
+                  processTree:std::move(processTree)];
   if (self) {
     _enricher = enricher;
     _logger = logger;

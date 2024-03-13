@@ -11,9 +11,9 @@ proto_library(
     name = "santa_proto",
     srcs = ["santa.proto"],
     deps = [
+        "//Source/santad/ProcessTree:process_tree_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
-        "//Source/santad/ProcessTree:process_tree_proto",
     ],
 )
 

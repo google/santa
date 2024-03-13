@@ -75,12 +75,13 @@ class EnrichedProcess {
         real_group_(std::nullopt),
         annotations_(std::nullopt) {}
 
-  EnrichedProcess(std::optional<std::shared_ptr<std::string>> &&effective_user,
-                  std::optional<std::shared_ptr<std::string>> &&effective_group,
-                  std::optional<std::shared_ptr<std::string>> &&real_user,
-                  std::optional<std::shared_ptr<std::string>> &&real_group,
-                  EnrichedFile &&executable,
-                  std::optional<santa::pb::v1::process_tree::Annotations> &&annotations)
+  EnrichedProcess(
+      std::optional<std::shared_ptr<std::string>> &&effective_user,
+      std::optional<std::shared_ptr<std::string>> &&effective_group,
+      std::optional<std::shared_ptr<std::string>> &&real_user,
+      std::optional<std::shared_ptr<std::string>> &&real_group,
+      EnrichedFile &&executable,
+      std::optional<santa::pb::v1::process_tree::Annotations> &&annotations)
       : effective_user_(std::move(effective_user)),
         effective_group_(std::move(effective_group)),
         real_user_(std::move(real_user)),
@@ -115,7 +116,8 @@ class EnrichedProcess {
     return real_group_;
   }
   const EnrichedFile &executable() const { return executable_; }
-  const std::optional<santa::pb::v1::process_tree::Annotations> &annotations() const {
+  const std::optional<santa::pb::v1::process_tree::Annotations> &annotations()
+      const {
     return annotations_;
   }
 

@@ -300,10 +300,10 @@ objc_library(
     deps = [
         ":EndpointSecurityAPI",
         ":EndpointSecurityMessage",
-        ":SNTEndpointSecurityClient",
         ":Metrics",
-        "//Source/santad/ProcessTree:process_tree",
+        ":SNTEndpointSecurityClient",
         "//Source/santad/ProcessTree:SNTEndpointSecurityAdapter",
+        "//Source/santad/ProcessTree:process_tree",
     ],
 )
 
@@ -320,8 +320,8 @@ objc_library(
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTCompilerController",
-        ":SNTEndpointSecurityTreeAwareClient",
         ":SNTEndpointSecurityEventHandler",
+        ":SNTEndpointSecurityTreeAwareClient",
         "//Source/common:PrefixTree",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
@@ -358,8 +358,8 @@ objc_library(
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTCompilerController",
-        ":SNTEndpointSecurityTreeAwareClient",
         ":SNTEndpointSecurityEventHandler",
+        ":SNTEndpointSecurityTreeAwareClient",
         ":SNTExecutionController",
         "//Source/common:BranchPrediction",
         "//Source/common:SNTCommonEnums",
@@ -460,8 +460,8 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
-        "//Source/santad/ProcessTree:process_tree",
         "//Source/santad/ProcessTree:SNTEndpointSecurityAdapter",
+        "//Source/santad/ProcessTree:process_tree",
     ],
 )
 

@@ -185,7 +185,8 @@ static inline void EncodeFileInfoLight(::pbv1::FileInfoLight *pb_file, const es_
   pb_file->set_truncated(es_file->path_truncated);
 }
 
-static inline void EncodeAnnotations(std::function<::pbv1::process_tree::Annotations *()> lazy_f, const EnrichedProcess &enriched_proc) {
+static inline void EncodeAnnotations(std::function<::pbv1::process_tree::Annotations *()> lazy_f,
+                                     const EnrichedProcess &enriched_proc) {
   if (std::optional<pbv1::process_tree::Annotations> proc_annotations = enriched_proc.annotations();
       proc_annotations) {
     *lazy_f() = *proc_annotations;
@@ -214,7 +215,6 @@ static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info
   EncodeFileInfoLight(pb_proc_info->mutable_executable(), es_proc->executable);
 
   EncodeAnnotations([pb_proc_info] { return pb_proc_info->mutable_annotations(); }, enriched_proc);
-
 }
 
 static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t message_version,

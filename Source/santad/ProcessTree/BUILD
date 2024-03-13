@@ -58,13 +58,13 @@ objc_library(
     sdk_dylibs = [
         "bsm",
     ],
+    visibility = ["//:santa_package_group"],
     deps = [
         ":process_tree",
         "//Source/santad:EndpointSecurityAPI",
         "//Source/santad:EndpointSecurityMessage",
         "@com_google_absl//absl/status:statusor",
     ],
-    visibility = ["//:santa_package_group"],
 )
 
 objc_library(

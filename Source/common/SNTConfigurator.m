@@ -277,7 +277,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
       kOverrideFileAccessActionKey : string,
       kEntitlementsPrefixFilterKey : array,
       kEntitlementsTeamIDFilterKey : array,
-      kEnabledProcessAnnotations: array,
+      kEnabledProcessAnnotations : array,
     };
 
     _syncStateFilePath = syncStateFilePath;

@@ -25,13 +25,14 @@
 
 #include "Source/common/SNTLogging.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
+#include "Source/santad/ProcessTree/SNTEndpointSecurityAdapter.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree_macos.h"
-#include "Source/santad/ProcessTree/SNTEndpointSecurityAdapter.h"
 
 namespace santa::santad::event_providers::endpoint_security {
 
-Enricher::Enricher(std::shared_ptr<::santa::santad::process_tree::ProcessTree> pt) : username_cache_(256), groupname_cache_(256), process_tree_(std::move(pt)) {}
+Enricher::Enricher(std::shared_ptr<::santa::santad::process_tree::ProcessTree> pt)
+    : username_cache_(256), groupname_cache_(256), process_tree_(std::move(pt)) {}
 
 std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
   // TODO(mlw): Consider potential design patterns that could help reduce memory usage under load
@@ -93,7 +94,9 @@ EnrichedProcess Enricher::Enrich(const es_process_t &es_proc, EnrichOptions opti
                          UsernameForUID(audit_token_to_ruid(es_proc.audit_token), options),
                          UsernameForGID(audit_token_to_rgid(es_proc.audit_token), options),
                          Enrich(*es_proc.executable, options),
-                         process_tree_ ? process_tree_->ExportAnnotations(process_tree::PidFromAuditToken(es_proc.audit_token)) : std::nullopt);
+                         process_tree_ ? process_tree_->ExportAnnotations(
+                                           process_tree::PidFromAuditToken(es_proc.audit_token))
+                                       : std::nullopt);
 }
 
 EnrichedFile Enricher::Enrich(const es_file_t &es_file, EnrichOptions options) {
