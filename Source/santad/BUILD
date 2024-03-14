@@ -293,6 +293,20 @@ objc_library(
 )
 
 objc_library(
+    name = "SNTEndpointSecurityTreeAwareClient",
+    srcs = ["EventProviders/SNTEndpointSecurityTreeAwareClient.mm"],
+    hdrs = ["EventProviders/SNTEndpointSecurityTreeAwareClient.h"],
+    deps = [
+        ":EndpointSecurityAPI",
+        ":EndpointSecurityMessage",
+        ":Metrics",
+        ":SNTEndpointSecurityClient",
+        "//Source/santad/ProcessTree:SNTEndpointSecurityAdapter",
+        "//Source/santad/ProcessTree:process_tree",
+    ],
+)
+
+objc_library(
     name = "SNTEndpointSecurityRecorder",
     srcs = ["EventProviders/SNTEndpointSecurityRecorder.mm"],
     hdrs = ["EventProviders/SNTEndpointSecurityRecorder.h"],
@@ -305,8 +319,8 @@ objc_library(
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTCompilerController",
-        ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
+        ":SNTEndpointSecurityTreeAwareClient",
         "//Source/common:PrefixTree",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTLogging",
@@ -343,8 +357,8 @@ objc_library(
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTCompilerController",
-        ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
+        ":SNTEndpointSecurityTreeAwareClient",
         ":SNTExecutionController",
         "//Source/common:BranchPrediction",
         "//Source/common:SNTCommonEnums",
@@ -445,6 +459,8 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
+        "//Source/santad/ProcessTree:SNTEndpointSecurityAdapter",
+        "//Source/santad/ProcessTree:process_tree",
     ],
 )
 
@@ -453,6 +469,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
     deps = [
         ":EndpointSecurityMessage",
+        "//Source/santad/ProcessTree:process_tree_cc_proto",
     ],
 )
 
@@ -627,6 +644,7 @@ objc_library(
     deps = [
         ":EndpointSecurityClient",
         ":WatchItemPolicy",
+        "//Source/santad/ProcessTree:process_tree",
     ],
 )
 
@@ -724,6 +742,7 @@ objc_library(
         "//Source/common:SNTXPCNotifierInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
         "//Source/common:Unit",
+        "//Source/santad/ProcessTree:process_tree",
         "@MOLXPCConnection",
     ],
 )
@@ -755,6 +774,7 @@ objc_library(
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCUnprivilegedControlInterface",
         "//Source/common:Unit",
+        "//Source/santad/ProcessTree:process_tree",
         "@MOLXPCConnection",
     ],
 )

@@ -30,6 +30,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 #include "Source/santad/Metrics.h"
+#include "Source/santad/ProcessTree/process_tree.h"
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
 #import "Source/santad/SNTNotificationQueue.h"
@@ -58,7 +59,8 @@ class SantadDeps {
       SNTExecutionController *exec_controller,
       std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>
           prefix_tree,
-      std::shared_ptr<santa::santad::TTYWriter> tty_writer);
+      std::shared_ptr<santa::santad::TTYWriter> tty_writer,
+      std::shared_ptr<process_tree::ProcessTree> process_tree);
 
   std::shared_ptr<santa::santad::event_providers::AuthResultCache>
   AuthResultCache();
@@ -77,6 +79,7 @@ class SantadDeps {
   SNTExecutionController *ExecController();
   std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> PrefixTree();
   std::shared_ptr<santa::santad::TTYWriter> TTYWriter();
+  std::shared_ptr<process_tree::ProcessTree> ProcessTree();
 
  private:
   std::shared_ptr<
@@ -97,6 +100,7 @@ class SantadDeps {
   SNTExecutionController *exec_controller_;
   std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree_;
   std::shared_ptr<santa::santad::TTYWriter> tty_writer_;
+  std::shared_ptr<process_tree::ProcessTree> process_tree_;
 };
 
 }  // namespace santa::santad

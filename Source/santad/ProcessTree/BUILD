@@ -58,6 +58,7 @@ objc_library(
     sdk_dylibs = [
         "bsm",
     ],
+    visibility = ["//:santa_package_group"],
     deps = [
         ":process_tree",
         "//Source/santad:EndpointSecurityAPI",

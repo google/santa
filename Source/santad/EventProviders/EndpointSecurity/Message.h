@@ -20,6 +20,8 @@
 #include <memory>
 #include <string>
 
+#include "Source/santad/ProcessTree/process_tree.h"
+
 namespace santa::santad::event_providers::endpoint_security {
 
 class EndpointSecurityAPI;
@@ -37,14 +39,16 @@ class Message {
   Message(const Message& other);
   Message& operator=(const Message& other) = delete;
 
+  void SetProcessToken(process_tree::ProcessToken tok);
+
   // Operators to access underlying es_message_t
   const es_message_t* operator->() const { return es_msg_; }
   const es_message_t& operator*() const { return *es_msg_; }
 
   // Helper to get the API associated with this message.
   // Used for things like es_exec_arg_count.
-  // We should ideally rework this to somehow present these functions as
-  // methods on the Message, however this would be a bit of a bigger lift.
+  // We should ideally rework this to somehow present these functions as methods
+  // on the Message, however this would be a bit of a bigger lift.
   std::shared_ptr<EndpointSecurityAPI> ESAPI() const { return esapi_; }
 
   std::string ParentProcessName() const;
@@ -52,6 +56,7 @@ class Message {
  private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
   const es_message_t* es_msg_;
+  std::optional<process_tree::ProcessToken> process_token_;
 
   std::string GetProcessName(pid_t pid) const;
 };

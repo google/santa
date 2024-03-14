@@ -147,6 +147,8 @@ static NSString *const kMetricExportInterval = @"MetricExportInterval";
 static NSString *const kMetricExportTimeout = @"MetricExportTimeout";
 static NSString *const kMetricExtraLabels = @"MetricExtraLabels";
 
+static NSString *const kEnabledProcessAnnotations = @"EnabledProcessAnnotations";
+
 // The keys managed by a sync server or mobileconfig.
 static NSString *const kClientModeKey = @"ClientMode";
 static NSString *const kBlockUSBMountKey = @"BlockUSBMount";
@@ -275,6 +277,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
       kOverrideFileAccessActionKey : string,
       kEntitlementsPrefixFilterKey : array,
       kEntitlementsTeamIDFilterKey : array,
+      kEnabledProcessAnnotations : array,
     };
 
     _syncStateFilePath = syncStateFilePath;
@@ -1103,6 +1106,16 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 
 - (NSDictionary *)extraMetricLabels {
   return self.configState[kMetricExtraLabels];
+}
+
+- (NSArray<NSString *> *)enabledProcessAnnotations {
+  NSArray<NSString *> *annotations = self.configState[kEnabledProcessAnnotations];
+  for (id annotation in annotations) {
+    if (![annotation isKindOfClass:[NSString class]]) {
+      return nil;
+    }
+  }
+  return annotations;
 }
 
 #pragma mark Private

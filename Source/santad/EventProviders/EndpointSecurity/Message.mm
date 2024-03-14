@@ -22,7 +22,7 @@
 namespace santa::santad::event_providers::endpoint_security {
 
 Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi, const es_message_t *es_msg)
-    : esapi_(std::move(esapi)), es_msg_(es_msg) {
+    : esapi_(std::move(esapi)), es_msg_(es_msg), process_token_(std::nullopt) {
   esapi_->RetainMessage(es_msg);
 }
 
@@ -36,12 +36,19 @@ Message::Message(Message &&other) {
   esapi_ = std::move(other.esapi_);
   es_msg_ = other.es_msg_;
   other.es_msg_ = nullptr;
+  process_token_ = std::move(other.process_token_);
+  other.process_token_ = std::nullopt;
 }
 
 Message::Message(const Message &other) {
   esapi_ = other.esapi_;
   es_msg_ = other.es_msg_;
   esapi_->RetainMessage(es_msg_);
+  process_token_ = other.process_token_;
+}
+
+void Message::SetProcessToken(process_tree::ProcessToken tok) {
+  process_token_ = std::move(tok);
 }
 
 std::string Message::ParentProcessName() const {

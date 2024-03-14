@@ -26,6 +26,7 @@
 #include <variant>
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
+#include "Source/santad/ProcessTree/process_tree.pb.h"
 
 namespace santa::santad::event_providers::endpoint_security {
 
@@ -71,25 +72,30 @@ class EnrichedProcess {
       : effective_user_(std::nullopt),
         effective_group_(std::nullopt),
         real_user_(std::nullopt),
-        real_group_(std::nullopt) {}
+        real_group_(std::nullopt),
+        annotations_(std::nullopt) {}
 
-  EnrichedProcess(std::optional<std::shared_ptr<std::string>> &&effective_user,
-                  std::optional<std::shared_ptr<std::string>> &&effective_group,
-                  std::optional<std::shared_ptr<std::string>> &&real_user,
-                  std::optional<std::shared_ptr<std::string>> &&real_group,
-                  EnrichedFile &&executable)
+  EnrichedProcess(
+      std::optional<std::shared_ptr<std::string>> &&effective_user,
+      std::optional<std::shared_ptr<std::string>> &&effective_group,
+      std::optional<std::shared_ptr<std::string>> &&real_user,
+      std::optional<std::shared_ptr<std::string>> &&real_group,
+      EnrichedFile &&executable,
+      std::optional<santa::pb::v1::process_tree::Annotations> &&annotations)
       : effective_user_(std::move(effective_user)),
         effective_group_(std::move(effective_group)),
         real_user_(std::move(real_user)),
         real_group_(std::move(real_group)),
-        executable_(std::move(executable)) {}
+        executable_(std::move(executable)),
+        annotations_(std::move(annotations)) {}
 
   EnrichedProcess(EnrichedProcess &&other)
       : effective_user_(std::move(other.effective_user_)),
         effective_group_(std::move(other.effective_group_)),
         real_user_(std::move(other.real_user_)),
         real_group_(std::move(other.real_group_)),
-        executable_(std::move(other.executable_)) {}
+        executable_(std::move(other.executable_)),
+        annotations_(std::move(other.annotations_)) {}
 
   // Note: Move assignment could be safely implemented but not currently needed
   EnrichedProcess &operator=(EnrichedProcess &&other) = delete;
@@ -110,6 +116,10 @@ class EnrichedProcess {
     return real_group_;
   }
   const EnrichedFile &executable() const { return executable_; }
+  const std::optional<santa::pb::v1::process_tree::Annotations> &annotations()
+      const {
+    return annotations_;
+  }
 
  private:
   std::optional<std::shared_ptr<std::string>> effective_user_;
@@ -117,6 +127,7 @@ class EnrichedProcess {
   std::optional<std::shared_ptr<std::string>> real_user_;
   std::optional<std::shared_ptr<std::string>> real_group_;
   EnrichedFile executable_;
+  std::optional<santa::pb::v1::process_tree::Annotations> annotations_;
 };
 
 class EnrichedEventType {

@@ -32,7 +32,7 @@ enum class EnrichOptions {
 
 class Enricher {
  public:
-  Enricher();
+  Enricher(std::shared_ptr<process_tree::ProcessTree> pt = nullptr);
   virtual ~Enricher() = default;
   virtual std::unique_ptr<EnrichedMessage> Enrich(Message &&msg);
   virtual EnrichedProcess Enrich(
@@ -51,6 +51,7 @@ class Enricher {
       username_cache_;
   SantaCache<gid_t, std::optional<std::shared_ptr<std::string>>>
       groupname_cache_;
+  std::shared_ptr<process_tree::ProcessTree> process_tree_;
 };
 
 }  // namespace santa::santad::event_providers::endpoint_security

@@ -4,6 +4,7 @@ syntax = "proto3";
 
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
+import "Source/santad/ProcessTree/process_tree.proto";
 
 option objc_class_prefix = "SNTPB";
 
@@ -173,6 +174,8 @@ message ProcessInfo {
 
   // Time the process was started
   optional google.protobuf.Timestamp start_time = 17;
+
+  optional process_tree.Annotations annotations = 18;
 }
 
 // Light variant of ProcessInfo message to help minimize on-disk/on-wire sizes
@@ -202,6 +205,8 @@ message ProcessInfoLight {
 
   // File information for the executable backing this process
   optional FileInfoLight executable = 10;
+
+  optional process_tree.Annotations annotations = 11;
 }
 
 // Certificate information

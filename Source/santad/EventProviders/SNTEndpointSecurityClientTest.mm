@@ -417,11 +417,11 @@ using santa::santad::event_providers::endpoint_security::Message;
                                              metrics:nullptr
                                            processor:Processor::kUnknown];
   {
-    auto enrichedMsg = std::make_unique<EnrichedMessage>(
-      EnrichedClose(Message(mockESApi, &esMsg),
-                    EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
-                                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt)),
-                    EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
+    auto enrichedMsg = std::make_unique<EnrichedMessage>(EnrichedClose(
+      Message(mockESApi, &esMsg),
+      EnrichedProcess(std::nullopt, std::nullopt, std::nullopt, std::nullopt,
+                      EnrichedFile(std::nullopt, std::nullopt, std::nullopt), std::nullopt),
+      EnrichedFile(std::nullopt, std::nullopt, std::nullopt)));
 
     [client processEnrichedMessage:std::move(enrichedMsg)
                            handler:^(std::unique_ptr<EnrichedMessage> msg) {

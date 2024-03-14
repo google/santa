@@ -157,7 +157,8 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
                                               enricher:mockEnricher
                                     compilerController:mockCC
                                        authResultCache:mockAuthCache
-                                            prefixTree:prefixTree];
+                                            prefixTree:prefixTree
+                                           processTree:nullptr];
 
   testBlock(&esMsg, mockESApi, mockCC, recorderClient, prefixTree, &sema, &semaMetrics);
 

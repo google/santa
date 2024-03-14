@@ -82,7 +82,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                 SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
                 SNTExecutionController *exec_controller,
                 std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree,
-                std::shared_ptr<TTYWriter> tty_writer) {
+                std::shared_ptr<TTYWriter> tty_writer,
+                std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];
 
   SNTDaemonControlController *dc =
@@ -123,7 +124,8 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                               enricher:enricher
                                     compilerController:compiler_controller
                                        authResultCache:auth_result_cache
-                                            prefixTree:prefix_tree];
+                                            prefixTree:prefix_tree
+                                           processTree:process_tree];
 
   SNTEndpointSecurityAuthorizer *authorizer_client =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:esapi
@@ -442,6 +444,13 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
   // Make the compiler happy. The variable is only used to ensure proper lifetime
   // of the SNTKVOManager objects it contains.
   (void)kvoObservers;
+
+  if (process_tree) {
+    if (absl::Status status = process_tree->Backfill(); !status.ok()) {
+      std::string err = status.ToString();
+      LOGE(@"Failed to backfill process tree: %@", @(err.c_str()));
+    }
+  }
 
   // IMPORTANT: ES will hold up third party execs until early boot clients make
   // their first subscription. Ensuring the `Authorizer` client is enabled first
