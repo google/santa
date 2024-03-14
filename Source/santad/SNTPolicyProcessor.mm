@@ -49,7 +49,7 @@
 inline SNTCachedDecision *updateCachedDecisionForRule(SNTCachedDecision *cd, SNTRule *rule,
                                                       SNTClientMode mode,
                                                       bool enableTransitiveRules) {
-  static const absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState> decisions =
+  static const auto decisions =
     absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState>{
       {{SNTRuleTypeCDHash, SNTRuleStateAllow}, SNTEventStateAllowCDHash},
       {{SNTRuleTypeCDHash, SNTRuleStateAllowCompiler}, SNTEventStateAllowCompiler},
@@ -77,6 +77,7 @@ inline SNTCachedDecision *updateCachedDecisionForRule(SNTCachedDecision *cd, SNT
     cd.decision = iterator->second;
   } else {
     // We don't have a matching rule type, rule state for this.
+    // These states aren't final and may be changed by scope rules.
     if (mode == SNTClientModeMonitor) {
       cd.decision = SNTEventStateAllowUnknown;
     } else {
@@ -84,36 +85,39 @@ inline SNTCachedDecision *updateCachedDecisionForRule(SNTCachedDecision *cd, SNT
     }
   }
 
-  if (rule.state == SNTRuleStateSilentBlock) {
-    cd.silentBlock = YES;
-  } else if (rule.state == SNTRuleStateAllowCompiler) {
-    if (!enableTransitiveRules) {
-      switch (rule.type) {
-        case SNTRuleTypeCDHash: cd.decision = SNTEventStateAllowCDHash; break;
-        case SNTRuleTypeBinary: cd.decision = SNTEventStateAllowBinary; break;
-        case SNTRuleTypeSigningID: cd.decision = SNTEventStateAllowSigningID; break;
-        default:
-          // Programming error. Something's marked as a compiler that shouldn't
-          // be.
-          LOGE(@"Invalid compiler rule type %ld", rule.type);
-          [NSException
-             raise:@"Invalid compiler rule type"
-            format:@"updateCachedDecisionForRule: Unexpected compiler rule type: %ld", rule.type];
-          break;
+  switch (rule.state) {
+    case SNTRuleStateSilentBlock: cd.silentBlock = YES; break;
+    case SNTRuleStateAllowCompiler:
+      if (!enableTransitiveRules) {
+        switch (rule.type) {
+          case SNTRuleTypeCDHash: cd.decision = SNTEventStateAllowCDHash; break;
+          case SNTRuleTypeBinary: cd.decision = SNTEventStateAllowBinary; break;
+          case SNTRuleTypeSigningID: cd.decision = SNTEventStateAllowSigningID; break;
+          default:
+            // Programming error. Something's marked as a compiler that shouldn't
+            // be.
+            LOGE(@"Invalid compiler rule type %ld", rule.type);
+            [NSException
+               raise:@"Invalid compiler rule type"
+              format:@"updateCachedDecisionForRule: Unexpected compiler rule type: %ld", rule.type];
+            break;
+        }
       }
-    }
-  } else if (rule.state == SNTRuleStateAllowTransitive) {
-    // If transitive rules are enabled, then SNTRuleStateAllowTransitive rules
-    // become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
-    // rule as if it were SNTRuleStateUnknown.
-    if (!enableTransitiveRules) {
-      // check operating mode.
-      if (mode == SNTClientModeMonitor) {
-        cd.decision = SNTEventStateAllowUnknown;
-      } else {
-        cd.decision = SNTEventStateBlockUnknown;
+      break;
+    case SNTRuleStateAllowTransitive:
+      // If transitive rules are enabled, then SNTRuleStateAllowTransitive rules
+      // become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
+      // rule as if it were SNTRuleStateUnknown.
+      if (!enableTransitiveRules) {
+        // check operating mode.
+        if (mode == SNTClientModeMonitor) {
+          cd.decision = SNTEventStateAllowUnknown;
+        } else {
+          cd.decision = SNTEventStateBlockUnknown;
+        }
       }
-    }
+      break;
+    default: break;
   }
 
   if (rule.customMsg) {
@@ -154,7 +158,7 @@ inline SNTCachedDecision *updateCachedDecisionSigningInfo(
 
   if (entitlementsFilterCallback) {
     cd.entitlements = entitlementsFilterCallback(entitlements);
-    cd.entitlementsFiltered = (cd.entitlements.count == entitlements.count);
+    cd.entitlementsFiltered = (cd.entitlements.count != entitlements.count);
   } else {
     cd.entitlements = [entitlements sntDeepCopy];
     cd.entitlementsFiltered = NO;
