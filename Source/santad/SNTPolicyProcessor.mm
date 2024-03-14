@@ -46,7 +46,8 @@
 }
 
 // This method applies the rules to the cached decision object.
-inline SNTCachedDecision *updateCachedDecisionForRule(SNTCachedDecision *cd, SNTRule *rule,
+inline SNTCachedDecision *updateCachedDecisionForRule(SNTCachedDecision *cd, 
+                                                      SNTRule *rule,
                                                       SNTClientMode mode,
                                                       bool enableTransitiveRules) {
   static const auto decisions =
