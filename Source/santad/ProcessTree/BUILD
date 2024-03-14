@@ -76,6 +76,7 @@ objc_library(
         ":process_tree",
         "@com_google_absl//absl/synchronization",
     ],
+    visibility = ["//Source/santad/ProcessTree:__subpackages__"],
 )
 
 santa_unit_test(
