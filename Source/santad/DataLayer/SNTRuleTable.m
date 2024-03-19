@@ -463,15 +463,31 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
-  // Check for non-plain-allowlist rules first before querying the database.
-  for (SNTRule *rule in rules) {
-    if (rule.state != SNTRuleStateAllow) return YES;
+  __block BOOL flushDecisionCache = NO;
+
+  // Check newly synced rules for any blocking rules. If any are found, check
+  // in the db to see if they already exist. If they're not found or were
+  // previously allow rules flush the cache.
+  [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
+    for (SNTRule *rule in rules) {
+      if (rule.state != SNTRuleStateAllow) {
+        if ([db longForQuery:
+                  @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
+                  rule.identifier, rule.type, rule.state] == 0) {
+          flushDecisionCache = YES;
+          break;
+        }
+      }
+    }
+  }];
+
+  if (flushDecisionCache) {
+    return flushDecisionCache;
   }
 
   // If still here, then all rules in the array are allowlist rules.  So now we look for allowlist
   // rules where there is a previously existing allowlist compiler rule for the same identifier.
   // If so we find such a rule, then cache should be flushed.
-  __block BOOL flushDecisionCache = NO;
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
     for (SNTRule *rule in rules) {
       // Allowlist certificate rules are ignored
