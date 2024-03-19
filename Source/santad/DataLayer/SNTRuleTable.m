@@ -463,7 +463,6 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
-  __block BOOL flushDecisionCache = NO;
   uint64_t blockingRuleCount = 0;
 
   for (SNTRule *rule in rules) {
@@ -472,7 +471,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     }
   }
 
-  if (blockingRuleCount > 1000) {
+  // Just flush if we have a lot of block rules.
+  if (blockingRuleCount >= 1000) {
     return YES;
   }
 
@@ -483,12 +483,14 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   // If all rules in the array are allowlist rules,  look for allowlist rules
   // where there is a previously existing allowlist compiler rule for the same
   // identifier.  If so we find such a rule, then cache should be flushed.
+  __block BOOL flushDecisionCache = NO;
+
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
     for (SNTRule *rule in rules) {
       if (rule.state != SNTRuleStateAllow) {
         if ([db longForQuery:
                   @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
-                  rule.identifier, rule.type, rule.state] == 0) {
+                  rule.identifier, @(rule.type), @(rule.state)] == 0) {
           flushDecisionCache = YES;
           break;
         }

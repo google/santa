@@ -425,4 +425,46 @@
   XCTAssertEqualObjects(rules[4], [self _exampleCDHashRule]);
 }
 
+- (void)testAddedRulesShouldFlushDecisionCacheWithNewBlockRule {
+  // Ensure that a brand new block rule flushes the decision cache.
+  NSError *error;
+  SNTRule *r = [self _exampleBinaryRule];
+  [self.sut addRules:@[ r ] ruleCleanup:SNTRuleCleanupNone error:&error];
+  XCTAssertNil(error);
+  XCTAssertEqual(self.sut.ruleCount, 1);
+  XCTAssertEqual(self.sut.binaryRuleCount, 1);
+
+  // Change the identifer so that the hash of a block rule is not found in the
+  // db.
+  r.identifier = @"bfff7d3f6c389ebf7a76a666c484d42ea447834901bc29141439ae7c7b96ff09";
+  XCTAssertEqual(YES, [self.sut addedRulesShouldFlushDecisionCache:@[ r ]]);
+}
+
+- (void)testAddedRulesShouldFlushDecisionCacheWithOldBlockRule {
+  // Ensure that a brand new block rule flushes the decision cache.
+  NSError *error;
+  SNTRule *r = [self _exampleBinaryRule];
+  [self.sut addRules:@[ r ] ruleCleanup:SNTRuleCleanupNone error:&error];
+  XCTAssertNil(error);
+  XCTAssertEqual(self.sut.ruleCount, 1);
+  XCTAssertEqual(self.sut.binaryRuleCount, 1);
+  XCTAssertEqual(NO, [self.sut addedRulesShouldFlushDecisionCache:@[ r ]]);
+}
+
+- (void)testAddedRulesShouldFlushDecisionCacheWithLargeNumberOfBlocks {
+  // Ensure that a brand new block rule flushes the decision cache.
+  NSError *error;
+  SNTRule *r = [self _exampleBinaryRule];
+  [self.sut addRules:@[ r ] ruleCleanup:SNTRuleCleanupNone error:&error];
+  XCTAssertNil(error);
+  XCTAssertEqual(self.sut.ruleCount, 1);
+  XCTAssertEqual(self.sut.binaryRuleCount, 1);
+  NSMutableArray<SNTRule *> *newRules = [NSMutableArray array];
+  for (int i = 0; i < 1000; i++) {
+    newRules[i] = r;
+  }
+
+  XCTAssertEqual(YES, [self.sut addedRulesShouldFlushDecisionCache:newRules]);
+}
+
 @end
