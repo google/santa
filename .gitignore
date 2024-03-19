@@ -18,3 +18,6 @@ tulsigen-*
 compile_commands.json
 .cache/
 .vscode/*
+
+# Rust stuff
+target
