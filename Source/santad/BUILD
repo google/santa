@@ -901,6 +901,7 @@ santa_unit_test(
         "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
+        "@OCMock",
     ],
 )
 

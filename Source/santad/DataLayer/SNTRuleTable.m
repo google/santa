@@ -368,7 +368,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   //
   // The intended order of precedence is CDHash > Binaries > Signing IDs > Certificates > Team IDs.
   //
-  // As such the query should have "ORDER BY type DESC" before the LIMIT, to ensure that is the
+  // As such the query should have "ORDER BY type ASC" before the LIMIT, to ensure that is the
   // case. However, in all tested versions of SQLite that ORDER BY clause is unnecessary: the query
   // is performed 'as written' by doing separate lookups in the index and the later lookups are if
   // the first returns a result. That behavior can be checked here: http://sqlfiddle.com/#!5/cdc42/1
@@ -383,8 +383,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   [self inDatabase:^(FMDatabase *db) {
     FMResultSet *rs =
       [db executeQuery:@"SELECT * FROM rules WHERE "
-                       @"   (identifier=? and type=500) "
-                       @"OR (identifier=? and type=1000) "
+                       @"   (identifier=? AND type=500) "
+                       @"OR (identifier=? AND type=1000) "
                        @"OR (identifier=? AND type=2000) "
                        @"OR (identifier=? AND type=3000) "
                        @"OR (identifier=? AND type=4000) LIMIT 1",

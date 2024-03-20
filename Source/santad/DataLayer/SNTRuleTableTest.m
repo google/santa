@@ -14,8 +14,10 @@
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
 
+#import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
@@ -24,6 +26,7 @@
 @interface SNTRuleTableTest : XCTestCase
 @property SNTRuleTable *sut;
 @property FMDatabaseQueue *dbq;
+@property id mockConfigurator;
 @end
 
 @implementation SNTRuleTableTest
@@ -33,6 +36,13 @@
 
   self.dbq = [[FMDatabaseQueue alloc] init];
   self.sut = [[SNTRuleTable alloc] initWithDatabaseQueue:self.dbq];
+
+  self.mockConfigurator = OCMClassMock([SNTConfigurator class]);
+  OCMStub([self.mockConfigurator configurator]).andReturn(self.mockConfigurator);
+}
+
+- (void)tearDown {
+  [self.mockConfigurator stopMocking];
 }
 
 - (SNTRule *)_exampleTeamIDRule {
@@ -296,15 +306,17 @@
 }
 
 - (void)testFetchRuleOrdering {
+  NSError *err;
   [self.sut addRules:@[
     [self _exampleCertRule], [self _exampleBinaryRule], [self _exampleTeamIDRule],
-    [self _exampleSigningIDRuleIsPlatform:NO], [self _exampleCDHashRule]
+    [self _exampleSigningIDRuleIsPlatform:NO], [self _exampleCDHashRule],
   ]
          ruleCleanup:SNTRuleCleanupNone
-               error:nil];
+               error:&err];
+  XCTAssertNil(err);
 
   // This test verifies that the implicit rule ordering we've been abusing is still working.
-  // See the comment in SNTRuleTable#ruleForBinarySHA256:certificateSHA256:teamID
+  // See the comment in SNTRuleTable#ruleForIdentifiers:
   SNTRule *r = [self.sut
     ruleForIdentifiers:(struct RuleIdentifiers){
                          .cdhash = @"dbe8c39801f93e05fc7bc53a02af5b4d3cfc670a",
