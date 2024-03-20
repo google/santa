@@ -463,16 +463,16 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
-  uint64_t blockingRuleCount = 0;
+  uint64_t nonAllowRuleCount = 0;
 
   for (SNTRule *rule in rules) {
     if (rule.state != SNTRuleStateAllow) {
-      blockingRuleCount++;
+      nonAllowRuleCount++;
     }
   }
 
   // Just flush if we have a lot of block rules.
-  if (blockingRuleCount >= 1000) {
+  if (nonAllowRuleCount >= 1000) {
     return YES;
   }
 
@@ -494,16 +494,19 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
           flushDecisionCache = YES;
           break;
         }
+        // Skip to check the next rule since we only want to check allows for
+        // compiler rules.
+        continue;
+      }
 
-        // Allowlist certificate rules are ignored
-        if (rule.type == SNTRuleTypeCertificate) continue;
+      // Allowlist certificate rules are ignored
+      if (rule.type == SNTRuleTypeCertificate || rule.type == SNTRuleTypeTeamID) continue;
 
-        if ([db longForQuery:
-                  @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
-                  rule.identifier, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
-          flushDecisionCache = YES;
-          break;
-        }
+      if ([db longForQuery:
+                @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
+                rule.identifier, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
+        flushDecisionCache = YES;
+        break;
       }
     }
   }];
