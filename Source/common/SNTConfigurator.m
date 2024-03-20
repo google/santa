@@ -1234,6 +1234,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
     }
   }
 #ifdef DEBUG
+  BOOL overridesApplied = NO;
   NSDictionary *overrides = [NSDictionary dictionaryWithContentsOfFile:kConfigOverrideFilePath];
   for (NSString *key in overrides) {
     id obj = overrides[key];
@@ -1242,11 +1243,18 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
          ![obj isKindOfClass:[NSString class]])) {
       continue;
     }
+
     forcedConfig[key] = obj;
+    overridesApplied = YES;
+
     if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
       NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
       forcedConfig[key] = [self expressionForPattern:pattern];
     }
+  }
+
+  if (overridesApplied) {
+    NSLog(@"WARNING: Running with overrides applied!");
   }
 #endif
   return forcedConfig;
