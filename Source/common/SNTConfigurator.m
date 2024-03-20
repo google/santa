@@ -1222,18 +1222,20 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
   return [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:NULL];
 }
 
-- (NSMutableDictionary *)readForcedConfig {
-  NSMutableDictionary *forcedConfig = [NSMutableDictionary dictionary];
-  for (NSString *key in self.forcedConfigKeyTypes) {
-    id obj = [self forcedConfigValueForKey:key];
-    forcedConfig[key] = [obj isKindOfClass:self.forcedConfigKeyTypes[key]] ? obj : nil;
-    // Create the regex objects now
-    if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
-      NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
-      forcedConfig[key] = [self expressionForPattern:pattern];
-    }
-  }
+- (void)applyOverrides:(NSMutableDictionary *)forcedConfig {
+  // Overrides should only be applied under debug builds.
 #ifdef DEBUG
+  if ([[[NSProcessInfo processInfo] environment] objectForKey:@"BAZEL_TEST"] &&
+      ![[[NSProcessInfo processInfo] environment] objectForKey:@"ENABLE_CONFIG_OVERRIDES"]) {
+    // By default, config overrides are not applied when runnings tests to help
+    // mitigate potential issues due to unexpected config values. This behavior
+    // can be overriden if desired by using the env variable: `ENABLE_CONFIG_OVERRIDES`.
+    //
+    // E.g.:
+    //   bazel test --test_env=ENABLE_CONFIG_OVERRIDES=1 ...other test args...
+    return;
+  }
+
   BOOL overridesApplied = NO;
   NSDictionary *overrides = [NSDictionary dictionaryWithContentsOfFile:kConfigOverrideFilePath];
   for (NSString *key in overrides) {
@@ -1257,6 +1259,22 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
     NSLog(@"WARNING: Running with overrides applied!");
   }
 #endif
+}
+
+- (NSMutableDictionary *)readForcedConfig {
+  NSMutableDictionary *forcedConfig = [NSMutableDictionary dictionary];
+  for (NSString *key in self.forcedConfigKeyTypes) {
+    id obj = [self forcedConfigValueForKey:key];
+    forcedConfig[key] = [obj isKindOfClass:self.forcedConfigKeyTypes[key]] ? obj : nil;
+    // Create the regex objects now
+    if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
+      NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
+      forcedConfig[key] = [self expressionForPattern:pattern];
+    }
+  }
+
+  [self applyOverrides:forcedConfig];
+
   return forcedConfig;
 }
 
