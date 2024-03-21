@@ -493,29 +493,29 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     for (SNTRule *rule in rules) {
       // If the rule is a block rule, silent block rule, or a compiler rule check if it already
       // exists in the database.
-      // 
+      //
       // If it does not then flush the cache. To ensure that the new rule is honored.
       if ((rule.state != SNTRuleStateAllow)) {
         if ([db longForQuery:
                   @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
                   rule.identifier, @(rule.type), @(rule.state)] == 0) {
           flushDecisionCache = YES;
-          break;
+          return;
         }
-      }
+      } else {
+        // At this point we know the rule is an allowlist rule. Check if it's
+        // overriding a compiler rule.
 
-      // At this point we know the rule is an allowlist rule. Check if it's
-      // overriding a compiler rule. 
+        // Skip certificate and TeamID rules as they cannot be compiler rules.
+        if (rule.type == SNTRuleTypeCertificate || rule.type == SNTRuleTypeTeamID) continue;
 
-      // Skip certificate and TeamID rules as they cannot be compiler rules.
-      if (rule.type == SNTRuleTypeCertificate || rule.type == SNTRuleTypeTeamID) continue;
-
-      if ([db longForQuery:@"SELECT COUNT(*) FROM rules WHERE identifier=? AND type IN (?, ?, ?)"
-                           @" AND state=? LIMIT 1",
-                           rule.identifier, @(SNTRuleTypeCDHash), @(SNTRuleTypeBinary),
-                           @(SNTRuleTypeSigningID), @(SNTRuleStateAllowCompiler)] > 0) {
-        flushDecisionCache = YES;
-        break;
+        if ([db longForQuery:@"SELECT COUNT(*) FROM rules WHERE identifier=? AND type IN (?, ?, ?)"
+                             @" AND state=? LIMIT 1",
+                             rule.identifier, @(SNTRuleTypeCDHash), @(SNTRuleTypeBinary),
+                             @(SNTRuleTypeSigningID), @(SNTRuleStateAllowCompiler)] > 0) {
+          flushDecisionCache = YES;
+          return;
+        }
       }
     }
   }];
