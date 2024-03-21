@@ -471,7 +471,7 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
     }
   }
 
-  // Just flush if we have a lot of block rules.
+  // Just flush if we more than 1000 block rules.
   if (nonAllowRuleCount >= 1000) {
     return YES;
   }
@@ -487,24 +487,34 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
     for (SNTRule *rule in rules) {
-      if (rule.state != SNTRuleStateAllow) {
+      // If the rule is a block rule, check if it exists in the database.
+      if ((rule.state == SNTRuleStateBlock)) {
         if ([db longForQuery:
                   @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
                   rule.identifier, @(rule.type), @(rule.state)] == 0) {
           flushDecisionCache = YES;
           break;
         }
-        // Skip to check the next rule since we only want to check allows for
-        // compiler rules.
-        continue;
       }
 
-      // Allowlist certificate rules are ignored
+      // If the rule being removed is targeting an allow rule, flush the cache.
+      if (rule.state == SNTRuleStateRemove) {
+        if ([db longForQuery:@"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state "
+                             @"in (?,?) LIMIT 1",
+                             rule.identifier, @(rule.type), @(SNTRuleStateAllow),
+                             @(SNTRuleStateAllowCompiler)] > 0) {
+          flushDecisionCache = YES;
+          break;
+        }
+      }
+
+      // Skip certificate and TeamID rules as they cannot be compiler rules.
       if (rule.type == SNTRuleTypeCertificate || rule.type == SNTRuleTypeTeamID) continue;
 
-      if ([db longForQuery:
-                @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
-                rule.identifier, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
+      if ([db longForQuery:@"SELECT COUNT(*) FROM rules WHERE identifier=? AND type IN (?, ?, ?)"
+                           @" AND state=? LIMIT 1",
+                           rule.identifier, @(SNTRuleTypeCDHash), @(SNTRuleTypeBinary),
+                           @(SNTRuleTypeSigningID), @(SNTRuleStateAllowCompiler)] > 0) {
         flushDecisionCache = YES;
         break;
       }
@@ -574,7 +584,6 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   *error = [NSError errorWithDomain:@"com.google.santad.ruletable" code:code userInfo:d];
   return YES;
 }
-
 #pragma mark Querying
 
 // Retrieve all rules from the Database
