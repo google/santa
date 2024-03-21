@@ -466,14 +466,18 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   uint64_t nonAllowRuleCount = 0;
 
   for (SNTRule *rule in rules) {
+    // If the rule is a remove rule, act conservatively and flush the cache.
+    // This is to make sure cached rules of different precedence rules do not
+    // impact final decision.
+    if (rule.state == SNTRuleStateRemove) {
+      return YES;
+    }
     if (rule.state != SNTRuleStateAllow) {
       nonAllowRuleCount++;
-    }
-  }
 
-  // Just flush if we more than 1000 block rules.
-  if (nonAllowRuleCount >= 1000) {
-    return YES;
+      // Just flush if we more than 1000 block rules.
+      if (nonAllowRuleCount >= 1000) return YES;
+    }
   }
 
   // Check newly synced rules for any blocking rules. If any are found, check
@@ -487,8 +491,11 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
     for (SNTRule *rule in rules) {
-      // If the rule is a block rule, check if it exists in the database.
-      if ((rule.state == SNTRuleStateBlock)) {
+      // If the rule is a block rule, silent block rule, or a compiler rule check if it already
+      // exists in the database.
+      // 
+      // If it does not then flush the cache. To ensure that the new rule is honored.
+      if ((rule.state != SNTRuleStateAllow)) {
         if ([db longForQuery:
                   @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
                   rule.identifier, @(rule.type), @(rule.state)] == 0) {
@@ -497,16 +504,8 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
         }
       }
 
-      // If the rule being removed is targeting an allow rule, flush the cache.
-      if (rule.state == SNTRuleStateRemove) {
-        if ([db longForQuery:@"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state "
-                             @"in (?,?) LIMIT 1",
-                             rule.identifier, @(rule.type), @(SNTRuleStateAllow),
-                             @(SNTRuleStateAllowCompiler)] > 0) {
-          flushDecisionCache = YES;
-          break;
-        }
-      }
+      // At this point we know the rule is an allowlist rule. Check if it's
+      // overriding a compiler rule. 
 
       // Skip certificate and TeamID rules as they cannot be compiler rules.
       if (rule.type == SNTRuleTypeCertificate || rule.type == SNTRuleTypeTeamID) continue;
