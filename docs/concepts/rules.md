@@ -115,7 +115,7 @@ specific to least specific:
 ```
 Most Specific                                  Least Specific
 
-Binary   -->   Signing ID   -->   Certificate   -->   Team ID
+CDHash   →   Binary   →   Signing ID   →   Certificate   →   Team ID
 ```
 
 If no rules are found that apply, scopes are then searched. See the
