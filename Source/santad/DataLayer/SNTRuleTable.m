@@ -463,25 +463,59 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
 }
 
 - (BOOL)addedRulesShouldFlushDecisionCache:(NSArray *)rules {
-  // Check for non-plain-allowlist rules first before querying the database.
+  uint64_t nonAllowRuleCount = 0;
+
   for (SNTRule *rule in rules) {
-    if (rule.state != SNTRuleStateAllow) return YES;
+    // If the rule is a remove rule, act conservatively and flush the cache.
+    // This is to make sure cached rules of different precedence rules do not
+    // impact final decision.
+    if (rule.state == SNTRuleStateRemove) {
+      return YES;
+    }
+    if (rule.state != SNTRuleStateAllow) {
+      nonAllowRuleCount++;
+
+      // Just flush if we more than 1000 block rules.
+      if (nonAllowRuleCount >= 1000) return YES;
+    }
   }
 
-  // If still here, then all rules in the array are allowlist rules.  So now we look for allowlist
-  // rules where there is a previously existing allowlist compiler rule for the same identifier.
-  // If so we find such a rule, then cache should be flushed.
+  // Check newly synced rules for any blocking rules. If any are found, check
+  // in the db to see if they already exist. If they're not found or were
+  // previously allow rules flush the cache.
+  //
+  // If all rules in the array are allowlist rules,  look for allowlist rules
+  // where there is a previously existing allowlist compiler rule for the same
+  // identifier.  If so we find such a rule, then cache should be flushed.
   __block BOOL flushDecisionCache = NO;
+
   [self inTransaction:^(FMDatabase *db, BOOL *rollback) {
     for (SNTRule *rule in rules) {
-      // Allowlist certificate rules are ignored
-      if (rule.type == SNTRuleTypeCertificate) continue;
+      // If the rule is a block rule, silent block rule, or a compiler rule check if it already
+      // exists in the database.
+      //
+      // If it does not then flush the cache. To ensure that the new rule is honored.
+      if ((rule.state != SNTRuleStateAllow)) {
+        if ([db longForQuery:
+                  @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
+                  rule.identifier, @(rule.type), @(rule.state)] == 0) {
+          flushDecisionCache = YES;
+          return;
+        }
+      } else {
+        // At this point we know the rule is an allowlist rule. Check if it's
+        // overriding a compiler rule.
 
-      if ([db longForQuery:
-                @"SELECT COUNT(*) FROM rules WHERE identifier=? AND type=? AND state=? LIMIT 1",
-                rule.identifier, @(SNTRuleTypeBinary), @(SNTRuleStateAllowCompiler)] > 0) {
-        flushDecisionCache = YES;
-        break;
+        // Skip certificate and TeamID rules as they cannot be compiler rules.
+        if (rule.type == SNTRuleTypeCertificate || rule.type == SNTRuleTypeTeamID) continue;
+
+        if ([db longForQuery:@"SELECT COUNT(*) FROM rules WHERE identifier=? AND type IN (?, ?, ?)"
+                             @" AND state=? LIMIT 1",
+                             rule.identifier, @(SNTRuleTypeCDHash), @(SNTRuleTypeBinary),
+                             @(SNTRuleTypeSigningID), @(SNTRuleStateAllowCompiler)] > 0) {
+          flushDecisionCache = YES;
+          return;
+        }
       }
     }
   }];
@@ -549,7 +583,6 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) API_AVAILABL
   *error = [NSError errorWithDomain:@"com.google.santad.ruletable" code:code userInfo:d];
   return YES;
 }
-
 #pragma mark Querying
 
 // Retrieve all rules from the Database
