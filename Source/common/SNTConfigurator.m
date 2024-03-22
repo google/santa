@@ -1227,7 +1227,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 #ifdef DEBUG
   if ([[[NSProcessInfo processInfo] processName] isEqualToString:@"xctest"] &&
       ![[[NSProcessInfo processInfo] environment] objectForKey:@"ENABLE_CONFIG_OVERRIDES"]) {
-    // By default, config overrides are not applied when runnings tests to help
+    // By default, config overrides are not applied when running tests to help
     // mitigate potential issues due to unexpected config values. This behavior
     // can be overriden if desired by using the env variable: `ENABLE_CONFIG_OVERRIDES`.
     //
