@@ -1225,7 +1225,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 - (void)applyOverrides:(NSMutableDictionary *)forcedConfig {
   // Overrides should only be applied under debug builds.
 #ifdef DEBUG
-  if ([[[NSProcessInfo processInfo] environment] objectForKey:@"BAZEL_TEST"] &&
+  if ([[[NSProcessInfo processInfo] processName] isEqualToString:@"xctest"] &&
       ![[[NSProcessInfo processInfo] environment] objectForKey:@"ENABLE_CONFIG_OVERRIDES"]) {
     // By default, config overrides are not applied when runnings tests to help
     // mitigate potential issues due to unexpected config values. This behavior
@@ -1236,7 +1236,6 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
     return;
   }
 
-  BOOL overridesApplied = NO;
   NSDictionary *overrides = [NSDictionary dictionaryWithContentsOfFile:kConfigOverrideFilePath];
   for (NSString *key in overrides) {
     id obj = overrides[key];
@@ -1247,16 +1246,11 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
     }
 
     forcedConfig[key] = obj;
-    overridesApplied = YES;
 
     if (self.forcedConfigKeyTypes[key] == [NSRegularExpression class]) {
       NSString *pattern = [obj isKindOfClass:[NSString class]] ? obj : nil;
       forcedConfig[key] = [self expressionForPattern:pattern];
     }
-  }
-
-  if (overridesApplied) {
-    NSLog(@"WARNING: Running with overrides applied!");
   }
 #endif
 }
