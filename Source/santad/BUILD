@@ -326,6 +326,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:String",
         "//Source/common:Unit",
+        "//Source/santad/ProcessTree:process_tree",
     ],
 )
 
@@ -357,8 +358,8 @@ objc_library(
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTCompilerController",
+        ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
-        ":SNTEndpointSecurityTreeAwareClient",
         ":SNTExecutionController",
         "//Source/common:BranchPrediction",
         "//Source/common:SNTCommonEnums",
