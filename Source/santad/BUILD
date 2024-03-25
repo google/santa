@@ -658,6 +658,9 @@ objc_library(
     name = "EndpointSecurityAPI",
     srcs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.mm"],
     hdrs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.h"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
