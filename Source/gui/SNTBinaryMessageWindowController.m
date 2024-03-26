@@ -92,6 +92,8 @@
     NSString *eventDetailText = [[SNTConfigurator configurator] eventDetailText];
     if (eventDetailText) {
       [self.openEventButton setTitle:eventDetailText];
+      [self.openEventButton setKeyEquivalent:@"\r"];
+      [self.openEventButton setKeyEquivalentModifierMask:!NSEventModifierFlagCommand];
     }
   }
 
