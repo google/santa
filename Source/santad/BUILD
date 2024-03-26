@@ -326,6 +326,7 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:String",
         "//Source/common:Unit",
+        "//Source/santad/ProcessTree:process_tree",
     ],
 )
 
@@ -357,8 +358,8 @@ objc_library(
         ":EndpointSecurityMessage",
         ":Metrics",
         ":SNTCompilerController",
+        ":SNTEndpointSecurityClient",
         ":SNTEndpointSecurityEventHandler",
-        ":SNTEndpointSecurityTreeAwareClient",
         ":SNTExecutionController",
         "//Source/common:BranchPrediction",
         "//Source/common:SNTCommonEnums",
@@ -657,6 +658,9 @@ objc_library(
     name = "EndpointSecurityAPI",
     srcs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.mm"],
     hdrs = ["EventProviders/EndpointSecurity/EndpointSecurityAPI.h"],
+    sdk_dylibs = [
+        "EndpointSecurity",
+    ],
     deps = [
         ":EndpointSecurityClient",
         ":EndpointSecurityMessage",
