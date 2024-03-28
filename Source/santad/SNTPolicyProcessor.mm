@@ -27,6 +27,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
+#include "absl/container/flat_hash_map.h"
 
 @interface SNTPolicyProcessor ()
 @property SNTRuleTable *ruleTable;
@@ -44,6 +45,128 @@
   return self;
 }
 
+// This method applies the rules to the cached decision object.
+inline SNTCachedDecision *updateCachedDecisionForRule(SNTCachedDecision *cd, 
+                                                      SNTRule *rule,
+                                                      SNTClientMode mode,
+                                                      bool enableTransitiveRules) {
+  static const auto decisions =
+    absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState>{
+      {{SNTRuleTypeCDHash, SNTRuleStateAllow}, SNTEventStateAllowCDHash},
+      {{SNTRuleTypeCDHash, SNTRuleStateAllowCompiler}, SNTEventStateAllowCompiler},
+      {{SNTRuleTypeCDHash, SNTRuleStateAllowTransitive}, SNTEventStateAllowTransitive},
+      {{SNTRuleTypeCDHash, SNTRuleStateBlock}, SNTEventStateBlockCDHash},
+      {{SNTRuleTypeBinary, SNTRuleStateAllow}, SNTEventStateAllowBinary},
+      {{SNTRuleTypeBinary, SNTRuleStateAllowTransitive}, SNTEventStateAllowTransitive},
+      {{SNTRuleTypeBinary, SNTRuleStateAllowCompiler}, SNTEventStateAllowCompiler},
+      {{SNTRuleTypeBinary, SNTRuleStateSilentBlock}, SNTEventStateBlockBinary},
+      {{SNTRuleTypeBinary, SNTRuleStateBlock}, SNTEventStateBlockBinary},
+      {{SNTRuleTypeSigningID, SNTRuleStateAllow}, SNTEventStateAllowSigningID},
+      {{SNTRuleTypeSigningID, SNTRuleStateAllowCompiler}, SNTEventStateAllowCompiler},
+      {{SNTRuleTypeSigningID, SNTRuleStateSilentBlock}, SNTEventStateBlockSigningID},
+      {{SNTRuleTypeSigningID, SNTRuleStateBlock}, SNTEventStateBlockSigningID},
+      {{SNTRuleTypeCertificate, SNTRuleStateAllow}, SNTEventStateAllowCertificate},
+      {{SNTRuleTypeCertificate, SNTRuleStateSilentBlock}, SNTEventStateBlockCertificate},
+      {{SNTRuleTypeCertificate, SNTRuleStateBlock}, SNTEventStateBlockCertificate},
+      {{SNTRuleTypeTeamID, SNTRuleStateAllow}, SNTEventStateAllowTeamID},
+      {{SNTRuleTypeTeamID, SNTRuleStateSilentBlock}, SNTEventStateBlockTeamID},
+      {{SNTRuleTypeTeamID, SNTRuleStateBlock}, SNTEventStateBlockTeamID},
+    };
+
+  auto iterator = decisions.find(std::pair<SNTRuleType, SNTRuleState>{rule.type, rule.state});
+  if (iterator != decisions.end()) {
+    cd.decision = iterator->second;
+  } else {
+    // We don't have a matching rule type, rule state for this.
+    // These states aren't final and may be changed by scope rules.
+    if (mode == SNTClientModeMonitor) {
+      cd.decision = SNTEventStateAllowUnknown;
+    } else {
+      cd.decision = SNTEventStateBlockUnknown;
+    }
+  }
+
+  switch (rule.state) {
+    case SNTRuleStateSilentBlock: cd.silentBlock = YES; break;
+    case SNTRuleStateAllowCompiler:
+      if (!enableTransitiveRules) {
+        switch (rule.type) {
+          case SNTRuleTypeCDHash: cd.decision = SNTEventStateAllowCDHash; break;
+          case SNTRuleTypeBinary: cd.decision = SNTEventStateAllowBinary; break;
+          case SNTRuleTypeSigningID: cd.decision = SNTEventStateAllowSigningID; break;
+          default:
+            // Programming error. Something's marked as a compiler that shouldn't
+            // be.
+            LOGE(@"Invalid compiler rule type %ld", rule.type);
+            [NSException
+               raise:@"Invalid compiler rule type"
+              format:@"updateCachedDecisionForRule: Unexpected compiler rule type: %ld", rule.type];
+            break;
+        }
+      }
+      break;
+    case SNTRuleStateAllowTransitive:
+      // If transitive rules are enabled, then SNTRuleStateAllowTransitive rules
+      // become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
+      // rule as if it were SNTRuleStateUnknown.
+      if (!enableTransitiveRules) {
+        // check operating mode.
+        if (mode == SNTClientModeMonitor) {
+          cd.decision = SNTEventStateAllowUnknown;
+        } else {
+          cd.decision = SNTEventStateBlockUnknown;
+        }
+      }
+      break;
+    default: break;
+  }
+
+  if (rule.customMsg) {
+    cd.customMsg = rule.customMsg;
+  }
+
+  if (rule.customURL) {
+    cd.customURL = rule.customURL;
+  }
+
+  return cd;
+}
+
+inline SNTCachedDecision *updateCachedDecisionSigningInfo(
+  SNTCachedDecision *cd, MOLCodesignChecker *csInfo,
+  NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements)) {
+  cd.certSHA256 = csInfo.leafCertificate.SHA256;
+  cd.certCommonName = csInfo.leafCertificate.commonName;
+  cd.certChain = csInfo.certificates;
+  // Check if we need to get teamID from code signing.
+  if (!cd.teamID) {
+    cd.teamID =
+      [csInfo.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
+  }
+
+  // Ensure that if no teamID exists that the signing info confirms it is a
+  // platform binary. If not, remove the signingID.
+  if (!cd.teamID && cd.signingID) {
+    id platformID =
+      [csInfo.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
+    if (![platformID isKindOfClass:[NSNumber class]] || [platformID intValue] == 0) {
+      cd.signingID = nil;
+    }
+  }
+
+  NSDictionary *entitlements =
+    csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict];
+
+  if (entitlementsFilterCallback) {
+    cd.entitlements = entitlementsFilterCallback(entitlements);
+    cd.entitlementsFiltered = (cd.entitlements.count != entitlements.count);
+  } else {
+    cd.entitlements = [entitlements sntDeepCopy];
+    cd.entitlementsFiltered = NO;
+  }
+  return cd;
+}
+
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                             cdhash:(nullable NSString *)cdhash
                                         fileSHA256:(nullable NSString *)fileSHA256
@@ -54,22 +177,26 @@
                         entitlementsFilterCallback:
                           (NSDictionary *_Nullable (^_Nullable)(
                             NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
-  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
-  cd.cdhash = cdhash;
-  cd.sha256 = fileSHA256 ?: fileInfo.SHA256;
-  cd.teamID = teamID;
-  cd.signingID = signingID;
-
+  // Check the hash before allocating a SNTCachedDecision.
+  NSString *fileHash = fileSHA256 ?: fileInfo.SHA256;
   SNTClientMode mode = [self.configurator clientMode];
-  cd.decisionClientMode = mode;
 
   // If the binary is a critical system binary, don't check its signature.
   // The binary was validated at startup when the rule table was initialized.
-  SNTCachedDecision *systemCd = self.ruleTable.criticalSystemBinaries[cd.sha256];
+  SNTCachedDecision *systemCd = self.ruleTable.criticalSystemBinaries[fileHash];
   if (systemCd) {
     systemCd.decisionClientMode = mode;
     return systemCd;
   }
+
+  // Allocate a new cached decision for the execution.
+  SNTCachedDecision *cd = [[SNTCachedDecision alloc] init];
+  cd.cdhash = cdhash;
+  cd.sha256 = fileHash;
+  cd.teamID = teamID;
+  cd.signingID = signingID;
+  cd.decisionClientMode = mode;
+  cd.quarantineURL = fileInfo.quarantineDataURL;
 
   NSError *csInfoError;
   if (certificateSHA256.length) {
@@ -87,36 +214,9 @@
       cd.signingID = nil;
       cd.cdhash = nil;
     } else {
-      cd.certSHA256 = csInfo.leafCertificate.SHA256;
-      cd.certCommonName = csInfo.leafCertificate.commonName;
-      cd.certChain = csInfo.certificates;
-      cd.teamID = teamID
-                    ?: [csInfo.signingInformation
-                         objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
-
-      // Ensure that if no teamID exists that the signing info confirms it is a
-      // platform binary. If not, remove the signingID.
-      if (!cd.teamID && cd.signingID) {
-        id platformID = [csInfo.signingInformation
-          objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
-        if (![platformID isKindOfClass:[NSNumber class]] || [platformID intValue] == 0) {
-          cd.signingID = nil;
-        }
-      }
-
-      NSDictionary *entitlements =
-        csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict];
-
-      if (entitlementsFilterCallback) {
-        cd.entitlements = entitlementsFilterCallback(entitlements);
-        cd.entitlementsFiltered = (cd.entitlements.count == entitlements.count);
-      } else {
-        cd.entitlements = [entitlements sntDeepCopy];
-        cd.entitlementsFiltered = NO;
-      }
+      cd = updateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback);
     }
   }
-  cd.quarantineURL = fileInfo.quarantineDataURL;
 
   // Do not evaluate TeamID/SigningID rules for dev-signed code based on the
   // assumption that orgs are generally more relaxed about dev signed cert
@@ -138,116 +238,9 @@
                                                                 .certificateSHA256 = cd.certSHA256,
                                                                 .teamID = cd.teamID}];
   if (rule) {
-    switch (rule.type) {
-      case SNTRuleTypeCDHash:
-        switch (rule.state) {
-          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowCDHash; return cd;
-          case SNTRuleStateAllowCompiler:
-            // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
-            // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
-            // it were SNTRuleStateAllowCDHash.
-            if ([self.configurator enableTransitiveRules]) {
-              cd.decision = SNTEventStateAllowCompiler;
-            } else {
-              cd.decision = SNTEventStateAllowCDHash;
-            }
-            return cd;
-          case SNTRuleStateSilentBlock:
-            cd.silentBlock = YES;
-            // intentional fallthrough
-          case SNTRuleStateBlock:
-            cd.customMsg = rule.customMsg;
-            cd.customURL = rule.customURL;
-            cd.decision = SNTEventStateBlockCDHash;
-            return cd;
-          default: break;
-        }
-      case SNTRuleTypeBinary:
-        switch (rule.state) {
-          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowBinary; return cd;
-          case SNTRuleStateSilentBlock: cd.silentBlock = YES;
-          case SNTRuleStateBlock:
-            cd.customMsg = rule.customMsg;
-            cd.customURL = rule.customURL;
-            cd.decision = SNTEventStateBlockBinary;
-            return cd;
-          case SNTRuleStateAllowCompiler:
-            // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
-            // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
-            // it were SNTRuleStateAllow.
-            if ([self.configurator enableTransitiveRules]) {
-              cd.decision = SNTEventStateAllowCompiler;
-            } else {
-              cd.decision = SNTEventStateAllowBinary;
-            }
-            return cd;
-          case SNTRuleStateAllowTransitive:
-            // If transitive rules are enabled, then SNTRuleStateAllowTransitive
-            // rules become SNTEventStateAllowTransitive decisions.  Otherwise, we treat the
-            // rule as if it were SNTRuleStateUnknown.
-            if ([self.configurator enableTransitiveRules]) {
-              cd.decision = SNTEventStateAllowTransitive;
-              return cd;
-            } else {
-              rule.state = SNTRuleStateUnknown;
-            }
-          default: break;
-        }
-        break;
-      case SNTRuleTypeSigningID:
-        switch (rule.state) {
-          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowSigningID; return cd;
-          case SNTRuleStateAllowCompiler:
-            // If transitive rules are enabled, then SNTRuleStateAllowListCompiler rules
-            // become SNTEventStateAllowCompiler decisions.  Otherwise we treat the rule as if
-            // it were SNTRuleStateAllowSigningID.
-            if ([self.configurator enableTransitiveRules]) {
-              cd.decision = SNTEventStateAllowCompiler;
-            } else {
-              cd.decision = SNTEventStateAllowSigningID;
-            }
-            return cd;
-          case SNTRuleStateSilentBlock:
-            cd.silentBlock = YES;
-            // intentional fallthrough
-          case SNTRuleStateBlock:
-            cd.customMsg = rule.customMsg;
-            cd.customURL = rule.customURL;
-            cd.decision = SNTEventStateBlockSigningID;
-            return cd;
-          default: break;
-        }
-        break;
-      case SNTRuleTypeCertificate:
-        switch (rule.state) {
-          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowCertificate; return cd;
-          case SNTRuleStateSilentBlock:
-            cd.silentBlock = YES;
-            // intentional fallthrough
-          case SNTRuleStateBlock:
-            cd.customMsg = rule.customMsg;
-            cd.customURL = rule.customURL;
-            cd.decision = SNTEventStateBlockCertificate;
-            return cd;
-          default: break;
-        }
-        break;
-      case SNTRuleTypeTeamID:
-        switch (rule.state) {
-          case SNTRuleStateAllow: cd.decision = SNTEventStateAllowTeamID; return cd;
-          case SNTRuleStateSilentBlock:
-            cd.silentBlock = YES;
-            // intentional fallthrough
-          case SNTRuleStateBlock:
-            cd.customMsg = rule.customMsg;
-            cd.customURL = rule.customURL;
-            cd.decision = SNTEventStateBlockTeamID;
-            return cd;
-          default: break;
-        }
-        break;
-
-      default: break;
+    cd = updateCachedDecisionForRule(cd, rule, mode, self.configurator.enableTransitiveRules);
+    if (cd.decision != SNTEventStateBlockUnknown || cd.decision != SNTEventStateAllowUnknown) {
+      return cd;
     }
   }
 
