@@ -21,7 +21,7 @@
         <window title="Santa Blocked Execution" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" visibleAtLaunch="NO" animationBehavior="none" titlebarAppearsTransparent="YES" titleVisibility="hidden" id="9Bq-yh-54f" customClass="SNTMessageWindow">
             <windowStyleMask key="styleMask" titled="YES" utility="YES"/>
             <rect key="contentRect" x="167" y="107" width="540" height="479"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1175"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1916" height="1099"/>
             <view key="contentView" id="Iwq-Lx-rLv">
                 <rect key="frame" x="0.0" y="0.0" width="540" height="462"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -247,6 +247,7 @@
                             <string key="keyEquivalent" base64-UTF8="YES">
 DQ
 </string>
+                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                         </buttonCell>
                         <constraints>
                             <constraint firstAttribute="width" priority="900" constant="112" id="Pec-Pa-4aZ"/>
