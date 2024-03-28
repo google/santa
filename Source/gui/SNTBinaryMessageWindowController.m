@@ -92,6 +92,9 @@
     NSString *eventDetailText = [[SNTConfigurator configurator] eventDetailText];
     if (eventDetailText) {
       [self.openEventButton setTitle:eventDetailText];
+      // Require the button keyEquivalent set to be CMD + Return
+      [self.openEventButton setKeyEquivalent:@"\r"]; // Return Key
+      [self.openEventButton setKeyEquivalentModifierMask:NSEventModifierFlagCommand]; // Command Key
     }
   }
 

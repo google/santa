@@ -142,6 +142,8 @@ struct SNTFileAccessMessageWindowView: View {
 
               Text(customText ?? "Open Event...").frame(maxWidth:.infinity)
             })
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut(.defaultAction)
           }
           Button(action: dismissButton, label: {
             Text("Dismiss").frame(maxWidth:.infinity)
