@@ -381,7 +381,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, struct timespec event_time,
                                                    struct timespec processed_time) {
-  ::pbv1::SantaMessage *santa_msg = Arena::CreateMessage<::pbv1::SantaMessage>(arena);
+  ::pbv1::SantaMessage *santa_msg = Arena::Create<::pbv1::SantaMessage>(arena);
 
   if (EnabledMachineID()) {
     EncodeString([santa_msg] { return santa_msg->mutable_machine_id(); }, MachineID());
@@ -415,7 +415,7 @@ std::vector<uint8_t> Protobuf::FinalizeProto(::pbv1::SantaMessage *santa_msg) {
     // TODO: Profile this. It's probably not the most efficient way to do this.
     JsonPrintOptions options;
     options.always_print_enums_as_ints = false;
-    options.always_print_primitive_fields = true;
+    options.always_print_fields_with_no_presence = true;
     options.preserve_proto_field_names = true;
     std::string json;
 

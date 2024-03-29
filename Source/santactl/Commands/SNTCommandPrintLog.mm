@@ -67,7 +67,7 @@ REGISTER_COMMAND_NAME(@"printlog")
 - (void)runWithArguments:(NSArray *)arguments {
   JsonPrintOptions options;
   options.always_print_enums_as_ints = false;
-  options.always_print_primitive_fields = true;
+  options.always_print_fields_with_no_presence = true;
   options.preserve_proto_field_names = true;
   options.add_whitespace = true;
 

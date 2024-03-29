@@ -17,11 +17,9 @@ http_archive(
 
 http_archive(
     name = "com_google_protobuf",
-    patch_args = ["-p1"],
-    patches = ["//external_patches/com_google_protobuf:13636.patch"],
-    sha256 = "07d69502e58248927b58c7d7e7424135272ba5b2852a753ab6b67e62d2d29355",
-    strip_prefix = "protobuf-24.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v24.3.tar.gz"],
+    sha256 = "4fc5ff1b2c339fb86cd3a25f0b5311478ab081e65ad258c6789359cd84d421f8",
+    strip_prefix = "protobuf-26.1",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v26.1.tar.gz"],
 )
 
 # We don't directly use rules_python but several dependencies do and they disagree
