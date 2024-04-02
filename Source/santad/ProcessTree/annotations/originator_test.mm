@@ -24,7 +24,7 @@ namespace ptpb = ::santa::pb::v1::process_tree;
 
 @interface OriginatorAnnotatorTest : XCTestCase
 @property std::shared_ptr<ProcessTreeTestPeer> tree;
-@property std::shared_ptr<const Process> init_proc;
+@property std::shared_ptr<const Process> initProc;
 @end
 
 @implementation OriginatorAnnotatorTest
@@ -33,7 +33,7 @@ namespace ptpb = ::santa::pb::v1::process_tree;
   std::vector<std::unique_ptr<Annotator>> annotators;
   annotators.emplace_back(std::make_unique<OriginatorAnnotator>());
   self.tree = std::make_shared<ProcessTreeTestPeer>(std::move(annotators));
-  self.init_proc = self.tree->InsertInit();
+  self.initProc = self.tree->InsertInit();
 }
 
 - (void)testAnnotation {
@@ -42,7 +42,7 @@ namespace ptpb = ::santa::pb::v1::process_tree;
 
   // PID 1.1: fork() -> PID 2.2
   const struct Pid login_pid = {.pid = 2, .pidversion = 2};
-  self.tree->HandleFork(event_id++, *self.init_proc, login_pid);
+  self.tree->HandleFork(event_id++, *self.initProc, login_pid);
 
   // PID 2.2: exec("/usr/bin/login") -> PID 2.3
   const struct Pid login_exec_pid = {.pid = 2, .pidversion = 3};

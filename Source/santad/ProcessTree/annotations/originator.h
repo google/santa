@@ -17,6 +17,7 @@
 #include <optional>
 
 #include "Source/santad/ProcessTree/annotations/annotator.h"
+#include "Source/santad/ProcessTree/process.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
 
 namespace santa::santad::process_tree {
