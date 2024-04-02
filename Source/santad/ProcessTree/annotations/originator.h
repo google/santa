@@ -24,17 +24,19 @@ namespace santa::santad::process_tree {
 class OriginatorAnnotator : public Annotator {
  public:
   OriginatorAnnotator()
-      : originator_(
-            ::santa::pb::v1::process_tree::Annotations::Originator::Annotations_Originator_UNSPECIFIED){};
-  explicit OriginatorAnnotator(::santa::pb::v1::process_tree::Annotations::Originator originator)
-      : originator_(originator){};
+      : originator_(::santa::pb::v1::process_tree::Annotations::Originator::
+                        Annotations_Originator_UNSPECIFIED) {};
+  explicit OriginatorAnnotator(
+      ::santa::pb::v1::process_tree::Annotations::Originator originator)
+      : originator_(originator) {};
 
   void AnnotateFork(ProcessTree &tree, const Process &parent,
                     const Process &child) override;
   void AnnotateExec(ProcessTree &tree, const Process &orig_process,
                     const Process &new_process) override;
 
-  std::optional<::santa::pb::v1::process_tree::Annotations> Proto() const override;
+  std::optional<::santa::pb::v1::process_tree::Annotations> Proto()
+      const override;
 
  private:
   ::santa::pb::v1::process_tree::Annotations::Originator originator_;

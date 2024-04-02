@@ -9,5 +9,5 @@ message Annotations {
     CRON = 2;
   }
 
-  Originator ancestor = 1;
+  Originator originator = 1;
 }

@@ -56,7 +56,8 @@ namespace ptpb = ::santa::pb::v1::process_tree;
   XCTAssertTrue(annotation_opt.has_value());
   auto proto_opt = (*annotation_opt)->Proto();
   XCTAssertTrue(proto_opt.has_value());
-  XCTAssertEqual(proto_opt->ancestor(), ptpb::Annotations::Originator::Annotations_Originator_LOGIN);
+  XCTAssertEqual(proto_opt->originator(),
+                 ptpb::Annotations::Originator::Annotations_Originator_LOGIN);
 
   // PID 2.3: fork() -> PID 3.3
   const struct Pid shell_pid = {.pid = 3, .pidversion = 3};

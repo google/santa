@@ -15,8 +15,8 @@
 
 #include <optional>
 
-#include "Source/santad/ProcessTree/process_tree.pb.h"
 #include "Source/santad/ProcessTree/process_tree.h"
+#include "Source/santad/ProcessTree/process_tree.pb.h"
 
 namespace ptpb = ::santa::pb::v1::process_tree;
 
@@ -33,29 +33,30 @@ void OriginatorAnnotator::AnnotateFork(ProcessTree &tree, const Process &parent,
 void OriginatorAnnotator::AnnotateExec(ProcessTree &tree,
                                        const Process &orig_process,
                                        const Process &new_process) {
+  static const absl::flat_hash_map<std::string, ptpb::Annotations::Originator>
+      originator_programs = {
+          {"/usr/bin/login",
+           ptpb::Annotations::Originator::Annotations_Originator_LOGIN},
+          {"/usr/sbin/cron",
+           ptpb::Annotations::Originator::Annotations_Originator_CRON},
+      };
+
   if (auto annotation = tree.GetAnnotation<OriginatorAnnotator>(orig_process)) {
     tree.AnnotateProcess(new_process, std::move(*annotation));
     return;
   }
 
-  if (new_process.program_->executable == "/usr/bin/login") {
-    tree.AnnotateProcess(
-        new_process,
-        std::make_shared<OriginatorAnnotator>(
-            ptpb::Annotations::Originator::Annotations_Originator_LOGIN));
-  } else if (new_process.program_->executable == "/usr/sbin/cron") {
-    tree.AnnotateProcess(
-        new_process,
-        std::make_shared<OriginatorAnnotator>(
-            ptpb::Annotations::Originator::Annotations_Originator_CRON));
+  if (auto it = originator_programs.find(new_process.program_->executable);
+      it != originator_programs.end()) {
+    tree.AnnotateProcess(new_process,
+                         std::make_shared<OriginatorAnnotator>(it->second));
   }
 }
 
 std::optional<ptpb::Annotations> OriginatorAnnotator::Proto() const {
   auto annotation = ptpb::Annotations();
-  annotation.set_ancestor(originator_);
+  annotation.set_originator(originator_);
   return annotation;
 }
 
 }  // namespace santa::santad::process_tree
-
