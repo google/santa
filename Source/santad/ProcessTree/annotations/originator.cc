@@ -20,7 +20,6 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "Source/santad/ProcessTree/process.h"
-#include "Source/santad/ProcessTree/process.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
 
