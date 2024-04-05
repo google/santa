@@ -90,22 +90,17 @@
       cd.certSHA256 = csInfo.leafCertificate.SHA256;
       cd.certCommonName = csInfo.leafCertificate.commonName;
       cd.certChain = csInfo.certificates;
-      cd.teamID = teamID
-                    ?: [csInfo.signingInformation
-                         objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
+      cd.teamID = teamID ?: csInfo.teamID;
 
       // Ensure that if no teamID exists that the signing info confirms it is a
       // platform binary. If not, remove the signingID.
       if (!cd.teamID && cd.signingID) {
-        id platformID = [csInfo.signingInformation
-          objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
-        if (![platformID isKindOfClass:[NSNumber class]] || [platformID intValue] == 0) {
+        if (!csInfo.platformBinary) {
           cd.signingID = nil;
         }
       }
 
-      NSDictionary *entitlements =
-        csInfo.signingInformation[(__bridge NSString *)kSecCodeInfoEntitlementsDict];
+      NSDictionary *entitlements = csInfo.entitlements;
 
       if (entitlementsFilterCallback) {
         cd.entitlements = entitlementsFilterCallback(entitlements);
