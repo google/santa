@@ -380,21 +380,16 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     NSError *err;
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
 
-    NSString *cdhash =
-      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
-    NSString *teamID =
-      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
-    NSString *identifier =
-      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
+    NSString *cdhash = csc.cdhash;
+    NSString *teamID = csc.teamID;
+    NSString *identifier = csc.signingID;
 
     NSString *signingID;
     if (identifier) {
       if (teamID) {
         signingID = [NSString stringWithFormat:@"%@:%@", teamID, identifier];
       } else {
-        id platformID =
-          [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoPlatformIdentifier];
-        if ([platformID isKindOfClass:[NSNumber class]] && [platformID intValue] != 0) {
+        if (csc.platformBinary) {
           signingID = [NSString stringWithFormat:@"platform:%@", identifier];
         }
       }
@@ -522,21 +517,21 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)teamID {
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
-    return [csc.signingInformation valueForKey:@"teamid"];
+    return csc.teamID;
   };
 }
 
 - (SNTAttributeBlock)signingID {
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
-    return [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
+    return csc.signingID;
   };
 }
 
 - (SNTAttributeBlock)cdhash {
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
-    return [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
+    return csc.cdhash;
   };
 }
 

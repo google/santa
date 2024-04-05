@@ -34,8 +34,7 @@ NSString *const kBundleID = @"com.google.santa.daemon";
 #else
   MOLCodesignChecker *cs = [[MOLCodesignChecker alloc] initWithSelf];
   // "teamid.com.google.santa.daemon.xpc"
-  NSString *t = cs.signingInformation[@"teamid"];
-  return [NSString stringWithFormat:@"%@.%@.xpc", t, kBundleID];
+  return [NSString stringWithFormat:@"%@.%@.xpc", cs.teamID, kBundleID];
 #endif
 }
 
