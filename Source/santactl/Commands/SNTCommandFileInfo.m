@@ -78,6 +78,22 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
   return result;
 }
 
+// Reformat the NSString for CDHash into a more presentable form.
+// Normally we get NSStrings like:
+// {length = 20, bytes = // 0x610424d2dff4a51646e287df11f79f1c163d19d3}
+// from MOLCodesignChecker and want to format it into the cleaner.
+//
+// 610424d2dff4a51646e287df11f79f1c163d19d3.
+NSString *formatCDHashStr(NSString *data) {
+  if (!data) return nil;
+
+  // Split the string and filterout 0x and the curly braces.
+  NSString *fields = [data componentsSeparatedByString:@"="].lastObject;
+  NSString *cleaned = [fields stringByReplacingOccurrencesOfString:@"0x" withString:@""];
+  cleaned = [cleaned stringByReplacingOccurrencesOfString:@"}" withString:@""];
+  return [cleaned stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
 @interface SNTCommandFileInfo : SNTCommand <SNTCommandProtocol>
 
 // Properties set from commandline flags
@@ -380,10 +396,13 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     NSError *err;
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:&err];
 
-    NSString *cdhash =
-      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
-    NSString *teamID =
-      [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier];
+    NSData *cdhashData =
+      (NSData *)[csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
+    NSString *cdhash = formatCDHashStr([[NSString alloc] initWithData:cdhashData
+                                                             encoding:NSUTF8StringEncoding]);
+
+    NSString *teamID = [[csc.signingInformation
+      objectForKey:(__bridge NSString *)kSecCodeInfoTeamIdentifier] description];
     NSString *identifier =
       [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
 
@@ -536,7 +555,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)cdhash {
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
-    return [csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
+    NSData *cdhashData =
+      (NSData *)[csc.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoUnique];
+    return formatCDHashStr([[NSString alloc] initWithData:cdhashData
+                                                 encoding:NSUTF8StringEncoding]);
   };
 }
 
