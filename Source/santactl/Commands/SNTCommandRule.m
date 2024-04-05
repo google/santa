@@ -438,30 +438,6 @@ REGISTER_COMMAND_NAME(@"rule")
   exit(0);
 }
 
-- (void)printStateOfRuleAsJSON:(SNTRule *)rule daemonConnection:(MOLXPCConnection *)daemonConn {
-  id<SNTDaemonControlXPC> rop = [daemonConn synchronousRemoteObjectProxy];
-  __block NSString *output;
-
-  struct RuleIdentifiers identifiers = {
-    .cdhash = (rule.type == SNTRuleTypeCDHash) ? rule.identifier : nil,
-    .binarySHA256 = (rule.type == SNTRuleTypeBinary) ? rule.identifier : nil,
-    .certificateSHA256 = (rule.type == SNTRuleTypeCertificate) ? rule.identifier : nil,
-    .teamID = (rule.type == SNTRuleTypeTeamID) ? rule.identifier : nil,
-    .signingID = (rule.type == SNTRuleTypeSigningID) ? rule.identifier : nil,
-  };
-
-  [rop databaseRuleForIdentifiers:[[SNTRuleIdentifiers alloc] initWithRuleIdentifiers:identifiers]
-                            reply:^(SNTRule *r) {
-                              output = [SNTCommandRule stringifyRule:r
-                                                           withColor:(isatty(STDOUT_FILENO) == 1)];
-                            }];
-
-  printf("%s\n", output.UTF8String);
-  exit(0);
-}
-
-
-
 - (void)importJSONFile:(NSString *)jsonFilePath with:(SNTRuleCleanup)cleanupType {
   // If the file exists parse it and then add the rules one at a time.
   NSError *error;
