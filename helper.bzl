@@ -26,7 +26,6 @@ def santa_unit_test(
         resources = [],
         structured_resources = [],
         copts = [],
-        data = [],
         **kwargs):
     apple_resource_group(
         name = "%s_resources" % name,
@@ -50,6 +49,5 @@ def santa_unit_test(
         minimum_os_version = minimum_os_version,
         deps = [":%s_lib" % name],
         size = size,
-        data = data,
         visibility = ["//:__subpackages__"],
     )
