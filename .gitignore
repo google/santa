@@ -2,7 +2,7 @@
 *.profraw
 *.provisionprofile
 bazel-*
-Pods
+MODULE.bazel.lock
 Santa.xcodeproj/*
 Santa.xcworkspace/*
 CoverageData/*

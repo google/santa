@@ -1,0 +1,58 @@
+module(name = "santa")
+
+bazel_dep(name = "apple_support", version = "1.15.1", repo_name = "build_bazel_apple_support")
+bazel_dep(name = "abseil-cpp", version = "20230802.1", repo_name = "com_google_absl")
+
+bazel_dep(name = "rules_python", version = "0.31.0")
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "rules_apple", version = "3.5.0", repo_name = "build_bazel_rules_apple")
+bazel_dep(name = "rules_swift", version = "1.18.0", repo_name = "build_bazel_rules_swift")
+
+bazel_dep(name = "protobuf", version = "main", repo_name = "com_google_protobuf")
+git_override(
+    module_name = "protobuf",
+    remote = "https://github.com/protocolbuffers/protobuf.git",
+    commit = "21d75f861cdbc03b0a6b235a9ccf3ba0e1f09b32",
+)
+
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
+
+bazel_dep(name = "molcertificate", version = "2.1", repo_name = "MOLCertificate")
+git_override(
+    module_name = "molcertificate",
+    remote = "https://github.com/google/macops-molcertificate.git",
+    commit = "34f0ccf68a34a07cc636ada89057c529f90bec3a",
+)
+
+bazel_dep(name = "molauthenticatingurlsession", version = "3.0", repo_name = "MOLAuthenticatingURLSession")
+git_override(
+    module_name = "molauthenticatingurlsession",
+    remote = "https://github.com/google/macops-molauthenticatingurlsession.git",
+    commit = "0a50a67f29d635a4012981714c1dedef9ac25fe6",
+)
+
+bazel_dep(name = "molcodesignchecker", version = "3.0", repo_name = "MOLCodesignChecker")
+git_override(
+    module_name = "molcodesignchecker",
+    remote = "https://github.com/google/macops-molcodesignchecker.git",
+    commit = "5060bcc8baa90bae3b0ca705d14850328bbbec53",
+)
+
+bazel_dep(name = "molxpcconnection", version = "2.1", repo_name = "MOLXPCConnection")
+git_override(
+    module_name = "molxpcconnection",
+    remote = "https://github.com/russellhancox/macops-molxpcconnection.git",
+    commit = "da816dc49becac96d941ef6a5c4153ed39d1fe7c",
+)
+
+non_module_deps = use_extension("//:non_module_deps.bzl", "non_module_deps")
+use_repo(non_module_deps, "FMDB")
+use_repo(non_module_deps, "OCMock")
+
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    commit = "0e990032f3c5a866e72615cf67e5ce22186dcb97",
+)
+
