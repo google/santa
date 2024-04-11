@@ -81,7 +81,7 @@ using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
 JsonPrintOptions DefaultJsonPrintOptions() {
   JsonPrintOptions options;
   options.always_print_enums_as_ints = false;
-  options.always_print_primitive_fields = false;
+  options.always_print_fields_with_no_presence = false;
   options.preserve_proto_field_names = true;
   options.add_whitespace = true;
   return options;
