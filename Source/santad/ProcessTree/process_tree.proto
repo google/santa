@@ -3,4 +3,11 @@ syntax = "proto3";
 package santa.pb.v1.process_tree;
 
 message Annotations {
+  enum Originator {
+    UNSPECIFIED = 0;
+    LOGIN = 1;
+    CRON = 2;
+  }
+
+  Originator originator = 1;
 }
