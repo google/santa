@@ -102,7 +102,7 @@ git_repository(
 
 git_repository(
     name = "MOLCodesignChecker",
-    commit = "7ef66f1df15997defd7651b0ea5d6d9ec65a5b4f",  # tag = "v2.2",
+    commit = "567eca847003b36f61fff61472809c39dcf31ef6",  # tag = "v3.0",
     remote = "https://github.com/google/macops-molcodesignchecker.git",
     shallow_since = "1561303990 -0400",
 )

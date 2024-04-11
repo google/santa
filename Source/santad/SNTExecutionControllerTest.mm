@@ -387,9 +387,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
 }
 
 - (void)testTeamIDAllowRule {
-  OCMStub([self.mockCodesignChecker signingInformation]).andReturn((@{
-    (__bridge NSString *)kSecCodeInfoTeamIdentifier : @(kExampleTeamID),
-  }));
+  OCMStub([self.mockCodesignChecker teamID]).andReturn(@(kExampleTeamID));
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateAllow;
@@ -405,9 +403,7 @@ VerifyPostActionBlock verifyPostAction = ^PostActionBlock(SNTAction wantAction) 
 }
 
 - (void)testTeamIDBlockRule {
-  OCMStub([self.mockCodesignChecker signingInformation]).andReturn((@{
-    (__bridge NSString *)kSecCodeInfoTeamIdentifier : @(kExampleTeamID),
-  }));
+  OCMStub([self.mockCodesignChecker teamID]).andReturn(@(kExampleTeamID));
 
   SNTRule *rule = [[SNTRule alloc] init];
   rule.state = SNTRuleStateBlock;

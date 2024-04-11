@@ -259,8 +259,7 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.identifier = cs.leafCertificate.SHA256;
     } else if (newRule.type == SNTRuleTypeCDHash) {
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
-      newRule.identifier =
-        [cs.signingInformation objectForKey:(__bridge NSString *)kSecCodeInfoIdentifier];
+      newRule.identifier = cs.signingID;
     } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
       // noop
     }
