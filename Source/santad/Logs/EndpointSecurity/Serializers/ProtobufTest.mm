@@ -78,6 +78,12 @@ using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
 using santa::santad::logs::endpoint_security::serializers::GetPolicyDecision;
 using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
 
+@interface ProtobufTest : XCTestCase
+@property id mockConfigurator;
+@property id mockDecisionCache;
+@property SNTCachedDecision *testCachedDecision;
+@end
+
 JsonPrintOptions DefaultJsonPrintOptions() {
   JsonPrintOptions options;
   options.always_print_enums_as_ints = false;
@@ -85,21 +91,6 @@ JsonPrintOptions DefaultJsonPrintOptions() {
   options.preserve_proto_field_names = true;
   options.add_whitespace = true;
   return options;
-}
-
-NSString *TestJsonPath(NSString *jsonFileName, uint32_t version) {
-  static dispatch_once_t onceToken;
-  static NSString *testPath;
-  static NSString *testDataRepoPath = @"santa/Source/santad/testdata/protobuf";
-  NSString *testDataRepoVersionPath = [NSString stringWithFormat:@"v%u", version];
-
-  dispatch_once(&onceToken, ^{
-    testPath = [NSString pathWithComponents:@[
-      [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testDataRepoPath
-    ]];
-  });
-
-  return [NSString pathWithComponents:@[ testPath, testDataRepoVersionPath, jsonFileName ]];
 }
 
 NSString *EventTypeToFilename(es_event_type_t eventType) {
@@ -115,6 +106,16 @@ NSString *EventTypeToFilename(es_event_type_t eventType) {
     case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED: return @"cs_invalidated.json";
     default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
   }
+}
+
+NSString *TestJsonPath(NSString *jsonFileName, uint32_t version) {
+  NSString *p = [NSString pathWithComponents:@[
+    [[NSBundle bundleForClass:[ProtobufTest class]] resourcePath],
+    @"protobuf",
+    [NSString stringWithFormat:@"v%u", version],
+    jsonFileName,
+  ]];
+  return p;
 }
 
 NSString *LoadTestJson(NSString *jsonFileName, uint32_t version) {
@@ -324,12 +325,6 @@ void SerializeAndCheckNonESEvents(
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
-
-@interface ProtobufTest : XCTestCase
-@property id mockConfigurator;
-@property id mockDecisionCache;
-@property SNTCachedDecision *testCachedDecision;
-@end
 
 @implementation ProtobufTest
 

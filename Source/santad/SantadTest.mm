@@ -71,7 +71,6 @@ static void SetBinaryDataFromHexString(const char *hexStr, uint8_t *buf, size_t 
   }
 }
 
-static NSString *const testBinariesPath = @"santa/Source/santad/testdata/binaryrules";
 static const char *kAllowedSigningID = "com.google.allowed_signing_id";
 static const char *kBlockedSigningID = "com.google.blocked_signing_id";
 static const char *kNoRuleMatchSigningID = "com.google.no_rule_match_signing_id";
@@ -127,7 +126,8 @@ static const char *kBlockedCDHash = "7218eddfee4d3eba4873dedf22d1391d79aea25f";
   OCMStub([mockConfigurator fileAccessPolicyUpdateIntervalSec]).andReturn(600);
 
   NSString *testPath = [NSString pathWithComponents:@[
-    [[[NSProcessInfo processInfo] environment] objectForKey:@"TEST_SRCDIR"], testBinariesPath
+    [[NSBundle bundleForClass:[self class]] resourcePath],
+    @"binaryrules",
   ]];
 
   OCMStub([self.mockSNTDatabaseController databasePath]).andReturn(testPath);

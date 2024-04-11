@@ -913,7 +913,7 @@ santa_unit_test(
 santa_unit_test(
     name = "SantadTest",
     srcs = ["SantadTest.mm"],
-    data = [
+    structured_resources = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
     minimum_os_version = "11.0",
@@ -1015,7 +1015,7 @@ santa_unit_test(
 santa_unit_test(
     name = "EndpointSecuritySerializerProtobufTest",
     srcs = ["Logs/EndpointSecurity/Serializers/ProtobufTest.mm"],
-    data = [
+    structured_resources = [
         "//Source/santad/testdata:protobuf_json_testdata",
     ],
     deps = [
