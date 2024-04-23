@@ -1,28 +1,34 @@
 #!/usr/bin/env python3
 """Download and run the given Santa E2E testing VM image."""
+import argparse
 import json
+import logging
 import os
 import pathlib
 import subprocess
-import sys
 import tempfile
 import urllib.request
 
-VMCLI = "/opt/bin/VMCLI"
 VMS_DIR = pathlib.Path.home() / "VMs"
 TIMEOUT = 15 * 60  # in seconds
 
 if __name__ == "__main__":
-  tar_name = sys.argv[1]
-  if not tar_name.endswith(".tar.gz"):
-    print("Image name should be .tar.gz file", file=sys.stderr)
-    sys.exit(1)
+  logging.basicConfig(level=logging.INFO)
 
-  tar_path = VMS_DIR / tar_name
+  parser = argparse.ArgumentParser(description="Start E2E VM")
+  # This is redundant, but kept to keep consistency with update_vm.py
+  parser.add_argument("--vm", help="VM tar.gz. name", required=True)
+  parser.add_argument("--vmcli", help="Path to VMCLI binary", default="/opt/bin/VMCLI")
+  args = parser.parse_args()
+
+  if not args.vm.endswith(".tar.gz"):
+    logging.fatal("Image name should be .tar.gz file")
+
+  tar_path = VMS_DIR / args.vm
   extracted_path = pathlib.Path(str(tar_path)[:-len(".tar.gz")])
 
   with tempfile.TemporaryDirectory() as snapshot_dir:
-    print(f"Snapshot: {snapshot_dir}")
+    logging.info(f"Snapshot: {snapshot_dir}")
     # COW copy the image to this tempdir
     subprocess.check_output(["cp", "-rc", extracted_path, snapshot_dir])
 
@@ -33,8 +39,8 @@ if __name__ == "__main__":
       "runner_group_id":1,
       "labels":[
         "self-hosted",
-        "ARM",
         "macOS",
+        "ARM64",
         "e2e-vm",
       ],
       "work_folder":"/tmp/_work",
@@ -53,14 +59,16 @@ if __name__ == "__main__":
     with urllib.request.urlopen(request) as response:
       jit_config = json.loads(response.read())["encoded_jit_config"]
 
+    logging.info("Got JIT runner config")
+
     # Create a disk image to inject startup script
     init_dmg = pathlib.Path(snapshot_dir) / "init.dmg"
-    subprocess.check_output(["hdiutil", "create", "-attach", "-size", "200M",
-                                "-fs", "ExFAT", "-volname", "init", init_dmg])
+    subprocess.check_output(["hdiutil", "create", "-attach", "-size", "1G",
+                                "-fs", "APFS", "-volname", "init", init_dmg])
     init_dmg_mount = pathlib.Path("/Volumes/init/")
 
     # And populate startup script with runner and JIT key
-    with open(init_dmg_mount / "boot.sh", "w") as run_sh:
+    with open(init_dmg_mount / "run.sh", "w") as run_sh:
       run_sh.write(f"""#!/bin/sh
 curl -L -o /tmp/runner.tar.gz 'https://github.com/actions/runner/releases/download/v2.316.0/actions-runner-osx-arm64-2.316.0.tar.gz'
 mkdir /tmp/runner
@@ -68,21 +76,26 @@ cd /tmp/runner
 tar -xzf /tmp/runner.tar.gz
 ./run.sh --jitconfig '{jit_config}'
 """)
-    os.chmod(init_dmg_mount / "boot.sh", 0o755)
-    subprocess.check_output(["hdiutil", "unmount", init_dmg_mount])
+    os.chmod(init_dmg_mount / "run.sh", 0o755)
+    subprocess.check_output(["hdiutil", "detach", init_dmg_mount])
+
+    logging.info("Created init.dmg")
 
     # Create a disk image for USB testing
     usb_dmg = pathlib.Path(snapshot_dir) / "usb.dmg"
     subprocess.check_output(["hdiutil", "create", "-size", "100M",
                                 "-fs", "ExFAT", "-volname", "USB", usb_dmg])
 
+    logging.info("Created usb.dmg")
+
     try:
+      logging.info("Starting VM")
       subprocess.check_output(
-          [VMCLI, pathlib.Path(snapshot_dir) / extracted_path.name, init_dmg, usb_dmg],
+          [args.vmcli, pathlib.Path(snapshot_dir) / extracted_path.name, init_dmg, usb_dmg],
           timeout=TIMEOUT,
       )
     except subprocess.TimeoutExpired:
-      print("VM timed out")
+      logging.warning("VM timed out")
 
-  print("VM deleted")
+  logging.info("VM deleted")
 

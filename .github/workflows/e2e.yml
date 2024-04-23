@@ -6,11 +6,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  # update_vm:
+  #   runs-on: e2e-host
+  #   steps:
+  #     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+  #     - name: Update VM
+  #       env:
+  #         GCS_KEY: ${{ secrets.GCS_SERVICE_ACCOUNT_KEY }}
+  #       run: |
+  #         export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json
+  #         echo "${GCS_KEY}" > ${GOOGLE_APPLICATION_CREDENTIALS}
+  #         python3 Testing/integration/actions/update_vm.py macOS_14.bundle.tar.gz
+
   # start_vm:
   #   runs-on: e2e-host
   #   steps:
   #     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
   #     - name: Start VM
+  #       env:
+  #         RUNNER_REG_TOKEN: ${{ secrets.RUNNER_REG_TOKEN }}
   #       run: python3 Testing/integration/actions/start_vm.py macOS_14.bundle.tar.gz
 
   integration:
