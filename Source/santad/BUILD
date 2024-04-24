@@ -221,9 +221,7 @@ santa_unit_test(
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTRule",
         "//Source/common:TestUtils",
-        "@OCMock",
     ],
-
 )
 
 objc_library(
