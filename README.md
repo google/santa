@@ -16,7 +16,7 @@ based on the contents of a local database, a GUI agent that notifies the user in
 case of a block decision and a command-line utility for managing the system and
 synchronizing the database with a server.
 
-It is named Santa because it keeps track of binaries that are naughty or nice.
+It is named Santa because it keeps track of naughty or nice binaries.
 
 # Docs
 
