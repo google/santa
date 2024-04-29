@@ -25,7 +25,7 @@ The project and the latest release is available on [**GitHub**](https://github.c
 
 ### Introduction
 
-The following pages overview how Santa accomplishes authorization at an enterprise scale.
+The following pages provide an overview of how Santa accomplishes authorization at an enterprise scale.
 
 * [Binary Authorization](introduction/binary-authorization-overview.md): How Santa makes allow or deny decisions for any execution taking place.
 * [Syncing](introduction/syncing-overview.md): How configuration and rules are applied from a sync server.
