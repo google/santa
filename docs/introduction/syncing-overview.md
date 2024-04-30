@@ -51,7 +51,7 @@ syncs, listen for push notifications and upload events.
     2.  Firebase Cloud Messaging (FCM) can be used*. The sync server can send
         down a configuration in the preflight to have the santactl daemon to
         start listening for FCM messages. If a connection to FCM is made, the
-        full sync interval drops to a default of 4 hours. A preflight configuration can further configure this.
+        full sync interval drops to a default of 4 hours. A preflight configuration can override this.
         The FCM connection allows the
         sync-sever to talk directly with Santa. This way we, can reduce polling
         the sync server dramatically.
