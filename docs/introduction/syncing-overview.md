@@ -35,16 +35,16 @@ syncs, listen for push notifications and upload events.
     as a daemon it too exports an XPC interface so santad can interact with the
     process efficiently and securely. To ensure syncing reliability santad will
     restart the santactl daemon if it is killed or crashes.
-3.  The santactl daemon process now schedules a full sync for 15 sec in the
+2.  The santactl daemon process now schedules a full sync for 15 sec in the
     future. The 15 sec is used to let santad settle before santactl starts
     sending rules from the sync server to process.
-4.  The full sync starts. There are a number of stages to a full sync:
+3.  The full sync starts. There are a number of stages to a full sync:
     1.  preflight: The sync server can set various settings for Santa.
     2.  eventupload (optional): If Santa has generated events, it will upload
         them to the sync-server.
     3.  ruledownload: Download rules from the sync server.
     4.  postflight: Updates timestamps for successful syncs.
-5.  After the full sync completes a new full sync will be scheduled, by default
+4.  After the full sync completes a new full sync will be scheduled, by default
     this will be 10min. However there are a few ways to manipulate this:
     1.  The sync server can send down a configuration in the preflight to
         override the 10min interval. It can be anything greater than 10min.
@@ -55,7 +55,7 @@ syncs, listen for push notifications and upload events.
         The FCM connection allows the
         sync-sever to talk directly with Santa. This way we can reduce polling
         the sync server dramatically.
-6.  Full syncs will continue to take place at their configured interval. If
+5.  Full syncs will continue to take place at their configured interval. If
     configured FCM messages will continue to be digested and acted upon.
 
 *The Firebase Cloud Messaging (FCM) based Push Notification system is only available on the internal Google deployment of Santa at this time
