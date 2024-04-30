@@ -53,7 +53,7 @@ syncs, listen for push notifications and upload events.
         start listening for FCM messages. If a connection to FCM is made, the
         full sync interval drops to a default of 4 hours. A preflight configuration can override this.
         The FCM connection allows the
-        sync-sever to talk directly with Santa. This way we, can reduce polling
+        sync-sever to talk directly with Santa. This way we can reduce polling
         the sync server dramatically.
 6.  Full syncs will continue to take place at their configured interval. If
     configured FCM messages will continue to be digested and acted upon.
