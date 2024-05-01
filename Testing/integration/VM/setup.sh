@@ -34,13 +34,13 @@ fi
 softwareupdate --install-rosetta --agree-to-license
 
 # Add a LaunchAgent to start the mounted runner
-cat | sudo tee ${HOME}/Library/LaunchAgents/runner.plist << EOF
+tee ${HOME}/Library/LaunchAgents/runner.plist << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>runner</string>
+    <string>com.google.santa.e2erunner</string>
     <key>ProgramArguments</key>
     <array>
         <string>/Volumes/init/run.sh</string>
