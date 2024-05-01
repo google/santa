@@ -70,7 +70,10 @@ if __name__ == "__main__":
     # And populate startup script with runner and JIT key
     with open(init_dmg_mount / "run.sh", "w") as run_sh:
       run_sh.write(f"""#!/bin/sh
+set -xeuo pipefail
+
 curl -L -o /tmp/runner.tar.gz 'https://github.com/actions/runner/releases/download/v2.316.0/actions-runner-osx-arm64-2.316.0.tar.gz'
+echo "8442d39e3d91b67807703ec0825cec4384837b583305ea43a495a9867b7222ca  /tmp/runner.tar.gz" | shasum -a 256 -c -
 mkdir /tmp/runner
 cd /tmp/runner
 tar -xzf /tmp/runner.tar.gz

@@ -16,6 +16,10 @@ jobs:
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp.json
           echo "${GCS_KEY}" > ${GOOGLE_APPLICATION_CREDENTIALS}
+          function cleanup {
+            rm /tmp/gcp.json
+          }
+          trap cleanup EXIT
           python3 Testing/integration/actions/update_vm.py macOS_14.bundle.tar.gz
 
   start_vm:
