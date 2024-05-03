@@ -145,6 +145,10 @@
 //   %file_identifier%           - The SHA-256 of the binary being executed.
 //   %bundle_or_file_identifier% - The hash of the bundle containing this file or the file itself,
 //                                 if no bundle hash is present.
+//   %file_bundle_id%            - The bundle id of the binary, if any.
+//   %team_id%                   - The Team ID if present in the signature information.
+//   %signing_id%                - The Signing ID if present in the signature information.
+//   %cdhash%                    - If signed, the CDHash.
 //   %username%                  - The executing user's name.
 //   %machine_id%                - The configured machine ID for this host.
 //   %hostname%                  - The machine's FQDN.
@@ -177,6 +181,10 @@
       ^{ return event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil; },
                                                  @"%bundle_or_file_identifier%",
       ^{ return event.executingUser; },          @"%username%",
+      ^{ return event.fileBundleID; },           @"%file_bundle_id%",
+      ^{ return event.teamID; },                 @"%team_id%",
+      ^{ return event.signingID; },              @"%signing_id%",
+      ^{ return event.cdhash; },                 @"%cdhash%",
       ^{ return config.machineID; },             @"%machine_id%",
       ^{ return [SNTSystemInfo longHostname]; }, @"%hostname%",
       ^{ return [SNTSystemInfo hardwareUUID]; }, @"%uuid%",
@@ -204,6 +212,10 @@
 //   %file_identifier% - The SHA-256 of the binary being executed.
 //   %accessed_path%   - The path accessed by the binary.
 //   %username%        - The executing user's name.
+//   %file_bundle_id%  - The bundle id of the binary, if any.
+//   %team_id%         - The Team ID if present in the signature information.
+//   %signing_id%      - The Signing ID if present in the signature information.
+//   %cdhash%          - If signed, the CDHash.
 //   %machine_id%      - The configured machine ID for this host.
 //   %hostname%        - The machine's FQDN.
 //   %uuid%            - The machine's UUID.
@@ -228,6 +240,10 @@
       ^{ return event.fileSHA256; },             @"%file_identifier%",
       ^{ return event.accessedPath; },           @"%accessed_path%",
       ^{ return event.executingUser; },          @"%username%",
+      ^{ return event.fileBundleID; },           @"%file_bundle_id%",
+      ^{ return event.teamID; },                 @"%team_id%",
+      ^{ return event.signingID; },              @"%signing_id%",
+      ^{ return event.cdhash; },                 @"%cdhash%",
       ^{ return config.machineID; },             @"%machine_id%",
       ^{ return [SNTSystemInfo longHostname]; }, @"%hostname%",
       ^{ return [SNTSystemInfo hardwareUUID]; }, @"%uuid%",

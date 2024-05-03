@@ -210,7 +210,7 @@ objc_library(
     ],
     deps = [
         ":CertificateHelpers",
-        "@MOLCertificate",
+        ":SNTStoredEvent",
     ],
 )
 
