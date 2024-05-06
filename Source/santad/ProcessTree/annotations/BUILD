@@ -14,8 +14,8 @@ cc_library(
 
 cc_library(
     name = "originator",
-    hdrs = ["originator.h"],
     srcs = ["originator.cc"],
+    hdrs = ["originator.h"],
     deps = [
         ":annotator",
         "//Source/santad/ProcessTree:process",
@@ -31,7 +31,7 @@ santa_unit_test(
     deps = [
         ":originator",
         "//Source/santad/ProcessTree:process",
-        "//Source/santad/ProcessTree:process_tree_test_helpers",
         "//Source/santad/ProcessTree:process_tree_cc_proto",
+        "//Source/santad/ProcessTree:process_tree_test_helpers",
     ],
 )
