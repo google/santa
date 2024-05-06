@@ -1,0 +1,25 @@
+[package]
+name = "parquet_logger"
+version = "0.1.0"
+edition = "2021"
+description = "Parquet output support for Santa"
+
+[lib]
+name = "parquet_logger"
+path = "parquet_logger.rs"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+parquet2 = "0.17.2"
+cxx = "1.0"
+
+# The release profile is tweaked for binary size. Not all of these options are
+# applied by bazel at the moment.
+[profile.release]
+# Automatically strip symbols from the binary. Note: this seems to have less of
+# an effect than just calling strip on the binary after the fact.
+strip = true  
+opt-level = "z"  # Optimize for size.
+lto = true
+codegen-units = 1  # Disable parallel codegen.
+panic = "abort" # This matches the behavior of LOG(FATAL).

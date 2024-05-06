@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    # The below list must be kept in sync with the crates_repository.manifest
+    # key in the root WORKSPACE file.
+    "Source/santad/Logs/EndpointSecurity/ParquetLogger",
+]

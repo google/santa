@@ -68,3 +68,82 @@ rules_fuzzing_dependencies()
 load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
 
 rules_fuzzing_init()
+
+# Rust support:
+
+# To find additional information on this release or newer ones visit:
+# https://github.com/bazelbuild/rules_rust/releases
+http_archive(
+    name = "rules_rust",
+    sha256 = "36ab8f9facae745c9c9c1b33d225623d976e78f2cc3f729b7973d8c20934ab95",
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.31.0/rules_rust-v0.31.0.tar.gz"],
+)
+
+load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
+
+rules_rust_dependencies()
+
+rust_register_toolchains(
+    edition = "2021",
+)
+
+load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
+
+crate_universe_dependencies()
+
+load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
+
+# If we don't specify which platforms to build, rust_*_library targets will
+# select() across platforms that are not guaranteed to exist in the local Bazel,
+# which breaks the build.
+#
+# This is probably a Bazel bug, because rules_rust
+# specifies the correct module dependency and Bazel just ignores it and fetches
+# an old version.
+#
+# TODO(the80srobot): Find the right Bazel subproject and file a bug.
+RUST_SUPPORTED_PLATFORM_TRIPLES = [
+    "i686-apple-darwin",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+]
+
+crates_repository(
+    name = "crate_index",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = [
+        # Root Cargo file.
+        "//:Cargo.toml",
+        # The below this line must be kept in sync with the workspaces listed in
+        # the root Cargo file.
+        "//:Source/santad/Logs/EndpointSecurity/ParquetLogger/Cargo.toml",
+    ],
+    supported_platform_triples = RUST_SUPPORTED_PLATFORM_TRIPLES,
+)
+
+load("@crate_index//:defs.bzl", "crate_repositories")
+
+crate_repositories()
+
+# cxxbridge is a codegen tool for Rust/C++ bindings. To understand why this is
+# set up the way it is, read
+# http://bazelbuild.github.io/rules_rust/crate_universe.html#binary-dependencies.
+http_archive(
+    name = "cxxbridge-cmd",
+    build_file = "//external_patches/cxxbridge-cmd:BUILD",
+    sha256 = "dc5db43c367778010dff55b602f71eccff712b8edf54a3f08687bd1c7cbad6df",
+    strip_prefix = "cxxbridge-cmd-1.0.110",
+    type = "tar.gz",
+    urls = ["https://crates.io/api/v1/crates/cxxbridge-cmd/1.0.110/download"],
+)
+
+# See above for notes.
+crates_repository(
+    name = "cxxbridge_cmd_deps",
+    cargo_lockfile = "//external_patches/cxxbridge-cmd:Cargo.lock",
+    lockfile = "//external_patches/cxxbridge-cmd:Cargo.Bazel.lock",
+    manifests = ["@cxxbridge-cmd//:Cargo.toml"],
+    supported_platform_triples = RUST_SUPPORTED_PLATFORM_TRIPLES,
+)
+load("@cxxbridge_cmd_deps//:defs.bzl", cxxbridge_cmd_deps = "crate_repositories")
+cxxbridge_cmd_deps()
