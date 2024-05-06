@@ -168,7 +168,7 @@ static id ValueOrNull(id value) {
     @"%machine_id%" : ValueOrNull(config.machineID),
     @"%hostname%" : ValueOrNull([SNTSystemInfo longHostname]),
     @"%uuid%" : ValueOrNull([SNTSystemInfo hardwareUUID]),
-    @"%serial%" : ([SNTSystemInfo serialNumber]),
+    @"%serial%" : ValueOrNull([SNTSystemInfo serialNumber]),
   };
 }
 
