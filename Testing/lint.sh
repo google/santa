@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xo pipefail
+set -xoe pipefail
 
 GIT_ROOT=$(git rev-parse --show-toplevel)
 

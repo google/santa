@@ -71,12 +71,12 @@ objc_library(
     name = "process_tree_test_helpers",
     srcs = ["process_tree_test_helpers.mm"],
     hdrs = ["process_tree_test_helpers.h"],
+    visibility = ["//Source/santad/ProcessTree:__subpackages__"],
     deps = [
         ":process",
         ":process_tree",
         "@com_google_absl//absl/synchronization",
     ],
-    visibility = ["//Source/santad/ProcessTree:__subpackages__"],
 )
 
 santa_unit_test(
