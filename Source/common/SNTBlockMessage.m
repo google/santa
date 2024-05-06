@@ -140,6 +140,9 @@ static id ValueOrNull(id value) {
 }
 
 //
+//   The following "format strings" will be replaced in the URL provided by
+//   `+eventDetailURLForEvent:customURL:templateMapping:`.
+//
 //   %file_identifier%           - The SHA-256 of the binary being executed.
 //   %bundle_or_file_identifier% - The hash of the bundle containing this file or the file itself,
 //                                 if no bundle hash is present.
@@ -193,7 +196,7 @@ static id ValueOrNull(id value) {
 // Returns either the generated URL for the passed in event, or an NSURL from the passed in custom
 // URL string. If the custom URL string is the string "null", nil will be returned. If no custom
 // URL is passed and there is no configured EventDetailURL template, nil will be returned.
-// The following "format strings" will be replaced in the URL, if they are present:
+// The "format strings" in `templateMapping` will be replaced in the URL, if they are present.
 + (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event
                         customURL:(NSString *)url
                   templateMapping:(NSDictionary *)templateMapping {
