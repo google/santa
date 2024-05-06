@@ -51,7 +51,9 @@ if __name__ == "__main__":
   if blob.updated > datetime.datetime.fromtimestamp(
       local_ctime, tz=datetime.timezone.utc
   ):
-    logging.info(f"VM {extracted_path} not present or not up to date, downloading...")
+    logging.info(
+        f"VM {extracted_path} not present or not up to date, downloading..."
+    )
 
     # Remove the old version of the image if present
     try:
@@ -97,5 +99,7 @@ if __name__ == "__main__":
     )
 
     logging.info("Extracting...")
-    subprocess.check_output(["tar", "-C", VMS_DIR, "-x", "-S", "-z", "-f", tar_path])
+    subprocess.check_output(
+        ["tar", "-C", VMS_DIR, "-x", "-S", "-z", "-f", tar_path]
+    )
     tar_path.unlink()

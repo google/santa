@@ -18,7 +18,9 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Start E2E VM")
   # This is redundant, but kept to keep consistency with update_vm.py
   parser.add_argument("--vm", help="VM tar.gz. name", required=True)
-  parser.add_argument("--vmcli", help="Path to VMCLI binary", default="/opt/bin/VMCLI")
+  parser.add_argument(
+      "--vmcli", help="Path to VMCLI binary", default="/opt/bin/VMCLI"
+  )
   args = parser.parse_args()
 
   if not args.vm.endswith(".tar.gz"):
