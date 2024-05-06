@@ -1,5 +1,6 @@
 #!/bin/bash
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
-find $GIT_ROOT \( -name "*.m" -o -name "*.h" -o -name "*.mm" -o -name "*.cc" \) -exec xcrun clang-format -i {} \+
-buildifier --lint=fix -r $GIT_ROOT
+find ${GIT_ROOT} \( -name "*.m" -o -name "*.h" -o -name "*.mm" -o -name "*.cc" \) -exec xcrun clang-format -i {} \+
+buildifier --lint=fix -r ${GIT_ROOT}
+python3 -m pyink --config ${GIT_ROOT}/.pyink-config ${GIT_ROOT}

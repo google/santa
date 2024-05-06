@@ -1,0 +1,5 @@
+[tool.pyink]
+pyink = true
+line-length = 88
+pyink-indentation = 2
+pyink-use-majority-quotes = true

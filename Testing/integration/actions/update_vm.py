@@ -31,7 +31,7 @@ if __name__ == "__main__":
     logging.fatal("Image name should be .tar.gz file")
 
   tar_path = VMS_DIR / tar_name
-  extracted_path = pathlib.Path(str(tar_path)[:-len(".tar.gz")])
+  extracted_path = pathlib.Path(str(tar_path)[: -len(".tar.gz")])
 
   if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
     logging.fatal("Missing GCS credentials file")
@@ -49,7 +49,8 @@ if __name__ == "__main__":
     local_ctime = 0
 
   if blob.updated > datetime.datetime.fromtimestamp(
-      local_ctime, tz=datetime.timezone.utc):
+      local_ctime, tz=datetime.timezone.utc
+  ):
     logging.info(f"VM {extracted_path} not present or not up to date, downloading...")
 
     # Remove the old version of the image if present
@@ -78,13 +79,17 @@ if __name__ == "__main__":
     logging.info("Verifying signature...")
 
     # Verify the signature of the hash file is OK
-    subprocess.check_output([
-        COSIGN,
-        "verify-blob",
-        "--key", PUBKEY,
-        "--signature", sig_path,
-        hash_path,
-    ])
+    subprocess.check_output(
+        [
+            COSIGN,
+            "verify-blob",
+            "--key",
+            PUBKEY,
+            "--signature",
+            sig_path,
+            hash_path,
+        ]
+    )
     # Then verify that the hash matches what we downloaded
     subprocess.check_output(
         ["shasum", "-a", "256", "-c", hash_path],
@@ -92,7 +97,5 @@ if __name__ == "__main__":
     )
 
     logging.info("Extracting...")
-    subprocess.check_output(
-        ["tar", "-C", VMS_DIR, "-x", "-S", "-z", "-f", tar_path]
-    )
+    subprocess.check_output(["tar", "-C", VMS_DIR, "-x", "-S", "-z", "-f", tar_path])
     tar_path.unlink()
