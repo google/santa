@@ -123,24 +123,18 @@
 }
 
 + (NSString *)replaceFormatString:(NSString *)str
-                         withDict:(NSDictionary<NSString *, NSString * (^)()> *)replacements {
+                         withDict:(NSDictionary<NSString *, NSString *> *)replacements {
   __block NSString *formatStr = str;
 
-  [replacements
-    enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString * (^computeValue)(), BOOL *stop) {
-      NSString *value = computeValue();
-      if (value) {
-        formatStr = [formatStr stringByReplacingOccurrencesOfString:key withString:value];
-      }
-    }];
+  [replacements enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *value, BOOL *stop) {
+    if (value) {
+      formatStr = [formatStr stringByReplacingOccurrencesOfString:key withString:value];
+    }
+  }];
 
   return formatStr;
 }
 
-// Returns either the generated URL for the passed in event, or an NSURL from the passed in custom
-// URL string. If the custom URL string is the string "null", nil will be returned. If no custom
-// URL is passed and there is no configured EventDetailURL template, nil will be returned.
-// The following "format strings" will be replaced in the URL, if they are present:
 //
 //   %file_identifier%           - The SHA-256 of the binary being executed.
 //   %bundle_or_file_identifier% - The hash of the bundle containing this file or the file itself,
@@ -155,7 +149,52 @@
 //   %uuid%                      - The machine's UUID.
 //   %serial%                    - The machine's serial number.
 //
-+ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url {
++ (NSDictionary<NSString *, NSString *> *)eventDetailTemplateMappingForEvent:
+  (SNTStoredEvent *)event {
+  SNTConfigurator *config = [SNTConfigurator configurator];
+  return @{
+    @"%file_sha%" : event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil,
+    @"%file_identifier%" : event.fileSHA256,
+    @"%bundle_or_file_identifier%" : event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256
+                                                      : nil,
+    @"%username%" : event.executingUser,
+    @"%file_bundle_id%" : event.fileBundleID,
+    @"%team_id%" : event.teamID,
+    @"%signing_id%" : event.signingID,
+    @"%cdhash%" : event.cdhash,
+    @"%machine_id%" : config.machineID,
+    @"%hostname%" : [SNTSystemInfo longHostname],
+    @"%uuid%" : [SNTSystemInfo hardwareUUID],
+    @"%serial%" : [SNTSystemInfo serialNumber],
+  };
+}
+
+//
+//   Everything from `+eventDetailTemplateMappingForEvent:` with the following file access
+//   specific templates.
+//
+//   %rule_version%    - The version of the rule that was violated.
+//   %rule_name%       - The name of the rule that was violated.
+//   %accessed_path%   - The path accessed by the binary.
+//
++ (NSDictionary<NSString *, NSString *> *)fileAccessEventDetailTemplateMappingForEvent:
+  (SNTFileAccessEvent *)event {
+  NSMutableDictionary *d = [self eventDetailTemplateMappingForEvent:event].mutableCopy;
+  [d addEntriesFromDictionary:@{
+    @"%rule_version%" : event.ruleVersion,
+    @"%rule_name%" : event.ruleName,
+    @"%accessed_path%" : event.accessedPath,
+  }];
+  return d;
+}
+
+// Returns either the generated URL for the passed in event, or an NSURL from the passed in custom
+// URL string. If the custom URL string is the string "null", nil will be returned. If no custom
+// URL is passed and there is no configured EventDetailURL template, nil will be returned.
+// The following "format strings" will be replaced in the URL, if they are present:
++ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event
+                        customURL:(NSString *)url
+                  templateMapping:(NSDictionary *)templateMapping {
   SNTConfigurator *config = [SNTConfigurator configurator];
 
   NSString *formatStr = url;
@@ -170,30 +209,7 @@
     return nil;
   }
 
-  // Disabling clang-format. See comment in `eventDetailURLForFileAccessEvent:customURL:`
-  // clang-format off
-  NSDictionary<NSString *, NSString * (^)()> *kvReplacements =
-    [NSDictionary dictionaryWithObjectsAndKeys:
-      // This key is deprecated, use %file_identifier% or %bundle_or_file_identifier%
-      ^{ return event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil; },
-                                                 @"%file_sha%",
-      ^{ return event.fileSHA256; },             @"%file_identifier%",
-      ^{ return event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil; },
-                                                 @"%bundle_or_file_identifier%",
-      ^{ return event.executingUser; },          @"%username%",
-      ^{ return event.fileBundleID; },           @"%file_bundle_id%",
-      ^{ return event.teamID; },                 @"%team_id%",
-      ^{ return event.signingID; },              @"%signing_id%",
-      ^{ return event.cdhash; },                 @"%cdhash%",
-      ^{ return config.machineID; },             @"%machine_id%",
-      ^{ return [SNTSystemInfo longHostname]; }, @"%hostname%",
-      ^{ return [SNTSystemInfo hardwareUUID]; }, @"%uuid%",
-      ^{ return [SNTSystemInfo serialNumber]; }, @"%serial%",
-      nil];
-  // clang-format on
-
-  formatStr = [SNTBlockMessage replaceFormatString:formatStr withDict:kvReplacements];
-
+  formatStr = [SNTBlockMessage replaceFormatString:formatStr withDict:templateMapping];
   NSURL *u = [NSURL URLWithString:formatStr];
   if (!u) {
     LOGW(@"Unable to generate event detail URL for string '%@'", formatStr);
@@ -202,63 +218,16 @@
   return u;
 }
 
-// Returns either the generated URL for the passed in event, or an NSURL from the passed in custom
-// URL string. If the custom URL string is the string "null", nil will be returned. If no custom
-// URL is passed and there is no configured EventDetailURL template, nil will be returned.
-// The following "format strings" will be replaced in the URL, if they are present:
-//
-//   %rule_version%    - The version of the rule that was violated.
-//   %rule_name%       - The name of the rule that was violated.
-//   %file_identifier% - The SHA-256 of the binary being executed.
-//   %accessed_path%   - The path accessed by the binary.
-//   %username%        - The executing user's name.
-//   %file_bundle_id%  - The bundle id of the binary, if any.
-//   %team_id%         - The Team ID if present in the signature information.
-//   %signing_id%      - The Signing ID if present in the signature information.
-//   %cdhash%          - If signed, the CDHash.
-//   %machine_id%      - The configured machine ID for this host.
-//   %hostname%        - The machine's FQDN.
-//   %uuid%            - The machine's UUID.
-//   %serial%          - The machine's serial number.
-//
++ (NSURL *)eventDetailURLForEvent:(SNTStoredEvent *)event customURL:(NSString *)url {
+  return [self eventDetailURLForEvent:event
+                            customURL:url
+                      templateMapping:[self eventDetailTemplateMappingForEvent:event]];
+}
+
 + (NSURL *)eventDetailURLForFileAccessEvent:(SNTFileAccessEvent *)event customURL:(NSString *)url {
-  if (!url.length || [url isEqualToString:@"null"]) {
-    return nil;
-  }
-
-  SNTConfigurator *config = [SNTConfigurator configurator];
-
-  // Clang format goes wild here. If you use the container literal syntax `@{}` with a block value
-  // type, it seems to break the clang format on/off functionality and breaks formatting for the
-  // remainder of the file.
-  // Using `dictionaryWithObjectsAndKeys` and disabling clang format as a workaround.
-  // clang-format off
-  NSDictionary<NSString *, NSString * (^)()> *kvReplacements =
-    [NSDictionary dictionaryWithObjectsAndKeys:
-      ^{ return event.ruleVersion; },            @"%rule_version%",
-      ^{ return event.ruleName; },               @"%rule_name%",
-      ^{ return event.fileSHA256; },             @"%file_identifier%",
-      ^{ return event.accessedPath; },           @"%accessed_path%",
-      ^{ return event.executingUser; },          @"%username%",
-      ^{ return event.fileBundleID; },           @"%file_bundle_id%",
-      ^{ return event.teamID; },                 @"%team_id%",
-      ^{ return event.signingID; },              @"%signing_id%",
-      ^{ return event.cdhash; },                 @"%cdhash%",
-      ^{ return config.machineID; },             @"%machine_id%",
-      ^{ return [SNTSystemInfo longHostname]; }, @"%hostname%",
-      ^{ return [SNTSystemInfo hardwareUUID]; }, @"%uuid%",
-      ^{ return [SNTSystemInfo serialNumber]; }, @"%serial%",
-      nil];
-  // clang-format on
-
-  NSString *formatStr = [SNTBlockMessage replaceFormatString:url withDict:kvReplacements];
-
-  NSURL *u = [NSURL URLWithString:formatStr];
-  if (!u) {
-    LOGW(@"Unable to generate event detail URL for string '%@'", formatStr);
-  }
-
-  return u;
+  return [self eventDetailURLForEvent:event
+                            customURL:url
+                      templateMapping:[self fileAccessEventDetailTemplateMappingForEvent:event]];
 }
 
 @end
