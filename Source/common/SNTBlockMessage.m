@@ -20,6 +20,10 @@
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTSystemInfo.h"
 
+static id ValueOrNull(id value) {
+  return value ?: [NSNull null];
+}
+
 @implementation SNTBlockMessage
 
 + (NSAttributedString *)formatMessage:(NSString *)message {
@@ -127,7 +131,7 @@
   __block NSString *formatStr = str;
 
   [replacements enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSString *value, BOOL *stop) {
-    if (value) {
+    if ((id)value != [NSNull null]) {
       formatStr = [formatStr stringByReplacingOccurrencesOfString:key withString:value];
     }
   }];
@@ -149,23 +153,22 @@
 //   %uuid%                      - The machine's UUID.
 //   %serial%                    - The machine's serial number.
 //
-+ (NSDictionary<NSString *, NSString *> *)eventDetailTemplateMappingForEvent:
-  (SNTStoredEvent *)event {
++ (NSDictionary *)eventDetailTemplateMappingForEvent:(SNTStoredEvent *)event {
   SNTConfigurator *config = [SNTConfigurator configurator];
   return @{
-    @"%file_sha%" : event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil,
-    @"%file_identifier%" : event.fileSHA256,
-    @"%bundle_or_file_identifier%" : event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256
-                                                      : nil,
-    @"%username%" : event.executingUser,
-    @"%file_bundle_id%" : event.fileBundleID,
-    @"%team_id%" : event.teamID,
-    @"%signing_id%" : event.signingID,
-    @"%cdhash%" : event.cdhash,
-    @"%machine_id%" : config.machineID,
-    @"%hostname%" : [SNTSystemInfo longHostname],
-    @"%uuid%" : [SNTSystemInfo hardwareUUID],
-    @"%serial%" : [SNTSystemInfo serialNumber],
+    @"%file_sha%" : ValueOrNull(event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil),
+    @"%file_identifier%" : ValueOrNull(event.fileSHA256),
+    @"%bundle_or_file_identifier%" :
+      ValueOrNull(event.fileSHA256 ? event.fileBundleHash ?: event.fileSHA256 : nil),
+    @"%username%" : ValueOrNull(event.executingUser),
+    @"%file_bundle_id%" : ValueOrNull(event.fileBundleID),
+    @"%team_id%" : ValueOrNull(event.teamID),
+    @"%signing_id%" : ValueOrNull(event.signingID),
+    @"%cdhash%" : ValueOrNull(event.cdhash),
+    @"%machine_id%" : ValueOrNull(config.machineID),
+    @"%hostname%" : ValueOrNull([SNTSystemInfo longHostname]),
+    @"%uuid%" : ValueOrNull([SNTSystemInfo hardwareUUID]),
+    @"%serial%" : ([SNTSystemInfo serialNumber]),
   };
 }
 
@@ -177,13 +180,12 @@
 //   %rule_name%       - The name of the rule that was violated.
 //   %accessed_path%   - The path accessed by the binary.
 //
-+ (NSDictionary<NSString *, NSString *> *)fileAccessEventDetailTemplateMappingForEvent:
-  (SNTFileAccessEvent *)event {
++ (NSDictionary *)fileAccessEventDetailTemplateMappingForEvent:(SNTFileAccessEvent *)event {
   NSMutableDictionary *d = [self eventDetailTemplateMappingForEvent:event].mutableCopy;
   [d addEntriesFromDictionary:@{
-    @"%rule_version%" : event.ruleVersion,
-    @"%rule_name%" : event.ruleName,
-    @"%accessed_path%" : event.accessedPath,
+    @"%rule_version%" : ValueOrNull(event.ruleVersion),
+    @"%rule_name%" : ValueOrNull(event.ruleName),
+    @"%accessed_path%" : ValueOrNull(event.accessedPath),
   }];
   return d;
 }

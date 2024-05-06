@@ -107,4 +107,17 @@
   XCTAssertNil([SNTBlockMessage eventDetailURLForFileAccessEvent:fae customURL:@"null"]);
 }
 
+- (void)testEventDetailURLMissingDetails {
+  SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
+
+  se.fileSHA256 = @"my_fi";
+
+  NSString *url = @"http://localhost?fi=%file_identifier%";
+  NSString *wantUrl = @"http://localhost?fi=my_fi";
+
+  NSURL *gotUrl = [SNTBlockMessage eventDetailURLForEvent:se customURL:url];
+
+  XCTAssertEqualObjects(gotUrl.absoluteString, wantUrl);
+}
+
 @end
