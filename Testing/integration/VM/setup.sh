@@ -33,16 +33,23 @@ fi
 # Install rosetta (for test binaries)
 softwareupdate --install-rosetta --agree-to-license
 
-# Install actions runner
-mkdir ~/actions-runner
-pushd ~/actions-runner
-curl -o actions-runner-osx-arm64-2.296.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.296.0/actions-runner-osx-arm64-2.296.0.tar.gz
-echo 'e358086b924d2e8d8abf50beec57ee7a3bb0c7d412f13abc51380f1b1894d776  actions-runner-osx-arm64-2.296.0.tar.gz' | shasum -a 256 -c
-tar xzf ./actions-runner-osx-arm64-2.296.0.tar.gz
-./config.sh --url https://github.com/google/santa
-./svc.sh install
-./svc.sh start
-popd
+# Add a LaunchAgent to start the mounted runner
+tee ${HOME}/Library/LaunchAgents/runner.plist << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.google.santa.e2erunner</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Volumes/init/run.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+EOF
 
 # Run sample applescript to grant bash accessibility and automation control
 clang "${SCRIPT_DIR}/disclaim.c" -o /tmp/disclaim
