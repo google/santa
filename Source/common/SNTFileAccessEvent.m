@@ -51,15 +51,7 @@
   ENCODE(accessedPath);
   ENCODE(ruleVersion);
   ENCODE(ruleName);
-  ENCODE(fileSHA256);
-  ENCODE(filePath);
   ENCODE(application);
-  ENCODE(teamID);
-  ENCODE(teamID);
-  ENCODE(pid);
-  ENCODE(ppid);
-  ENCODE(parentName);
-  ENCODE(signingChain);
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
@@ -68,15 +60,7 @@
     DECODE(accessedPath, NSString);
     DECODE(ruleVersion, NSString);
     DECODE(ruleName, NSString);
-    DECODE(fileSHA256, NSString);
-    DECODE(filePath, NSString);
     DECODE(application, NSString);
-    DECODE(teamID, NSString);
-    DECODE(teamID, NSString);
-    DECODE(pid, NSNumber);
-    DECODE(ppid, NSNumber);
-    DECODE(parentName, NSString);
-    DECODEARRAY(signingChain, MOLCertificate);
   }
   return self;
 }
