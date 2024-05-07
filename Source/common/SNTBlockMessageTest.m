@@ -44,13 +44,19 @@
 
   se.fileSHA256 = @"my_fi";
   se.executingUser = @"my_un";
+  se.fileBundleID = @"s.n.t";
+  se.cdhash = @"abc";
+  se.teamID = @"SNT";
+  se.signingID = @"SNT:s.n.t";
 
   NSString *url = @"http://"
                   @"localhost?fs=%file_sha%&fi=%file_identifier%&bfi=%bundle_or_file_identifier%&"
+                  @"fbid=%file_bundle_id%&ti=%team_id%&si=%signing_id%&ch=%cdhash%&"
                   @"un=%username%&mid=%machine_id%&hn=%hostname%&u=%uuid%&s=%serial%";
-  NSString *wantUrl =
-    @"http://"
-    @"localhost?fs=my_fi&fi=my_fi&bfi=my_fi&bfi=my_fi&un=my_un&mid=my_mid&hn=my_hn&u=my_u&s=my_s";
+  NSString *wantUrl = @"http://"
+                      @"localhost?fs=my_fi&fi=my_fi&bfi=my_fi&"
+                      @"fbid=s.n.t&ti=SNT&si=SNT:s.n.t&ch=abc&"
+                      @"un=my_un&mid=my_mid&hn=my_hn&u=my_u&s=my_s";
 
   NSURL *gotUrl = [SNTBlockMessage eventDetailURLForEvent:se customURL:url];
 
@@ -58,7 +64,9 @@
   se.fileBundleHash = @"my_fbh";
 
   wantUrl = @"http://"
-            @"localhost?fs=my_fbh&fi=my_fi&bfi=my_fbh&un=my_un&mid=my_mid&hn=my_hn&u=my_u&s=my_s";
+            @"localhost?fs=my_fbh&fi=my_fi&bfi=my_fbh&"
+            @"fbid=s.n.t&ti=SNT&si=SNT:s.n.t&ch=abc&"
+            @"un=my_un&mid=my_mid&hn=my_hn&u=my_u&s=my_s";
 
   gotUrl = [SNTBlockMessage eventDetailURLForEvent:se customURL:url];
 
@@ -74,15 +82,22 @@
   fae.ruleVersion = @"my_rv";
   fae.ruleName = @"my_rn";
   fae.fileSHA256 = @"my_fi";
+  fae.fileBundleID = @"s.n.t";
+  fae.cdhash = @"abc";
+  fae.teamID = @"SNT";
+  fae.signingID = @"SNT:s.n.t";
   fae.accessedPath = @"my_ap";
   fae.executingUser = @"my_un";
 
-  NSString *url = @"http://"
-                  @"localhost?rv=%rule_version%&rn=%rule_name%&fi=%file_identifier%&ap=%accessed_"
-                  @"path%&un=%username%&mid=%machine_id%&hn=%hostname%&u=%uuid%&s=%serial%";
-  NSString *wantUrl =
+  NSString *url =
     @"http://"
-    @"localhost?rv=my_rv&rn=my_rn&fi=my_fi&ap=my_ap&un=my_un&mid=my_mid&hn=my_hn&u=my_u&s=my_s";
+    @"localhost?rv=%rule_version%&rn=%rule_name%&fi=%file_identifier%&"
+    @"fbid=%file_bundle_id%&ti=%team_id%&si=%signing_id%&ch=%cdhash%&"
+    @"ap=%accessed_path%&un=%username%&mid=%machine_id%&hn=%hostname%&u=%uuid%&s=%serial%";
+  NSString *wantUrl = @"http://"
+                      @"localhost?rv=my_rv&rn=my_rn&fi=my_fi&"
+                      @"fbid=s.n.t&ti=SNT&si=SNT:s.n.t&ch=abc&"
+                      @"ap=my_ap&un=my_un&mid=my_mid&hn=my_hn&u=my_u&s=my_s";
 
   NSURL *gotUrl = [SNTBlockMessage eventDetailURLForFileAccessEvent:fae customURL:url];
 
@@ -90,6 +105,19 @@
 
   XCTAssertNil([SNTBlockMessage eventDetailURLForFileAccessEvent:fae customURL:nil]);
   XCTAssertNil([SNTBlockMessage eventDetailURLForFileAccessEvent:fae customURL:@"null"]);
+}
+
+- (void)testEventDetailURLMissingDetails {
+  SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
+
+  se.fileSHA256 = @"my_fi";
+
+  NSString *url = @"http://localhost?fi=%file_identifier%";
+  NSString *wantUrl = @"http://localhost?fi=my_fi";
+
+  NSURL *gotUrl = [SNTBlockMessage eventDetailURLForEvent:se customURL:url];
+
+  XCTAssertEqualObjects(gotUrl.absoluteString, wantUrl);
 }
 
 @end

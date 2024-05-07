@@ -925,9 +925,6 @@ santa_unit_test(
 santa_unit_test(
     name = "SantadTest",
     srcs = ["SantadTest.mm"],
-    structured_resources = [
-        "//Source/santad/testdata:binaryrules_testdata",
-    ],
     minimum_os_version = "11.0",
     sdk_dylibs = [
         "bsm",
@@ -935,6 +932,9 @@ santa_unit_test(
     ],
     sdk_frameworks = [
         "DiskArbitration",
+    ],
+    structured_resources = [
+        "//Source/santad/testdata:binaryrules_testdata",
     ],
     tags = ["exclusive"],
     deps = [

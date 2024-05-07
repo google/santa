@@ -14,12 +14,12 @@
 
 #import <Foundation/Foundation.h>
 
-#import <MOLCertificate/MOLCertificate.h>
+#import "Source/common/SNTStoredEvent.h"
 
 ///
 ///  Represents an event stored in the database.
 ///
-@interface SNTFileAccessEvent : NSObject <NSSecureCoding>
+@interface SNTFileAccessEvent : SNTStoredEvent <NSSecureCoding>
 
 ///
 /// The watched path that was accessed
@@ -33,55 +33,9 @@
 @property NSString *ruleName;
 
 ///
-/// The SHA256 of the process that accessed the path
-///
-@property NSString *fileSHA256;
-
-///
-/// The path of the process that accessed the watched path
-///
-@property NSString *filePath;
-
-///
 /// If the process is part of a bundle, the name of the application
 ///
 @property NSString *application;
-
-///
-/// If the executed file was signed, this is the Team ID if present in the signature information.
-///
-@property NSString *teamID;
-
-///
-/// If the executed file was signed, this is the Signing ID if present in the signature information.
-///
-@property NSString *signingID;
-
-///
-///  The user who executed the binary.
-///
-@property NSString *executingUser;
-
-///
-///  The process ID of the binary being executed.
-///
-@property NSNumber *pid;
-
-///
-///  The parent process ID of the binary being executed.
-///
-@property NSNumber *ppid;
-
-///
-///  The name of the parent process.
-///
-@property NSString *parentName;
-
-///
-/// If the executed file was signed, this is an NSArray of MOLCertificate's
-/// representing the signing chain.
-///
-@property NSArray<MOLCertificate *> *signingChain;
 
 ///
 /// A string representing the publisher based on the signingChain
