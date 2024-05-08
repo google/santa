@@ -41,29 +41,3 @@ go_rules_dependencies()
 go_register_toolchains(version = "1.19.3")
 
 gazelle_dependencies()
-
-# Fuzzing
-
-# rules_fuzzing requires an older python for now
-http_archive(
-    name = "rules_python_fuzz",
-    sha256 = "c03246c11efd49266e8e41e12931090b613e12a59e6f55ba2efd29a7cb8b4258",
-    strip_prefix = "rules_python-0.11.0",
-    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.11.0.tar.gz",
-)
-
-git_repository(
-    name = "rules_fuzzing",
-    commit = "b193df79b10dbfb4c623bda23e825e835f12bada",  # Commit post PR 213 which fixes macOS
-    remote = "https://github.com/bazelbuild/rules_fuzzing",
-    repo_mapping = {"@rules_python": "@rules_python_fuzz"},
-    shallow_since = "1668184479 -0500",
-)
-
-load("@rules_fuzzing//fuzzing:repositories.bzl", "rules_fuzzing_dependencies")
-
-rules_fuzzing_dependencies()
-
-load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
-
-rules_fuzzing_init()

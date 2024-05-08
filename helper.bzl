@@ -21,6 +21,7 @@ def santa_unit_test(
         name,
         srcs = [],
         deps = [],
+        data = [],
         size = "medium",
         minimum_os_version = "11.0",
         resources = [],
@@ -39,7 +40,7 @@ def santa_unit_test(
         srcs = srcs,
         deps = deps,
         copts = copts,
-        data = [":%s_resources" % name],
+        data = data + [":%s_resources" % name],
         **kwargs
     )
 
