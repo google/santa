@@ -17,8 +17,8 @@
 #import <MOLCertificate/MOLCertificate.h>
 
 #import "Source/common/SNTCommonEnums.h"
-#import "Source/common/SNTRuleIdentifiers.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SNTRuleIdentifiers.h"
 
 @class MOLCodesignChecker;
 @class SNTCachedDecision;
@@ -61,13 +61,12 @@
 - (nonnull SNTCachedDecision *)decisionForFilePath:(nonnull NSString *)filePath
                                        identifiers:(nonnull SNTRuleIdentifiers *)identifiers;
 
-
 ///
 /// Updates a decision for a given file and agent configuration.
 ///
 /// Returns YES if the decision requires no futher processing NO otherwise.
-- (BOOL)decision:(nonnull SNTCachedDecision *) cd 
-                forRule:(nonnull SNTRule *) rule
-    withTransitiveRules:(BOOL) transitive;
+- (BOOL)decision:(nonnull SNTCachedDecision *)cd
+              forRule:(nonnull SNTRule *)rule
+  withTransitiveRules:(BOOL)transitive;
 
 @end
