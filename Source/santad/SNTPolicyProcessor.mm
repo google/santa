@@ -49,8 +49,8 @@
 //
 // It returns YES if the decision was made, NO if the decision was not made.
 - (BOOL)decision:(SNTCachedDecision *)cd
-                forRule:(SNTRule *)rule
-    withTransitiveRules:(BOOL)enableTransitiveRules {
+              forRule:(SNTRule *)rule
+  withTransitiveRules:(BOOL)enableTransitiveRules {
   static const auto decisions =
     absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState>{
       {{SNTRuleTypeCDHash, SNTRuleStateAllow}, SNTEventStateAllowCDHash},
