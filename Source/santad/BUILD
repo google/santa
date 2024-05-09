@@ -193,7 +193,7 @@ objc_library(
 
 objc_library(
     name = "SNTPolicyProcessor",
-    srcs = ["SNTPolicyProcessor.m"],
+    srcs = ["SNTPolicyProcessor.mm"],
     hdrs = ["SNTPolicyProcessor.h"],
     deps = [
         ":SNTRuleTable",
@@ -209,6 +209,18 @@ objc_library(
         "@MOLCertificate",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
+        "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+santa_unit_test(
+    name = "SNTPolicyProcessorTest",
+    srcs = ["SNTPolicyProcessorTest.mm"],
+    deps = [
+        ":SNTPolicyProcessor",
+        "//Source/common:SNTConfigurator",
+        "//Source/common:SNTRule",
+        "//Source/common:TestUtils",
     ],
 )
 
@@ -1417,6 +1429,7 @@ test_suite(
         ":SNTEndpointSecurityTamperResistanceTest",
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
+        ":SNTPolicyProcessorTest",
         ":SNTRuleTableTest",
         ":SantadTest",
         ":WatchItemsTest",
