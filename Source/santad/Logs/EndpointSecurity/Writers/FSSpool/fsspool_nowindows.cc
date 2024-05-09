@@ -23,6 +23,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool_platform_specific.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
 namespace fsspool {
