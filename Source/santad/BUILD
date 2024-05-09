@@ -215,7 +215,7 @@ objc_library(
 
 santa_unit_test(
     name = "SNTPolicyProcessorTest",
-    srcs = ["SNTPolicyProcessorTest.m"],
+    srcs = ["SNTPolicyProcessorTest.mm"],
     deps = [
         ":SNTPolicyProcessor",
         "//Source/common:SNTConfigurator",
@@ -1429,7 +1429,7 @@ test_suite(
         ":SNTEndpointSecurityTamperResistanceTest",
         ":SNTEventTableTest",
         ":SNTExecutionControllerTest",
-	":SNTPolicyProcessorTest",
+        ":SNTPolicyProcessorTest",
         ":SNTRuleTableTest",
         ":SantadTest",
         ":WatchItemsTest",

@@ -28,7 +28,7 @@
 
 @implementation SNTPolicyProcessorTest
 - (void)setUp {
-  _processor = [[SNTPolicyProcessor alloc] init];
+  self.processor = [[SNTPolicyProcessor alloc] init];
 }
 
 - (void)testRule:(SNTRule *)rule
@@ -524,7 +524,7 @@
 
   XCTAssertNotNil(rule, "invalid test rule dictionary");
 
-  rule.state = 88888;  // Set to an invalid state
+  rule.state = static_cast<SNTRuleState>(88888);  // Set to an invalid state
 
   [self testRule:rule
      transitiveRules:YES

@@ -55,7 +55,6 @@
     absl::flat_hash_map<std::pair<SNTRuleType, SNTRuleState>, SNTEventState>{
       {{SNTRuleTypeCDHash, SNTRuleStateAllow}, SNTEventStateAllowCDHash},
       {{SNTRuleTypeCDHash, SNTRuleStateAllowCompiler}, SNTEventStateAllowCompiler},
-      {{SNTRuleTypeCDHash, SNTRuleStateAllowTransitive}, SNTEventStateAllowTransitive},
       {{SNTRuleTypeCDHash, SNTRuleStateBlock}, SNTEventStateBlockCDHash},
       {{SNTRuleTypeCDHash, SNTRuleStateSilentBlock}, SNTEventStateBlockCDHash},
       {{SNTRuleTypeBinary, SNTRuleStateAllow}, SNTEventStateAllowBinary},
@@ -128,7 +127,7 @@
   return YES;
 }
 
-void updateCachedDecisionSigningInfo(
+static void updateCachedDecisionSigningInfo(
   SNTCachedDecision *cd, MOLCodesignChecker *csInfo,
   NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements)) {
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
