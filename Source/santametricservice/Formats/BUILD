@@ -2,6 +2,7 @@ load("//:helper.bzl", "santa_unit_test")
 
 package(
     default_visibility = ["//:santa_package_group"],
+    features = ["-layering_check"],
 )
 
 licenses(["notice"])
