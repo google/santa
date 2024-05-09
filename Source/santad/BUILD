@@ -219,6 +219,7 @@ santa_unit_test(
     srcs = ["SNTPolicyProcessorTest.mm"],
     deps = [
         ":SNTPolicyProcessor",
+        "//Source/common:SNTCachedDecision",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTRule",
         "//Source/common:TestUtils",
