@@ -2,6 +2,7 @@ package(
     default_visibility = [
         "//Testing/integration/VM:__subpackages__",
     ],
+    features = ["-layering_check"],
 )
 
 objc_library(

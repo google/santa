@@ -1,7 +1,13 @@
 load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 load("//:helper.bzl", "run_command")
 
-package(default_visibility = ["//:santa_package_group"])
+package(
+    default_visibility = ["//:santa_package_group"],
+    # NOTE: layering_check is disabled in all Santa BUILD files because the feature
+    # works inconsistently between versions of bazel in a way that causes problems
+    # when pulling the GitHub source into the internal source tree for building.
+    features = ["-layering_check"],
+)
 
 licenses(["notice"])
 
