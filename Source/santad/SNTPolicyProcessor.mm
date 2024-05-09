@@ -204,7 +204,7 @@ static void UpdateCachedDecisionSigningInfo(
       cd.signingID = nil;
       cd.cdhash = nil;
     } else {
-      updateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback);
+      UpdateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback);
     }
   }
 
