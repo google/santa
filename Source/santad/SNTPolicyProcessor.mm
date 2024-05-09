@@ -127,7 +127,7 @@
   return YES;
 }
 
-static void updateCachedDecisionSigningInfo(
+static void UpdateCachedDecisionSigningInfo(
   SNTCachedDecision *cd, MOLCodesignChecker *csInfo,
   NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements)) {
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
