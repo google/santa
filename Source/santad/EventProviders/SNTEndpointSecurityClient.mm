@@ -91,8 +91,7 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
 
     _notifyQueue = dispatch_queue_create(
       "com.google.santa.daemon.notify_queue",
-      dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL,
-                                              QOS_CLASS_DEFAULT, 0));
+      DISPATCH_QUEUE_CONCURRENT_WITH_AUTORELEASE_POOL);
   }
   return self;
 }
