@@ -1,10 +1,14 @@
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("//:helper.bzl", "santa_unit_test")
 
+package(
+    default_visibility = ["//:santa_package_group"],
+    features = ["-layering_check"],
+)
+
 cc_library(
     name = "process",
     hdrs = ["process.h"],
-    visibility = ["//:santa_package_group"],
     deps = [
         "//Source/santad/ProcessTree/annotations:annotator",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -26,7 +30,6 @@ objc_library(
     sdk_dylibs = [
         "bsm",
     ],
-    visibility = ["//:santa_package_group"],
     deps = [
         ":process",
         "//Source/santad/ProcessTree:process_tree_cc_proto",
@@ -42,12 +45,10 @@ objc_library(
 proto_library(
     name = "process_tree_proto",
     srcs = ["process_tree.proto"],
-    visibility = ["//:santa_package_group"],
 )
 
 cc_proto_library(
     name = "process_tree_cc_proto",
-    visibility = ["//:santa_package_group"],
     deps = [":process_tree_proto"],
 )
 
@@ -58,7 +59,6 @@ objc_library(
     sdk_dylibs = [
         "bsm",
     ],
-    visibility = ["//:santa_package_group"],
     deps = [
         ":process_tree",
         "//Source/santad:EndpointSecurityAPI",
@@ -71,7 +71,6 @@ objc_library(
     name = "process_tree_test_helpers",
     srcs = ["process_tree_test_helpers.mm"],
     hdrs = ["process_tree_test_helpers.h"],
-    visibility = ["//Source/santad/ProcessTree:__subpackages__"],
     deps = [
         ":process",
         ":process_tree",
