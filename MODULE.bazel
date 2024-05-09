@@ -1,7 +1,7 @@
 module(name = "santa")
 
 bazel_dep(name = "apple_support", version = "1.15.1", repo_name = "build_bazel_apple_support")
-bazel_dep(name = "abseil-cpp", version = "20230802.1", repo_name = "com_google_absl")
+bazel_dep(name = "abseil-cpp", version = "20240116.1", repo_name = "com_google_absl")
 bazel_dep(name = "rules_python", version = "0.31.0")
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_apple", version = "3.5.0", repo_name = "build_bazel_rules_apple")
