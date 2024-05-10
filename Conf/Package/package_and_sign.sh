@@ -53,11 +53,10 @@ readonly RELEASE_NAME="santa-$(/usr/bin/defaults read "${INPUT_APP}/Contents/Inf
 readonly SCRATCH=$(/usr/bin/mktemp -d "${TMPDIR}/santa-"XXXXXX)
 readonly APP_PKG_ROOT="${SCRATCH}/app_pkg_root"
 readonly APP_PKG_SCRIPTS="${SCRATCH}/pkg_scripts"
-readonly ENTITLEMENTS="${SCRATCH}/entitlements"
 
 readonly SCRIPT_PATH="$(/usr/bin/dirname -- ${BASH_SOURCE[0]})"
 
-/bin/mkdir -p "${APP_PKG_ROOT}" "${APP_PKG_SCRIPTS}" "${ENTITLEMENTS}"
+/bin/mkdir -p "${APP_PKG_ROOT}" "${APP_PKG_SCRIPTS}"
 
 readonly DMG_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.dmg"
 readonly TAR_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.tar.gz"
@@ -65,19 +64,9 @@ readonly TAR_PATH="${ARTIFACTS_DIR}/${RELEASE_NAME}.tar.gz"
 # Sign all of binaries/bundles. Maintain inside-out ordering where necessary
 for ARTIFACT in "${INPUT_SANTACTL}" "${INPUT_SANTABS}" "${INPUT_SANTAMS}" "${INPUT_SANTASS}" "${INPUT_SYSX}" "${INPUT_APP}"; do
   BN=$(/usr/bin/basename "${ARTIFACT}")
-  EN="${ENTITLEMENTS}/${BN}.entitlements"
-
-  echo "extracting ${BN} entitlements"
-  /usr/bin/codesign -d --entitlements "${EN}" "${ARTIFACT}"
-  if [[ -s "${EN}" ]]; then
-    EN="--entitlements ${EN}"
-  else
-    EN=""
-  fi
-
   echo "codesigning ${BN}"
   /usr/bin/codesign --sign "${SIGNING_IDENTITY}" --keychain "${SIGNING_KEYCHAIN}" \
-        ${EN} --timestamp --force --generate-entitlement-der \
+        --preserve-metadata=entitlements --timestamp --force --generate-entitlement-der \
         --options library,kill,runtime "${ARTIFACT}"
 done
 
