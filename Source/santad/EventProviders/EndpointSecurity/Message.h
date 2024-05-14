@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 
+#include "Source/santad/Metrics.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
 namespace santa::santad::event_providers::endpoint_security {
@@ -53,12 +54,23 @@ class Message {
 
   std::string ParentProcessName() const;
 
+  void UpdateStatState(santa::santad::StatChangeStep step) const;
+
+  inline santa::santad::StatChangeStep StatChangeStep() const {
+    return stat_change_step_;
+  }
+  inline errno_t StatError() const { return stat_error_; }
+
  private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
   const es_message_t* es_msg_;
   std::optional<process_tree::ProcessToken> process_token_;
 
   std::string GetProcessName(pid_t pid) const;
+
+  mutable santa::santad::StatChangeStep stat_change_step_ =
+      santa::santad::StatChangeStep::kNoChange;
+  mutable errno_t stat_error_ = 0;
 };
 
 }  // namespace santa::santad::event_providers::endpoint_security

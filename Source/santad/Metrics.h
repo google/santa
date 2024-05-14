@@ -51,9 +51,16 @@ enum class FileAccessMetricStatus {
   kBlockedUser,
 };
 
+enum class StatChangeStep {
+  kNoChange = 0,
+  kMessageCreate,
+  kCodesignValidation,
+};
+
 using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
 using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
 using EventStatsTuple = std::tuple<Processor, es_event_type_t>;
+using EventStatChangeTuple = std::tuple<StatChangeStep, errno_t>;
 using FileAccessMetricsPolicyVersion = std::string;
 using FileAccessMetricsPolicyName = std::string;
 using FileAccessEventCountTuple =
@@ -67,8 +74,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   Metrics(dispatch_queue_t q, dispatch_source_t timer_source, uint64_t interval,
           SNTMetricInt64Gauge *event_processing_times, SNTMetricCounter *event_counts,
           SNTMetricCounter *rate_limit_counts, SNTMetricCounter *drop_counts,
-          SNTMetricCounter *faa_event_counts, SNTMetricSet *metric_set,
-          void (^run_on_first_start)(Metrics *));
+          SNTMetricCounter *faa_event_counts, SNTMetricCounter *stat_change_counts,
+          SNTMetricSet *metric_set, void (^run_on_first_start)(Metrics *));
 
   ~Metrics();
 
@@ -84,7 +91,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   void UpdateEventStats(Processor processor, const es_message_t *msg);
 
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
-                       EventDisposition disposition, int64_t nanos);
+                       EventDisposition disposition, int64_t nanos, StatChangeStep step,
+                       errno_t stat_error);
 
   void SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count);
 
@@ -112,6 +120,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   SNTMetricCounter *rate_limit_counts_;
   SNTMetricCounter *faa_event_counts_;
   SNTMetricCounter *drop_counts_;
+  SNTMetricCounter *stat_change_counts_;
   SNTMetricSet *metric_set_;
   // Tracks whether or not the timer_source should be running.
   // This helps manage dispatch source state to ensure the source is not
@@ -129,6 +138,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   std::map<Processor, int64_t> rate_limit_counts_cache_;
   std::map<FileAccessEventCountTuple, int64_t> faa_event_counts_cache_;
   std::map<EventStatsTuple, SequenceStats> drop_cache_;
+  std::map<EventStatChangeTuple, int64_t> stat_change_cache_;
 };
 
 }  // namespace santa::santad

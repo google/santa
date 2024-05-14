@@ -151,7 +151,8 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
     if ([self handleContextMessage:esMsg]) {
       int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
       self->_metrics->SetEventMetrics(self->_processor, eventType, EventDisposition::kProcessed,
-                                      processingEnd - processingStart);
+                                      processingEnd - processingStart, esMsg.StatChangeStep(),
+                                      esMsg.StatError());
       return;
     }
 
@@ -160,12 +161,14 @@ constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db"
         recordEventMetrics:^(EventDisposition disposition) {
           int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
           self->_metrics->SetEventMetrics(self->_processor, eventType, disposition,
-                                          processingEnd - processingStart);
+                                          processingEnd - processingStart, esMsg.StatChangeStep(),
+                                          esMsg.StatError());
         }];
     } else {
       int64_t processingEnd = clock_gettime_nsec_np(CLOCK_MONOTONIC);
       self->_metrics->SetEventMetrics(self->_processor, eventType, EventDisposition::kDropped,
-                                      processingEnd - processingStart);
+                                      processingEnd - processingStart, esMsg.StatChangeStep(),
+                                      esMsg.StatError());
     }
   });
 

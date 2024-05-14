@@ -16,6 +16,8 @@
 
 #include <bsm/libbsm.h>
 #include <libproc.h>
+#include <sys/errno.h>
+#include <sys/stat.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
@@ -24,6 +26,7 @@ namespace santa::santad::event_providers::endpoint_security {
 Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi, const es_message_t *es_msg)
     : esapi_(std::move(esapi)), es_msg_(es_msg), process_token_(std::nullopt) {
   esapi_->RetainMessage(es_msg);
+  UpdateStatState(santa::santad::StatChangeStep::kMessageCreate);
 }
 
 Message::~Message() {
@@ -38,6 +41,8 @@ Message::Message(Message &&other) {
   other.es_msg_ = nullptr;
   process_token_ = std::move(other.process_token_);
   other.process_token_ = std::nullopt;
+  stat_change_step_ = other.stat_change_step_;
+  stat_error_ = other.stat_error_;
 }
 
 Message::Message(const Message &other) {
@@ -45,6 +50,23 @@ Message::Message(const Message &other) {
   es_msg_ = other.es_msg_;
   esapi_->RetainMessage(es_msg_);
   process_token_ = other.process_token_;
+  stat_change_step_ = other.stat_change_step_;
+  stat_error_ = other.stat_error_;
+}
+
+void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
+  // Only update state for AUTH EXEC events and if no previous change was detected
+  if (es_msg_->event_type == ES_EVENT_TYPE_AUTH_EXEC &&
+      stat_change_step_ == santa::santad::StatChangeStep::kNoChange) {
+    struct stat sb;
+    errno = 0;
+    int ret = stat(es_msg_->event.exec.target->executable->path.data, &sb);
+    struct stat &es_sb = es_msg_->event.exec.target->executable->stat;
+    if (ret != 0 || es_sb.st_ino != sb.st_ino || es_sb.st_dev != sb.st_dev) {
+      stat_change_step_ = step;
+      stat_error_ = errno;
+    }
+  }
 }
 
 void Message::SetProcessToken(process_tree::ProcessToken tok) {
