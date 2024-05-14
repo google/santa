@@ -11,4 +11,4 @@ nav_order: 7
 
 - USB Mass Storage Blocking: Santa's USB Mass Storage blocking feature only stops incidental
   data exfiltration. It is not meant as a hard control. It cannot block:
-   * Storage devices mounted during boot before Santa has an opportunity to begin authorizing mounts
+   * Directly writing to an unmounted, but attached device
