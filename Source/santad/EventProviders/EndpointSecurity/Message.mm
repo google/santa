@@ -42,7 +42,7 @@ Message::Message(Message &&other) {
   process_token_ = std::move(other.process_token_);
   other.process_token_ = std::nullopt;
   stat_change_step_ = other.stat_change_step_;
-  stat_error_ = other.stat_error_;
+  stat_result_ = other.stat_result_;
 }
 
 Message::Message(const Message &other) {
@@ -51,7 +51,7 @@ Message::Message(const Message &other) {
   esapi_->RetainMessage(es_msg_);
   process_token_ = other.process_token_;
   stat_change_step_ = other.stat_change_step_;
-  stat_error_ = other.stat_error_;
+  stat_result_ = other.stat_result_;
 }
 
 void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
@@ -68,7 +68,12 @@ void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
     // If stat failed, or if devno/inode changed, update state.
     if (ret != 0 || es_sb.st_ino != sb.st_ino || es_sb.st_dev != sb.st_dev) {
       stat_change_step_ = step;
-      stat_error_ = errno;
+      // Determine the specific condition that failed for tracking purposes
+      if (ret != 0) {
+        stat_result_ = santa::santad::StatResult::kStatError;
+      } else {
+        stat_result_ = santa::santad::StatResult::kDevnoInodeMismatch;
+      }
     }
   }
 }

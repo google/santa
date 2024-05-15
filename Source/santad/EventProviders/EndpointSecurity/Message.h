@@ -59,7 +59,7 @@ class Message {
   inline santa::santad::StatChangeStep StatChangeStep() const {
     return stat_change_step_;
   }
-  inline errno_t StatError() const { return stat_error_; }
+  inline StatResult StatError() const { return stat_result_; }
 
  private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
@@ -70,7 +70,8 @@ class Message {
 
   mutable santa::santad::StatChangeStep stat_change_step_ =
       santa::santad::StatChangeStep::kNoChange;
-  mutable errno_t stat_error_ = 0;
+  mutable santa::santad::StatResult stat_result_ =
+      santa::santad::StatResult::kOK;
 };
 
 }  // namespace santa::santad::event_providers::endpoint_security

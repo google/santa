@@ -58,6 +58,10 @@ static NSString *const kStatChangeStepNoChange = @"NoChange";
 static NSString *const kStatChangeStepMessageCreate = @"MessageCreate";
 static NSString *const kStatChangeStepCodesignValidation = @"CodesignValidation";
 
+static NSString *const kStatResultOK = @"OK";
+static NSString *const kStatResultStatError = @"StatError";
+static NSString *const kStatResultDevnoInodeMismatch = @"DevnoInodeMismatch";
+
 // Compat values
 static NSString *const kFileAccessMetricStatusOK = @"OK";
 static NSString *const kFileAccessMetricStatusBlockedUser = @"BLOCKED_USER";
@@ -160,6 +164,18 @@ NSString *const StatChangeStepToString(StatChangeStep step) {
     default:
       [NSException raise:@"Invalid stat change step"
                   format:@"Unknown stat change step value: %d", static_cast<int>(step)];
+      return nil;
+  }
+}
+
+NSString *const StatResultToString(StatResult result) {
+  switch (result) {
+    case StatResult::kOK: return kStatResultOK;
+    case StatResult::kStatError: return kStatResultStatError;
+    case StatResult::kDevnoInodeMismatch: return kStatResultDevnoInodeMismatch;
+    default:
+      [NSException raise:@"Invalid stat result"
+                  format:@"Unknown stat result value: %d", static_cast<int>(result)];
       return nil;
   }
 }
@@ -332,7 +348,7 @@ void Metrics::FlushMetrics() {
     for (const auto &[key, count] : stat_change_cache_) {
       if (count > 0) {
         NSString *stepName = StatChangeStepToString(std::get<StatChangeStep>(key));
-        NSString *error = [@(std::get<errno_t>(key)) stringValue];
+        NSString *error = StatResultToString(std::get<StatResult>(key));
 
         [stat_change_counts_ incrementBy:count forFieldValues:@[ stepName, error ]];
       }
@@ -389,11 +405,11 @@ void Metrics::StopPoll() {
 
 void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
                               EventDisposition event_disposition, int64_t nanos,
-                              StatChangeStep step, errno_t stat_error) {
+                              StatChangeStep step, StatResult stat_result) {
   dispatch_sync(events_q_, ^{
     event_counts_cache_[EventCountTuple{processor, event_type, event_disposition}]++;
     event_times_cache_[EventTimesTuple{processor, event_type}] = nanos;
-    stat_change_cache_[EventStatChangeTuple{step, stat_error}]++;
+    stat_change_cache_[EventStatChangeTuple{step, stat_result}]++;
   });
 }
 

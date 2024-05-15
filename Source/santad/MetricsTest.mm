@@ -32,6 +32,7 @@ using santa::santad::EventTimesTuple;
 using santa::santad::FileAccessEventCountTuple;
 using santa::santad::Processor;
 using santa::santad::StatChangeStep;
+using santa::santad::StatResult;
 
 namespace santa::santad {
 
@@ -41,6 +42,7 @@ extern NSString *const EventDispositionToString(EventDisposition d);
 extern NSString *const FileAccessMetricStatusToString(FileAccessMetricStatus status);
 extern NSString *const FileAccessPolicyDecisionToString(FileAccessPolicyDecision decision);
 extern NSString *const StatChangeStepToString(StatChangeStep decision);
+extern NSString *const StatResultToString(StatResult decision);
 
 class MetricsPeer : public Metrics {
  public:
@@ -74,6 +76,7 @@ using santa::santad::Metrics;
 using santa::santad::MetricsPeer;
 using santa::santad::ProcessorToString;
 using santa::santad::StatChangeStepToString;
+using santa::santad::StatResultToString;
 
 std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^block)(Metrics *)) {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
@@ -247,6 +250,20 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   XCTAssertThrows(StatChangeStepToString((StatChangeStep)12345));
 }
 
+- (void)testStatResultToString {
+  std::map<StatResult, NSString *> resultToString = {
+    {StatResult::kOK, @"OK"},
+    {StatResult::kStatError, @"StatError"},
+    {StatResult::kDevnoInodeMismatch, @"DevnoInodeMismatch"},
+  };
+
+  for (const auto &kv : resultToString) {
+    XCTAssertEqualObjects(StatResultToString(kv.first), kv.second);
+  }
+
+  XCTAssertThrows(StatResultToString((StatResult)12345));
+}
+
 - (void)testSetEventMetrics {
   int64_t nanos = 1234;
 
@@ -259,7 +276,8 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   XCTAssertEqual(metrics->stat_change_cache_.size(), 0);
 
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
-                           EventDisposition::kProcessed, nanos, StatChangeStep::kNoChange, 0);
+                           EventDisposition::kProcessed, nanos, StatChangeStep::kNoChange,
+                           StatResult::kOK);
 
   // Check sizes after setting metrics once
   XCTAssertEqual(metrics->event_counts_cache_.size(), 1);
@@ -267,9 +285,11 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   XCTAssertEqual(metrics->stat_change_cache_.size(), 1);
 
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
-                           EventDisposition::kProcessed, nanos, StatChangeStep::kMessageCreate, 2);
+                           EventDisposition::kProcessed, nanos, StatChangeStep::kMessageCreate,
+                           StatResult::kDevnoInodeMismatch);
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN,
-                           EventDisposition::kProcessed, nanos * 2, StatChangeStep::kNoChange, 0);
+                           EventDisposition::kProcessed, nanos * 2, StatChangeStep::kNoChange,
+                           StatResult::kOK);
 
   // Re-check expected counts. One was an update, so should only be 2 items
   XCTAssertEqual(metrics->event_counts_cache_.size(), 2);
@@ -283,7 +303,7 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
                          EventDisposition::kProcessed};
   EventTimesTuple etExec{Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC};
   EventTimesTuple etOpen{Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN};
-  EventStatChangeTuple noChange{StatChangeStep::kNoChange, 0};
+  EventStatChangeTuple noChange{StatChangeStep::kNoChange, StatResult::kOK};
 
   XCTAssertEqual(metrics->event_counts_cache_[ecExec], 2);
   XCTAssertEqual(metrics->event_counts_cache_[ecOpen], 1);
@@ -427,10 +447,11 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
                                                });
 
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_EXEC,
-                           EventDisposition::kProcessed, nanos, StatChangeStep::kNoChange, 0);
+                           EventDisposition::kProcessed, nanos, StatChangeStep::kNoChange,
+                           StatResult::kOK);
   metrics->SetEventMetrics(Processor::kAuthorizer, ES_EVENT_TYPE_AUTH_OPEN,
                            EventDisposition::kProcessed, nanos * 2,
-                           StatChangeStep::kCodesignValidation, 123);
+                           StatChangeStep::kCodesignValidation, StatResult::kStatError);
   metrics->UpdateEventStats(Processor::kRecorder, &esMsgWithDrops);
   metrics->SetRateLimitingMetrics(Processor::kFileAccessAuthorizer, 123);
   metrics->SetFileAccessEventMetrics("v1.0", "rule_abc", FileAccessMetricStatus::kOK,

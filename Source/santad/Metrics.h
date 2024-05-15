@@ -57,10 +57,16 @@ enum class StatChangeStep {
   kCodesignValidation,
 };
 
+enum class StatResult {
+  kOK = 0,
+  kStatError,
+  kDevnoInodeMismatch,
+};
+
 using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
 using EventTimesTuple = std::tuple<Processor, es_event_type_t>;
 using EventStatsTuple = std::tuple<Processor, es_event_type_t>;
-using EventStatChangeTuple = std::tuple<StatChangeStep, errno_t>;
+using EventStatChangeTuple = std::tuple<StatChangeStep, StatResult>;
 using FileAccessMetricsPolicyVersion = std::string;
 using FileAccessMetricsPolicyName = std::string;
 using FileAccessEventCountTuple =
@@ -92,7 +98,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
 
   void SetEventMetrics(Processor processor, es_event_type_t event_type,
                        EventDisposition disposition, int64_t nanos, StatChangeStep step,
-                       errno_t stat_error);
+                       StatResult stat_result);
 
   void SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count);
 
