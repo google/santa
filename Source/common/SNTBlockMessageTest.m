@@ -39,6 +39,12 @@
   OCMStub([self.mockSystemInfo serialNumber]).andReturn(@"my_s");
 }
 
+- (void)testFormatMessage {
+  NSString *input = @"Testing with somé Ünicode çharacters";
+  NSAttributedString *got = [SNTBlockMessage formatMessage:input];
+  XCTAssertEqualObjects([got string], input);
+}
+
 - (void)testEventDetailURLForEvent {
   SNTStoredEvent *se = [[SNTStoredEvent alloc] init];
 
