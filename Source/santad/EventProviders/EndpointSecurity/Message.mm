@@ -57,11 +57,16 @@ Message::Message(const Message &other) {
 void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
   // Only update state for AUTH EXEC events and if no previous change was detected
   if (es_msg_->event_type == ES_EVENT_TYPE_AUTH_EXEC &&
-      stat_change_step_ == santa::santad::StatChangeStep::kNoChange) {
+      stat_change_step_ == santa::santad::StatChangeStep::kNoChange &&
+      // Note: The following checks are required due to tests that only
+      // partially construct an es_message_t.
+      es_msg_->event.exec.target &&
+      es_msg_->event.exec.target->executable) {
+    struct stat &es_sb = es_msg_->event.exec.target->executable->stat;
     struct stat sb;
     errno = 0;
     int ret = stat(es_msg_->event.exec.target->executable->path.data, &sb);
-    struct stat &es_sb = es_msg_->event.exec.target->executable->stat;
+    // If stat failed, or if devno/inode changed, update state.
     if (ret != 0 || es_sb.st_ino != sb.st_ino || es_sb.st_dev != sb.st_dev) {
       stat_change_step_ = step;
       stat_error_ = errno;
