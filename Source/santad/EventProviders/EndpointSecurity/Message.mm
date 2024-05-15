@@ -60,8 +60,7 @@ void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
       stat_change_step_ == santa::santad::StatChangeStep::kNoChange &&
       // Note: The following checks are required due to tests that only
       // partially construct an es_message_t.
-      es_msg_->event.exec.target &&
-      es_msg_->event.exec.target->executable) {
+      es_msg_->event.exec.target && es_msg_->event.exec.target->executable) {
     struct stat &es_sb = es_msg_->event.exec.target->executable->stat;
     struct stat sb;
     errno = 0;
