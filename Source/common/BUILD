@@ -478,12 +478,15 @@ santa_unit_test(
     name = "SNTBlockMessageTest",
     srcs = ["SNTBlockMessageTest.m"],
     deps = [
-        ":SNTBlockMessage",
+        ":SNTBlockMessage_SantaGUI",
         ":SNTConfigurator",
         ":SNTFileAccessEvent",
         ":SNTStoredEvent",
         ":SNTSystemInfo",
         "@OCMock",
+    ],
+    sdk_frameworks = [
+        "AppKit",
     ],
 )
 
