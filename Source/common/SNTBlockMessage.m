@@ -57,8 +57,8 @@ static id ValueOrNull(id value) {
 #ifdef SANTAGUI
   NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
   NSDictionary *options = @{
-      NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType,
-      NSCharacterEncodingDocumentAttribute: @(NSUTF8StringEncoding),
+    NSDocumentTypeDocumentAttribute : NSHTMLTextDocumentType,
+    NSCharacterEncodingDocumentAttribute : @(NSUTF8StringEncoding),
   };
   return [[NSAttributedString alloc] initWithHTML:htmlData options:options documentAttributes:NULL];
 #else
