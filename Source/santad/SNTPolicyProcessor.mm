@@ -157,16 +157,17 @@ static void UpdateCachedDecisionSigningInfo(
   }
 }
 
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                            cdhash:(nullable NSString *)cdhash
-                                        fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID
-                                         signingID:(nullable NSString *)signingID
-                              isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
-                        entitlementsFilterCallback:
-                          (NSDictionary *_Nullable (^_Nullable)(
-                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
+- (nonnull SNTCachedDecision *)
+         decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                      cdhash:(nullable NSString *)cdhash
+                  fileSHA256:(nullable NSString *)fileSHA256
+           certificateSHA256:(nullable NSString *)certificateSHA256
+                      teamID:(nullable NSString *)teamID
+                   signingID:(nullable NSString *)signingID
+        isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
+  entitlementsFilterCallback:(NSDictionary *_Nullable (^_Nullable)(
+                               NSDictionary *_Nullable entitlements))entitlementsFilterCallback
+    preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback {
   // Check the hash before allocating a SNTCachedDecision.
   NSString *fileHash = fileSHA256 ?: fileInfo.SHA256;
   SNTClientMode mode = [self.configurator clientMode];
@@ -192,6 +193,10 @@ static void UpdateCachedDecisionSigningInfo(
   if (certificateSHA256.length) {
     cd.certSHA256 = certificateSHA256;
   } else {
+    if (preCodesignCheckCallback) {
+      preCodesignCheckCallback();
+    }
+
     // Grab the code signature, if there's an error don't try to capture
     // any of the signature details. Also clear out any rule lookup parameters
     // that would require being validly signed.
@@ -271,6 +276,19 @@ static void UpdateCachedDecisionSigningInfo(
                           (NSDictionary *_Nullable (^_Nonnull)(
                             const char *_Nullable teamID,
                             NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
+  return [self decisionForFileInfo:fileInfo
+                     targetProcess:targetProc
+          preCodesignCheckCallback:nil
+        entitlementsFilterCallback:entitlementsFilterCallback];
+}
+
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                     targetProcess:(nonnull const es_process_t *)targetProc
+                          preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nonnull)(
+                            const char *_Nullable teamID,
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
   NSString *signingID;
   NSString *teamID;
   NSString *cdhash;
@@ -319,7 +337,8 @@ static void UpdateCachedDecisionSigningInfo(
     }
     entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
       return entitlementsFilterCallback(entitlementsFilterTeamID, entitlements);
-    }];
+    }
+    preCodesignCheckCallback:preCodesignCheckCallback];
 }
 
 // Used by `$ santactl fileinfo`.
@@ -356,7 +375,8 @@ static void UpdateCachedDecisionSigningInfo(
                   return NO;
                 }
               }
-        entitlementsFilterCallback:nil];
+        entitlementsFilterCallback:nil
+          preCodesignCheckCallback:nil];
 }
 
 ///

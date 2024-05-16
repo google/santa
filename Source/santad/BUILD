@@ -657,6 +657,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/Message.h"],
     deps = [
         ":EndpointSecurityClient",
+        ":Metrics",
         ":WatchItemPolicy",
         "//Source/santad/ProcessTree:process_tree",
     ],
