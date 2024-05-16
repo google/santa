@@ -16,7 +16,6 @@
 
 #include <bsm/libbsm.h>
 #include <libproc.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
@@ -63,17 +62,13 @@ void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
       es_msg_->event.exec.target && es_msg_->event.exec.target->executable) {
     struct stat &es_sb = es_msg_->event.exec.target->executable->stat;
     struct stat sb;
-    errno = 0;
     int ret = stat(es_msg_->event.exec.target->executable->path.data, &sb);
     // If stat failed, or if devno/inode changed, update state.
     if (ret != 0 || es_sb.st_ino != sb.st_ino || es_sb.st_dev != sb.st_dev) {
       stat_change_step_ = step;
       // Determine the specific condition that failed for tracking purposes
-      if (ret != 0) {
-        stat_result_ = santa::santad::StatResult::kStatError;
-      } else {
-        stat_result_ = santa::santad::StatResult::kDevnoInodeMismatch;
-      }
+      stat_result_ = (ret != 0) ? santa::santad::StatResult::kStatError
+                                : santa::santad::StatResult::kDevnoInodeMismatch;
     }
   }
 }
