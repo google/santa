@@ -657,8 +657,8 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/Message.h"],
     deps = [
         ":EndpointSecurityClient",
-        ":Metrics",
         ":WatchItemPolicy",
+        "//Source/common:SNTCommonEnums",
         "//Source/santad/ProcessTree:process_tree",
     ],
 )
@@ -719,6 +719,7 @@ objc_library(
     srcs = ["Metrics.mm"],
     hdrs = ["Metrics.h"],
     deps = [
+        ":EndpointSecurityMessage",
         ":SNTApplicationCoreMetrics",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
@@ -1184,7 +1185,10 @@ santa_unit_test(
     name = "MetricsTest",
     srcs = ["MetricsTest.mm"],
     deps = [
+        ":EndpointSecurityMessage",
         ":Metrics",
+        ":MockEndpointSecurityAPI",
+        "//Source/common:SNTCommonEnums",
         "//Source/common:SNTMetricSet",
         "//Source/common:TestUtils",
         "@OCMock",

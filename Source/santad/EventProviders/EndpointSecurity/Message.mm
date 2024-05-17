@@ -25,7 +25,7 @@ namespace santa::santad::event_providers::endpoint_security {
 Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi, const es_message_t *es_msg)
     : esapi_(std::move(esapi)), es_msg_(es_msg), process_token_(std::nullopt) {
   esapi_->RetainMessage(es_msg);
-  UpdateStatState(santa::santad::StatChangeStep::kMessageCreate);
+  UpdateStatState(StatChangeStep::kMessageCreate);
 }
 
 Message::~Message() {
@@ -53,10 +53,10 @@ Message::Message(const Message &other) {
   stat_result_ = other.stat_result_;
 }
 
-void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
+void Message::UpdateStatState(enum StatChangeStep step) const {
   // Only update state for AUTH EXEC events and if no previous change was detected
   if (es_msg_->event_type == ES_EVENT_TYPE_AUTH_EXEC &&
-      stat_change_step_ == santa::santad::StatChangeStep::kNoChange &&
+      stat_change_step_ == StatChangeStep::kNoChange &&
       // Note: The following checks are required due to tests that only
       // partially construct an es_message_t.
       es_msg_->event.exec.target && es_msg_->event.exec.target->executable) {
@@ -67,8 +67,7 @@ void Message::UpdateStatState(santa::santad::StatChangeStep step) const {
     if (ret != 0 || es_sb.st_ino != sb.st_ino || es_sb.st_dev != sb.st_dev) {
       stat_change_step_ = step;
       // Determine the specific condition that failed for tracking purposes
-      stat_result_ = (ret != 0) ? santa::santad::StatResult::kStatError
-                                : santa::santad::StatResult::kDevnoInodeMismatch;
+      stat_result_ = (ret != 0) ? StatResult::kStatError : StatResult::kDevnoInodeMismatch;
     }
   }
 }
