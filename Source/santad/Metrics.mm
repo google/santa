@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #include "Source/santad/Metrics.h"
+
 #include <EndpointSecurity/ESTypes.h>
 
 #include <memory>
@@ -403,13 +404,17 @@ void Metrics::StopPoll() {
   });
 }
 
-void Metrics::SetEventMetrics(Processor processor, es_event_type_t event_type,
-                              EventDisposition event_disposition, int64_t nanos,
-                              StatChangeStep step, StatResult stat_result) {
+void Metrics::SetEventMetrics(
+  Processor processor, EventDisposition event_disposition, int64_t nanos,
+  const santa::santad::event_providers::endpoint_security::Message &msg) {
   dispatch_sync(events_q_, ^{
-    event_counts_cache_[EventCountTuple{processor, event_type, event_disposition}]++;
-    event_times_cache_[EventTimesTuple{processor, event_type}] = nanos;
-    stat_change_cache_[EventStatChangeTuple{step, stat_result}]++;
+    event_counts_cache_[EventCountTuple{processor, msg->event_type, event_disposition}]++;
+    event_times_cache_[EventTimesTuple{processor, msg->event_type}] = nanos;
+
+    // Stat changes are only tracked for AUTH EXEC events
+    if (msg->event_type == ES_EVENT_TYPE_AUTH_EXEC) {
+      stat_change_cache_[EventStatChangeTuple{msg.StatChangeStep(), msg.StatResult()}]++;
+    }
   });
 }
 

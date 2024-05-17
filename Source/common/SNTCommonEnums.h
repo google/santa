@@ -182,6 +182,7 @@ typedef NS_ENUM(NSInteger, SNTRuleCleanup) {
 };
 
 #ifdef __cplusplus
+
 enum class FileAccessPolicyDecision {
   kNoPolicy,
   kDenied,
@@ -190,6 +191,19 @@ enum class FileAccessPolicyDecision {
   kAllowedReadAccess,
   kAllowedAuditOnly,
 };
+
+enum class StatChangeStep {
+  kNoChange = 0,
+  kMessageCreate,
+  kCodesignValidation,
+};
+
+enum class StatResult {
+  kOK = 0,
+  kStatError,
+  kDevnoInodeMismatch,
+};
+
 #endif
 
 static const char *kSantaDPath =

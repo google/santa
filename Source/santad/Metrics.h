@@ -26,6 +26,7 @@
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTMetricSet.h"
+#include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
 namespace santa::santad {
 
@@ -49,18 +50,6 @@ enum class Processor {
 enum class FileAccessMetricStatus {
   kOK = 0,
   kBlockedUser,
-};
-
-enum class StatChangeStep {
-  kNoChange = 0,
-  kMessageCreate,
-  kCodesignValidation,
-};
-
-enum class StatResult {
-  kOK = 0,
-  kStatError,
-  kDevnoInodeMismatch,
 };
 
 using EventCountTuple = std::tuple<Processor, es_event_type_t, EventDisposition>;
@@ -96,9 +85,8 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   // Used for tracking event sequence numbers to determine if drops occured
   void UpdateEventStats(Processor processor, const es_message_t *msg);
 
-  void SetEventMetrics(Processor processor, es_event_type_t event_type,
-                       EventDisposition disposition, int64_t nanos, StatChangeStep step,
-                       StatResult stat_result);
+  void SetEventMetrics(Processor processor, EventDisposition event_disposition, int64_t nanos,
+                       const santa::santad::event_providers::endpoint_security::Message &msg);
 
   void SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count);
 

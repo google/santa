@@ -20,12 +20,13 @@
 #include <memory>
 #include <string>
 
-#include "Source/santad/Metrics.h"
+#import "Source/common/SNTCommonEnums.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
 namespace santa::santad::event_providers::endpoint_security {
 
 class EndpointSecurityAPI;
+class MessagePeer;
 
 class Message {
  public:
@@ -54,12 +55,12 @@ class Message {
 
   std::string ParentProcessName() const;
 
-  void UpdateStatState(santa::santad::StatChangeStep step) const;
+  void UpdateStatState(enum StatChangeStep step) const;
 
-  inline santa::santad::StatChangeStep StatChangeStep() const {
-    return stat_change_step_;
-  }
-  inline StatResult StatError() const { return stat_result_; }
+  inline StatChangeStep StatChangeStep() const { return stat_change_step_; }
+  inline StatResult StatResult() const { return stat_result_; }
+
+  friend class santa::santad::event_providers::endpoint_security::MessagePeer;
 
  private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
@@ -68,10 +69,8 @@ class Message {
 
   std::string GetProcessName(pid_t pid) const;
 
-  mutable santa::santad::StatChangeStep stat_change_step_ =
-      santa::santad::StatChangeStep::kNoChange;
-  mutable santa::santad::StatResult stat_result_ =
-      santa::santad::StatResult::kOK;
+  mutable enum StatChangeStep stat_change_step_ = StatChangeStep::kNoChange;
+  mutable enum StatResult stat_result_ = StatResult::kOK;
 };
 
 }  // namespace santa::santad::event_providers::endpoint_security

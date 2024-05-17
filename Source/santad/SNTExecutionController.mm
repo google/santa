@@ -259,7 +259,7 @@ static NSString *const kPrinterProxyPostMonterey =
   SNTCachedDecision *cd = [self.policyProcessor decisionForFileInfo:binInfo
     targetProcess:targetProc
     preCodesignCheckCallback:^(void) {
-      esMsg.UpdateStatState(santa::santad::StatChangeStep::kCodesignValidation);
+      esMsg.UpdateStatState(StatChangeStep::kCodesignValidation);
     }
     entitlementsFilterCallback:^NSDictionary *(const char *teamID, NSDictionary *entitlements) {
       if (!entitlements) {
