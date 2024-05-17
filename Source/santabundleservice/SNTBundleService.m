@@ -226,9 +226,17 @@
 
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       se.signingChain = cs.certificates;
-      se.teamID = cs.teamID;
-      se.signingID = cs.signingID;
       se.cdhash = cs.cdhash;
+      se.teamID = cs.teamID;
+      if (cs.signingID) {
+        if (cs.teamID) {
+          se.signingID = [NSString stringWithFormat:@"%@:%@", cs.teamID, cs.signingID];
+        } else {
+          if (cs.platformBinary) {
+            se.signingID = [NSString stringWithFormat:@"platform:%@", cs.signingID];
+          }
+        }
+      }
 
       dispatch_sync(dispatch_get_main_queue(), ^{
         relatedEvents[se.fileSHA256] = se;
