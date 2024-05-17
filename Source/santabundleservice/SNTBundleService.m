@@ -226,6 +226,9 @@
 
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
       se.signingChain = cs.certificates;
+      se.teamID = cs.teamID;
+      se.signingID = cs.signingID;
+      se.cdhash = cs.cdhash;
 
       dispatch_sync(dispatch_get_main_queue(), ^{
         relatedEvents[se.fileSHA256] = se;
