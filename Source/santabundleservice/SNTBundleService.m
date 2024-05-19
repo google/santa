@@ -231,10 +231,8 @@
       if (cs.signingID) {
         if (cs.teamID) {
           se.signingID = [NSString stringWithFormat:@"%@:%@", cs.teamID, cs.signingID];
-        } else {
-          if (cs.platformBinary) {
-            se.signingID = [NSString stringWithFormat:@"platform:%@", cs.signingID];
-          }
+        } else if (cs.platformBinary) {
+          se.signingID = [NSString stringWithFormat:@"platform:%@", cs.signingID];
         }
       }
 
