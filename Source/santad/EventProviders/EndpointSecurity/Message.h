@@ -20,11 +20,13 @@
 #include <memory>
 #include <string>
 
+#import "Source/common/SNTCommonEnums.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
 namespace santa::santad::event_providers::endpoint_security {
 
 class EndpointSecurityAPI;
+class MessagePeer;
 
 class Message {
  public:
@@ -53,12 +55,22 @@ class Message {
 
   std::string ParentProcessName() const;
 
+  void UpdateStatState(enum StatChangeStep step) const;
+
+  inline StatChangeStep StatChangeStep() const { return stat_change_step_; }
+  inline StatResult StatResult() const { return stat_result_; }
+
+  friend class santa::santad::event_providers::endpoint_security::MessagePeer;
+
  private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
   const es_message_t* es_msg_;
   std::optional<process_tree::ProcessToken> process_token_;
 
   std::string GetProcessName(pid_t pid) const;
+
+  mutable enum StatChangeStep stat_change_step_ = StatChangeStep::kNoChange;
+  mutable enum StatResult stat_result_ = StatResult::kOK;
 };
 
 }  // namespace santa::santad::event_providers::endpoint_security

@@ -16,6 +16,7 @@
 
 #include <bsm/libbsm.h>
 #include <libproc.h>
+#include <sys/stat.h>
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
@@ -24,6 +25,7 @@ namespace santa::santad::event_providers::endpoint_security {
 Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi, const es_message_t *es_msg)
     : esapi_(std::move(esapi)), es_msg_(es_msg), process_token_(std::nullopt) {
   esapi_->RetainMessage(es_msg);
+  UpdateStatState(StatChangeStep::kMessageCreate);
 }
 
 Message::~Message() {
@@ -38,6 +40,8 @@ Message::Message(Message &&other) {
   other.es_msg_ = nullptr;
   process_token_ = std::move(other.process_token_);
   other.process_token_ = std::nullopt;
+  stat_change_step_ = other.stat_change_step_;
+  stat_result_ = other.stat_result_;
 }
 
 Message::Message(const Message &other) {
@@ -45,6 +49,27 @@ Message::Message(const Message &other) {
   es_msg_ = other.es_msg_;
   esapi_->RetainMessage(es_msg_);
   process_token_ = other.process_token_;
+  stat_change_step_ = other.stat_change_step_;
+  stat_result_ = other.stat_result_;
+}
+
+void Message::UpdateStatState(enum StatChangeStep step) const {
+  // Only update state for AUTH EXEC events and if no previous change was detected
+  if (es_msg_->event_type == ES_EVENT_TYPE_AUTH_EXEC &&
+      stat_change_step_ == StatChangeStep::kNoChange &&
+      // Note: The following checks are required due to tests that only
+      // partially construct an es_message_t.
+      es_msg_->event.exec.target && es_msg_->event.exec.target->executable) {
+    struct stat &es_sb = es_msg_->event.exec.target->executable->stat;
+    struct stat sb;
+    int ret = stat(es_msg_->event.exec.target->executable->path.data, &sb);
+    // If stat failed, or if devno/inode changed, update state.
+    if (ret != 0 || es_sb.st_ino != sb.st_ino || es_sb.st_dev != sb.st_dev) {
+      stat_change_step_ = step;
+      // Determine the specific condition that failed for tracking purposes
+      stat_result_ = (ret != 0) ? StatResult::kStatError : StatResult::kDevnoInodeMismatch;
+    }
+  }
 }
 
 void Message::SetProcessToken(process_tree::ProcessToken tok) {

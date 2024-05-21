@@ -56,7 +56,11 @@ static id ValueOrNull(id value) {
 
 #ifdef SANTAGUI
   NSData *htmlData = [fullHTML dataUsingEncoding:NSUTF8StringEncoding];
-  return [[NSAttributedString alloc] initWithHTML:htmlData documentAttributes:NULL];
+  NSDictionary *options = @{
+    NSDocumentTypeDocumentAttribute : NSHTMLTextDocumentType,
+    NSCharacterEncodingDocumentAttribute : @(NSUTF8StringEncoding),
+  };
+  return [[NSAttributedString alloc] initWithHTML:htmlData options:options documentAttributes:NULL];
 #else
   NSString *strippedHTML = [self stringFromHTML:fullHTML];
   if (!strippedHTML) {
