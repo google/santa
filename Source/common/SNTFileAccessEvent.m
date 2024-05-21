@@ -48,6 +48,7 @@
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
+  [super encodeWithCoder:coder];
   ENCODE(accessedPath);
   ENCODE(ruleVersion);
   ENCODE(ruleName);
@@ -55,7 +56,7 @@
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder {
-  self = [super init];
+  self = [super initWithCoder:decoder];
   if (self) {
     DECODE(accessedPath, NSString);
     DECODE(ruleVersion, NSString);
