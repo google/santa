@@ -388,10 +388,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     if (identifier) {
       if (teamID) {
         signingID = [NSString stringWithFormat:@"%@:%@", teamID, identifier];
-      } else {
-        if (csc.platformBinary) {
-          signingID = [NSString stringWithFormat:@"platform:%@", identifier];
-        }
+      } else if (csc.platformBinary) {
+        signingID = [NSString stringWithFormat:@"platform:%@", identifier];
       }
     }
 
@@ -524,7 +522,16 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 - (SNTAttributeBlock)signingID {
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
-    return csc.signingID;
+
+    NSString *identifier = csc.signingID;
+    NSString *teamID = csc.teamID;
+    if (!identifier) return nil;
+    if (teamID) {
+      return [NSString stringWithFormat:@"%@:%@", teamID, identifier];
+    } else if (csc.platformBinary) {
+      return [NSString stringWithFormat:@"platform:%@", identifier];
+    }
+    return nil;
   };
 }
 
