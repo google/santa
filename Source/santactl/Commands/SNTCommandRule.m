@@ -61,7 +61,8 @@ REGISTER_COMMAND_NAME(@"rule")
     @"\n"
     @"  One of:\n"
     @"    --path {path}: path of binary/bundle to add/remove.\n"
-    @"                   Will add the hash of the file currently at that path.\n"
+    @"                   Will add an appropriate rule for the file currently at that path.\n"
+    @"                   Defaults to a SHA-256 rule unless overridden with another flag.\n"
     @"                   Does not work with --check. Use the fileinfo verb to check.\n"
     @"                   the rule state of a file.\n"
     @"    --identifier {sha256|teamID|signingID|cdhash}: identifier to add/remove/check\n"
@@ -259,9 +260,17 @@ REGISTER_COMMAND_NAME(@"rule")
       newRule.identifier = cs.leafCertificate.SHA256;
     } else if (newRule.type == SNTRuleTypeCDHash) {
       MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
-      newRule.identifier = cs.signingID;
-    } else if (newRule.type == SNTRuleTypeTeamID || newRule.type == SNTRuleTypeSigningID) {
-      // noop
+      newRule.identifier = cs.cdhash;
+    } else if (newRule.type == SNTRuleTypeTeamID) {
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
+      newRule.identifier = cs.teamID;
+    } else if (newRule.type == SNTRuleTypeSigningID) {
+      MOLCodesignChecker *cs = [fi codesignCheckerWithError:NULL];
+      if (cs.teamID.length) {
+        newRule.identifier = [NSString stringWithFormat:@"%@:%@", cs.teamID, cs.signingID];
+      } else if (cs.platformBinary) {
+        newRule.identifier = [NSString stringWithFormat:@"platform:%@", cs.signingID];
+      }
     }
   }
 
@@ -290,7 +299,8 @@ REGISTER_COMMAND_NAME(@"rule")
   if (newRule.state == SNTRuleStateUnknown) {
     [self printErrorUsageAndExit:@"No state specified"];
   } else if (!newRule.identifier) {
-    [self printErrorUsageAndExit:@"Either SHA-256, team ID, or path to file must be specified"];
+    [self printErrorUsageAndExit:
+            @"A valid SHA-256, CDHash, Signing ID, team ID, or path to file must be specified"];
   }
 
   [[self.daemonConn remoteObjectProxy]
