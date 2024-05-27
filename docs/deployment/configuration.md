@@ -300,6 +300,6 @@ This would be used alongside a payload allowing [notifications](notificationsett
 and for allowing the [system extension](https://github.com/google/santa/blob/main/docs/deployment/system-extension-policy.santa.example.mobileconfig) to be loaded without end user interaction.
 
 Please note that for release package installers that included the kernel extension
-as part of the payload (prior to 2021.8) the end user to be prompted to allow it
+as part of the payload (prior to 2021.8) the end user was prompted to allow it to load
 unless explicitly allowed with another MDM-delivered configuration profile to the
 supervised system.

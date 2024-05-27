@@ -4,42 +4,58 @@ parent: Binaries
 
 # santad
 
-The santad process does the heavy lifting when it comes to making decisions
-about binary executions. It also handles brokering all of the XPC connections
-between the various components of Santa. It does all of this with performance
-being at the forefront.
+The `santad` process does the heavy lifting when it comes to making decisions
+about binary executions, file access, and mounting USB mass storage devices. It
+also handles brokering all of the XPC connections between the various components
+of Santa. It does all of this with performance being at the forefront.
 
-##### A note on performance
+## On Launch
 
-On an idling machine, santad and the other components of Santa consume virtually
-no CPU and a minimal amount of memory (5-50MB). When lots of processes
-`execve()` at the same time, the CPU and memory usage can spike. All of the
-`execve()` decisions are made on high priority threads to ensure decisions are
-posted back to the kernel as soon as possible. A watchdog thread will log
-warnings when sustained high CPU (>20%) and memory (>250MB) usage by santad is
-detected.
-
-##### On Launch
-
-The very first thing santad does once it has been launched is to load and
-connect to santa-driver. Only one connection may be active at any given time.
-
-At this point, santa-driver is loaded and running in the kernel, but is allowing
-all executions and not sending any messages to santad. Before santad tells
-santa-driver it is ready to receive messages, it needs to setup a few more
-things:
+When `santad` starts several pieces are initially configured:
 
 *   The rule and event databases are initialized
-*   Connections to Santa (GUI) and santactl sync daemon are established.
+*   Connections to `Santa` (GUI) and `santasyncservice` daemon are established.
 *   The config file is processed.
 
-santad is now ready to start processing decision and logging messages from
-santa-driver. The listeners are started and santad sits in a run loop awaiting
-messages from santa-driver.
+Next, if configured to do so, `santad` begins to unmount/remount any connected
+USB mass storage devices that violate policy.
 
-##### Running
+Finally, `santad` establishes its connections to the
+[Endpoint Security](https://developer.apple.com/documentation/endpointsecurity)
+(ES) framework which is used to authorize actions and collect telemetry. Once
+successfully registered, appropriate event streams are subscribed to and
+`santad` is able to begin making decisions.
 
-Messages are read from a shared memory queue (`IODataQueueMemory` ) on a single
-thread. A callback is invoked for each message. The callback then dispatches all
-the work of processing a decision message to a concurrent high priority queue.
-The log messages are dispatched to a low priority queue for processing.
+## Event Streams
+
+Multiple ES clients are created, each with their own area of responsibility and
+unique set of event streams.
+
+| Client                 | Responsibility |
+| ---------------------- | -------------- |
+| Authorizer             | Applying policy to new executions |
+| Recorder               | Gathering telemetry, creating transitive rules |
+| File Access Authorizer | Enforcing FAA policy by tracking all file access events |
+| Device Manager         | Blocking USB mounts or enforcing mounts contain specified flags |
+| Tamper Resistance      | Protects Santa components from malicious/accidental tampering |
+
+## Logging
+
+`santad` logs can be configured to target one of several different outputs:
+
+| Log Type | Description |
+| ------   | ----------- |
+| syslog   | Emits events as a human readable, key/value pair string to the [Apple ULS](https://developer.apple.com/documentation/os/logging?language=objc) |
+| file     | Similar output to `syslog`, but logs are sent to a file instead of the ULS |
+| protobuf | Emits events with an extremely rich set of data defined by the [santa.proto](https://github.com/google/santa/blob/main/Source/common/santa.proto) schema |
+| json     | Similar to `protobuf`, but the output is converted to JSON (Note: This is not a performant option and should only be used in targeted situations or when logging is ecpected to be minimal) |
+| null     | Disables logging |
+
+## A note on performance
+
+On an idling machine, `santad` and the other components of Santa consume
+virtually no CPU and a minimal amount of memory (5-50MB). When lots of processes
+execute at the same time, the CPU and memory usage can spike. All of the
+execution authorizations are made on high priority threads to ensure decisions
+are made as soon as possible. A watchdog thread will log warnings when there is
+sustained CPU and memory usage detected.

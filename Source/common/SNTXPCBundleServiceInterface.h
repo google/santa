@@ -21,7 +21,7 @@
 ///  A block that takes the calculated bundle hash, associated events and hashing time in ms.
 typedef void (^SNTBundleHashBlock)(NSString *, NSArray<SNTStoredEvent *> *, NSNumber *);
 
-///  Protocol implemented by santabs and utilized by SantaGUI for bundle hashing
+///  Protocol implemented by santabundleservice and utilized by SantaGUI for bundle hashing
 @protocol SNTBundleServiceXPC
 
 ///

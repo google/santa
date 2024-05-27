@@ -7,63 +7,63 @@ redirect_from:
 
 # Binary Authorization Overview
 
-NOTE: This doc is out-dated and will be updated soon. We don't rely on a Kernel
-Extension anymore.
+## Background
 
-#### Background
+`santad` subscribes to appropriate
+[Endpoint Security](https://developer.apple.com/documentation/endpointsecurity)
+(ES) framework events to authorize new executions in its
+[authorizer client](../binaries/santad#event-streams). This framework ensures
+that `santad` has the opportunity to allow or deny the execution of a binary
+before it any code in that binary is executed.
 
-The decision flow starts in the kernel. The macOS kernel is extensible by way of
-a kernel extension (KEXT). macOS makes available kernel programming interfaces
-(KPIs) to be used by a KEXT. Santa utilizes the Kernel Authorization (Kauth)
-KPI. This is a very powerful and verbose interface that gives Santa the ability
-to listen in on most vnode and file systems operations and to take actions,
-directly or indirectly, on the operations being performed.
+## Flow of a New Execution
 
-#### Flow of an execve()
-
-This is a high level overview of the binary authorization decision
-process. For a more detailed account of each part, see the respective
-documentation. This flow does not cover the logging component of Santa, see the
-[logs.md](../concepts/logs.md) documentation for more info.
-
-###### Kernel Space
-
-1.  santa-driver registers itself as a `KAUTH_SCOPE_VNODE` listener. This flow
-    follows how santa-driver handles `KAUTH_VNODE_EXECUTE` events.
-2.  A santa-driver Kauth callback function is executed by the kernel when a
-    process is trying to `execve()`. In most cases, the `execve()` takes place
-    right after a process calls `fork()` to start a new process. This function
-    is running on a kernel thread representing the new process. Information on
-    where to find the executable is provided. This information is known as the
-    `vnode_id`.
-3.  santa-driver then checks if its cache has an allow or deny entry for the
-    `vnode_id`. If so it returns that decision to the Kauth KPI.
-    *   If Kauth receives a deny, it will stop the `execve()` from taking place.
-    *   If Kauth receives an allow, it will defer the decision. If there are
-        other Kauth listeners, they also have a chance deny or defer.
-4.  If there is no entry for the `vnode_id` in the cache a few actions occur:
-    *   santa-driver hands off the decision making to santad.
-    *   A new entry is created in the cache for the `vnode_id` with a special
-        value of `SNTActionRequestBinary`. This is used as a placeholder until
-        the decision from santad comes back. If another process tries to
-        `execve()` the same `vnode_id`, santa-driver will have that thread wait
-        for the in-flight decision from santad. All subsequent `execve()`s for
-        the same `vnode_id` will use the decision in the cache as explained
-        in #2, until the cache is invalidated.
-    *   If the executing file is written to while any of the threads are waiting
-        for a response the `SNTActionRequestBinary` entry is removed, forcing the
-        decision-making process to be restarted.
-
-###### User Space
-
-1.  santad is listening for decision requests from santa-driver.
-    *   More information is collected about the executable that lives at the
-        `vnode_id`. Since this codepath has a sleeping kernel thread waiting for
-        a decision, extra care is taken to be as performant as possible.
-2.  santad uses the information it has gathered to make a decision to allow or
-    deny the `execve()`. There are more details on how these decisions are made
-    in the [rules.md](../concepts/rules.md) and [scopes.md](../concepts/scopes.md)
-    documents.
-3.  The decision is posted back to santa-driver.
-4.  If there was a deny decision, a message is sent to Santa GUI to display a
-    user popup notification.
+1.  The `santad` ES client subscribes to the `ES_EVENT_TYPE_AUTH_EXEC` to begin
+    receiving and authorizing all new executions on the system.
+1.  When a binary is executed (e.g., via `execve(2)` or `posix_spawn(2)`), the
+    ES framework gathers
+    [some information](https://developer.apple.com/documentation/endpointsecurity/es_event_exec_t)
+    about the execution and holds up the new image until ES either receives a
+    response from `santad` or a timeout occurs.
+    *   Note: ES supports authorization result caching that `santad` attempts to
+        take advantage of when possible. This cache resides within the ES
+        subsystem in the kernel. When a result is already available, ES uses
+        that result immediately without collecting event information or waiting
+        for a new result. This can greatly reduce performance impact.
+1.  The `authorizer client`'s callback is called by the ES framework with the
+    event information
+1.  `santad` first checks if the event from another ES client on the system and,
+    if configured to do so, immediately allows the event and stops all further
+    processing for this event.
+1.  Some final sanity checks on the event are made before continuing to handle
+    the event asynchronously on a concurrent dispatch queue.
+    *   Note: A second asynchronous dispatch block is also submitted to execute
+        immediately before the event's deadline with the configured default
+        response. This helps prevent `santad` from missing an ES response
+        deadline which would result in the `santad` process being killed.
+1.  `santad` then checks its local authorization cache to determine if full
+    evaluation is necessary.
+    *   If a cached result already exists, the `authorizer client` responds to
+        the ES subsystem immediately and no more event processing occurs.
+1.  When `santad` has no local cache entry and must perform a full evaluation,
+    it first inserts a placeholder value in its auth cache. If a second event
+    for the same binary is received while the first is being processed, it will
+    wait for the original event to be processed and result placed into the cache
+    instead of performing duplicate processing.
+1.  Next, `santad` extracts relevant file and code signing information from the
+    event. It computes the file's hash as well verifies the binary's code
+    signature.
+    *   Note: If code signature validation fails, `santad` will not attempt to
+        lookup rules for any properties validated by the code signature
+        (currently TeamID, SigningID and CDHash). This means only file hash and
+        file scope rules apply.
+1.  The extracted information is then used to lookup any matching rules and make
+    a decision
+    *   There are more details on how these decisions are made in the
+        [Rules](../concepts/rules.md) and [Scopes](../concepts/scopes.md)
+        documents.
+1.  The decision is then posted back to the ES subsystem and local caches are
+    updated.
+1.  If the binary was blocked, the `Santa GUI` will
+    [display a message](../binaries/santa-gui.html#blocked-executions) if
+    configured to do so.

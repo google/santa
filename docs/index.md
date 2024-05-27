@@ -57,7 +57,7 @@ The following pages describe the main components that make up Santa:
 * [santad](binaries/santad.md): A root daemon that makes decisions.
 * [santactl](binaries/santactl.md): A command-line utility for inspecting the state and managing local configuration of Santa.
 * [santa-gui](binaries/santa-gui.md): A GUI daemon that displays notifications when an execution is blocked.
-* [santabs](binaries/santabs.md): A root daemon that finds binaries within a bundle to allow for easier rule-creation of bundled applications.
+* [santabundleservice](binaries/santabundleservice.md): A root daemon that finds binaries within a bundle to allow for easier rule-creation of bundled applications.
 
 ### Development
 
