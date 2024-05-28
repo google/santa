@@ -1,0 +1,225 @@
+syntax = "proto3";
+
+package santa.sync.v1;
+
+// SantaSync is service used to distribute configuration settings and rules to Santa.
+service SantaSync {
+  // Preflight is used to send current configuration data to the server and to
+  // retrieve new configuration values from the server.
+  rpc Preflight(PreflightRequest) returns (PreflightResponse) {}
+
+  // EventUpload sends details about blocked (or would-be-blocked) executions to
+  // the server.
+  rpc EventUpload(EventUploadRequest) returns (EventUploadResponse) {}
+
+  // RuleDownload retrieves new rules from the server.
+  rpc RuleDownload(RuleDownloadRequest) returns (RuleDownloadResponse) {}
+
+  // Postflight sends status data back to the server after applying any new
+  // configuration received in the previous stages.
+  rpc Postflight(PostflightRequest) returns (PostflightResponse) {}
+}
+
+// ClientMode represents the operating mode for an agent.
+enum ClientMode {
+  MONITOR = 0;
+  LOCKDOWN = 1;
+}
+
+message PreflightRequest {
+  string serial_number = 1 [json_name="serial_num"];
+  string hostname = 2;
+  string os_version = 3;
+  string os_build = 4;
+  string model_identifier = 5;
+  string santa_version = 6;
+  string primary_user = 7;
+  string push_notification_token = 8;
+
+  ClientMode client_mode = 9;
+  bool request_clean_sync = 10;
+
+  uint32 binary_rule_count = 11;
+  uint32 certificate_rule_count = 12;
+  uint32 compiler_rule_count = 13;
+  uint32 transitive_rule_count = 14;
+  uint32 teamid_rule_count = 15;
+  uint32 signingid_rule_count = 16;
+  uint32 cdhash_rule_count = 17;
+}
+
+message PreflightResponse {
+  ClientMode client_mode = 1;
+  // Possible values are "normal" (default if unspecified), "clean", or "clean_all".
+  // "normal" is a standard progressive sync
+  // "clean" deletes all previously received rules before applying the newly received rules.
+  // "clean_all" deletes all rules, including transitive rules, before applying the newly received rules.
+  // This should be an enum but we won't match lowercase values if specified as an enum unless the
+  // enum values are also lowercase (which is odd), and this is the behavior from the pre-proto protocol.
+  string sync_type = 2;
+
+  // Deprecated but still supported key that acts like sync_type was set to "clean" unless
+  // the client had requested a clean sync, in which case it acts like "clean_all"
+  uint32 batch_size = 3;
+
+  bool enable_bundles = 4;
+  bool enable_transitive_rules = 5;
+  bool enable_all_event_upload = 6;
+  bool disable_unknown_event_upload = 7;
+
+  uint64 full_sync_interval = 8;
+  uint64 push_notification_full_sync_interval = 9;
+  uint64 push_notification_global_rule_sync_interval = 10;
+
+  optional string allowed_path_regex = 11;
+  optional string blocked_path_regex = 12;
+
+  optional bool block_usb_mount = 13;
+  repeated string remount_usb_mode = 14;
+
+  optional string override_file_access_action = 15;
+
+  // These fields are deprecated forms of other fields and exist here solely for backwards compatibility
+  optional bool deprecated_enabled_transitive_whitelisting = 80 [json_name="enabled_transitive_whitelisting"];
+  optional bool deprecated_transitive_whitelisting_enabled = 81 [json_name="transitive_whitelisting_enabled"];
+  optional bool deprecated_bundles_enabled = 82 [json_name="bundles_enabled"];
+  optional uint64 deprecated_fcm_full_sync_interval = 83 [json_name="fcm_full_sync_interval"];
+  optional uint64 deprecated_fcm_global_rule_sync_deadline = 84 [json_name="fcm_global_rule_sync_deadline"];
+  optional string deprecated_whitelist_regex = 85 [json_name="whitelist_regex"];
+  optional string deprecated_blacklist_regex = 86 [json_name="blacklist_regex"];
+  optional bool deprecated_clean_sync = 87 [json_name="clean_sync"];
+}
+
+enum Decision {
+  DECISION_UNKNOWN = 0;
+  ALLOW_UNKNOWN = 1;
+  ALLOW_BINARY = 2;
+  ALLOW_CERTIFICATE = 3;
+  ALLOW_SCOPE = 4;
+  ALLOW_TEAMID = 5;
+  ALLOW_SIGNINGID = 6;
+  ALLOW_CDHASH = 7;
+  BLOCK_UNKNOWN = 8;
+  BLOCK_BINARY = 9;
+  BLOCK_CERTIFICATE = 10;
+  BLOCK_SCOPE = 11;
+  BLOCK_TEAMID = 12;
+  BLOCK_SIGNINGID = 13;
+  BLOCK_CDHASH = 14;
+  BUNDLE_BINARY = 15;
+}
+
+message Certificate {
+  string sha256 = 1;
+  string cn = 2;
+  string org = 3;
+  string ou = 4;
+  uint32 valid_from = 5;
+  uint32 valid_until = 6;
+}
+
+message Event {
+  string file_sha256 = 1;
+  string file_path = 2;
+  string file_name = 3;
+  string executing_user = 4;
+  double execution_time = 5; // Seconds since UNIX epoch
+  repeated string logged_in_users = 6;
+  repeated string current_sessions = 7;
+  Decision decision = 8;
+
+  string file_bundle_id = 9;
+  string file_bundle_path = 10;
+  string file_bundle_executable_rel_path = 11;
+  string file_bundle_name = 12;
+  string file_bundle_version = 13;
+  string file_bundle_version_string = 14;
+  string file_bundle_hash = 15;
+  uint64 file_bundle_hash_millis = 16;
+  uint64 file_bundle_binary_count = 17;
+
+  // pid_t is an int32
+  int32 pid = 18;
+  int32 ppid = 19;
+  string parent_name = 20;
+
+  string team_id = 21;
+  string signing_id = 22;
+  string cdhash = 23;
+
+  string quarantine_data_url = 24;
+  string quarantine_referer_url = 25;
+  // Seconds since UNIX epoch. This field would ideally be an int64 but the protobuf library
+  // encodes that as a string, unlike NSJSONSerialization
+  uint32 quarantine_timestamp = 26;
+  string quarantine_agent_bundle_id = 27;
+
+  repeated Certificate signing_chain = 28;
+}
+
+message EventUploadRequest {
+  repeated Event events = 1;
+}
+
+message EventUploadResponse {
+  // A list of SHA-256's of bundle binaries that need to be uploaded.
+  repeated string event_upload_bundle_binaries = 1;
+}
+
+enum Policy {
+  option allow_alias = true;
+
+  POLICY_UNKNOWN = 0;
+  ALLOWLIST = 1;
+  ALLOWLIST_COMPILER = 2;
+  BLOCKLIST = 3;
+  SILENT_BLOCKLIST = 4;
+  REMOVE = 5;
+
+  // These enum values are deprecated and remain here for backward compatibility.
+  WHITELIST = 1;
+  WHITELIST_COMPILER = 2;
+  BLACKLIST = 3;
+  SILENT_BLACKLIST = 4;
+}
+
+enum RuleType {
+  RULETYPE_UNKNOWN = 0;
+  BINARY = 1;
+  CERTIFICATE = 2;
+  TEAMID = 3;
+  SIGNINGID = 4;
+  CDHASH = 5;
+}
+
+message Rule {
+  string identifier = 1;
+  string sha256 = 2;  // This field is deprecated, use identifier!
+  Policy policy = 3;
+  RuleType rule_type = 4;
+
+  // For BLOCK_* rules, this will override the default block message shown to users.
+  string custom_msg = 5;
+
+  // For BLOCK_* rules, this will override the URL used by the "Open" button in the UI.
+  // The same format values used by the EventDetailURL configuration value can be used here.
+  // See: https://santa.dev/deployment/configuration#eventdetailurl
+  string custom_url = 6;
+}
+
+message RuleDownloadRequest {
+  string cursor = 1;
+}
+
+message RuleDownloadResponse {
+  repeated Rule rules = 1;
+  string cursor = 2;
+}
+
+message PostflightRequest {
+  uint64 rules_received = 1;
+  uint64 rules_processed = 2;
+}
+
+message PostflightResponse { }
+

@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santasyncservice/SNTSyncPreflight.h"
+#include "Source/common/SNTCommonEnums.h"
 
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
@@ -21,17 +22,16 @@
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTSystemInfo.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/String.h"
 #import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
-// Return the given value or nil if not of the expected given class
-static id EnsureType(id val, Class c) {
-  if ([val isKindOfClass:c]) {
-    return val;
-  } else {
-    return nil;
-  }
-}
+#include <google/protobuf/arena.h>
+#include "Source/santasyncservice/syncv1.pb.h"
+namespace pbv1 = ::santa::sync::v1;
+
+using santa::common::NSStringToUTF8String;
+using santa::common::StringToNSString;
 
 /*
 
@@ -74,34 +74,37 @@ The following table expands upon the above logic to list most of the permutation
 }
 
 - (BOOL)sync {
-  NSMutableDictionary *requestDict = [NSMutableDictionary dictionary];
-  requestDict[kSerialNumber] = [SNTSystemInfo serialNumber];
-  requestDict[kHostname] = [SNTSystemInfo longHostname];
-  requestDict[kOSVer] = [SNTSystemInfo osVersion];
-  requestDict[kOSBuild] = [SNTSystemInfo osBuild];
-  requestDict[kModelIdentifier] = [SNTSystemInfo modelIdentifier];
-  requestDict[kSantaVer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
-  requestDict[kPrimaryUser] = self.syncState.machineOwner;
+  google::protobuf::Arena arena;
+  auto req = google::protobuf::Arena::Create<::pbv1::PreflightRequest>(&arena);
+  req->set_serial_number(NSStringToUTF8String([SNTSystemInfo serialNumber]));
+  req->set_hostname(NSStringToUTF8String([SNTSystemInfo longHostname]));
+  req->set_os_version(NSStringToUTF8String([SNTSystemInfo osVersion]));
+  req->set_os_build(NSStringToUTF8String([SNTSystemInfo osBuild]));
+  req->set_model_identifier(NSStringToUTF8String([SNTSystemInfo modelIdentifier]));
+  req->set_santa_version(
+    NSStringToUTF8String([[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]));
+  req->set_primary_user(NSStringToUTF8String(self.syncState.machineOwner));
+
   if (self.syncState.pushNotificationsToken) {
-    requestDict[kFCMToken] = self.syncState.pushNotificationsToken;
+    req->set_push_notification_token(NSStringToUTF8String(self.syncState.pushNotificationsToken));
   }
 
   id<SNTDaemonControlXPC> rop = [self.daemonConn synchronousRemoteObjectProxy];
 
   [rop databaseRuleCounts:^(struct RuleCounts counts) {
-    requestDict[kBinaryRuleCount] = @(counts.binary);
-    requestDict[kCertificateRuleCount] = @(counts.certificate);
-    requestDict[kCompilerRuleCount] = @(counts.compiler);
-    requestDict[kTransitiveRuleCount] = @(counts.transitive);
-    requestDict[kTeamIDRuleCount] = @(counts.teamID);
-    requestDict[kSigningIDRuleCount] = @(counts.signingID);
-    requestDict[kCDHashRuleCount] = @(counts.cdhash);
+    req->set_binary_rule_count(uint32(counts.binary));
+    req->set_certificate_rule_count(uint32(counts.certificate));
+    req->set_compiler_rule_count(uint32(counts.compiler));
+    req->set_transitive_rule_count(uint32(counts.transitive));
+    req->set_teamid_rule_count(uint32(counts.teamID));
+    req->set_signingid_rule_count(uint32(counts.signingID));
+    req->set_cdhash_rule_count(uint32(counts.cdhash));
   }];
 
   [rop clientMode:^(SNTClientMode cm) {
     switch (cm) {
-      case SNTClientModeMonitor: requestDict[kClientMode] = kClientModeMonitor; break;
-      case SNTClientModeLockdown: requestDict[kClientMode] = kClientModeLockdown; break;
+      case SNTClientModeMonitor: req->set_client_mode(::pbv1::MONITOR); break;
+      case SNTClientModeLockdown: req->set_client_mode(::pbv1::LOCKDOWN); break;
       default: break;
     }
   }];
@@ -115,59 +118,74 @@ The following table expands upon the above logic to list most of the permutation
   if (requestSyncType == SNTSyncTypeClean || requestSyncType == SNTSyncTypeCleanAll) {
     SLOGD(@"%@ sync requested by user",
           (requestSyncType == SNTSyncTypeCleanAll) ? @"Clean All" : @"Clean");
-    requestDict[kRequestCleanSync] = @YES;
+    req->set_request_clean_sync(true);
   }
 
-  NSURLRequest *req = [self requestWithDictionary:requestDict];
-  NSDictionary *resp = [self performRequest:req];
+  ::pbv1::PreflightResponse resp;
+  NSError *err = [self performRequest:[self requestWithMessage:req] intoMessage:&resp timeout:30];
 
-  if (!resp) return NO;
+  if (err) {
+    SLOGE(@"Failed preflight request: %@", err);
+    return NO;
+  }
 
-  self.syncState.enableBundles = EnsureType(resp[kEnableBundles], [NSNumber class])
-                                   ?: EnsureType(resp[kEnableBundlesDeprecated], [NSNumber class]);
-  self.syncState.enableTransitiveRules = EnsureType(resp[kEnableTransitiveRules], [NSNumber class])
-                                   ?: EnsureType(resp[kEnableTransitiveRulesDeprecated], [NSNumber class])
-                                   ?: EnsureType(resp[kEnableTransitiveRulesSuperDeprecated], [NSNumber class]);
-  self.syncState.enableAllEventUpload = EnsureType(resp[kEnableAllEventUpload], [NSNumber class]);
-  self.syncState.disableUnknownEventUpload =
-    EnsureType(resp[kDisableUnknownEventUpload], [NSNumber class]);
-
-  self.syncState.eventBatchSize =
-    [EnsureType(resp[kBatchSize], [NSNumber class]) unsignedIntegerValue] ?: kDefaultEventBatchSize;
+  self.syncState.enableBundles = @(resp.enable_bundles() || resp.deprecated_bundles_enabled());
+  self.syncState.enableTransitiveRules =
+    @(resp.enable_transitive_rules() || resp.deprecated_enabled_transitive_whitelisting() ||
+      resp.deprecated_transitive_whitelisting_enabled());
+  self.syncState.enableAllEventUpload = @(resp.enable_all_event_upload());
+  self.syncState.disableUnknownEventUpload = @(resp.disable_unknown_event_upload());
+  self.syncState.eventBatchSize = resp.batch_size();
 
   // Don't let these go too low
-  NSUInteger value =
-    [EnsureType(resp[kFCMFullSyncInterval], [NSNumber class]) unsignedIntegerValue];
+  auto value = resp.push_notification_full_sync_interval();
+  if (value == 0) {
+    value = resp.deprecated_fcm_full_sync_interval();
+  }
   self.syncState.pushNotificationsFullSyncInterval =
     (value < kDefaultFullSyncInterval) ? kDefaultPushNotificationsFullSyncInterval : value;
 
-  value = [EnsureType(resp[kFCMGlobalRuleSyncDeadline], [NSNumber class]) unsignedIntegerValue];
-  self.syncState.pushNotificationsGlobalRuleSyncDeadline =
-    (value < 60) ? kDefaultPushNotificationsGlobalRuleSyncDeadline : value;
+  value = resp.push_notification_global_rule_sync_interval();
+  if (value == 0) {
+    value = resp.deprecated_fcm_global_rule_sync_deadline();
+  }
+  self.syncState.pushNotificationsFullSyncInterval =
+    (value < kDefaultFullSyncInterval) ? kDefaultPushNotificationsFullSyncInterval : value;
 
   // Check if our sync interval has changed
-  value = [EnsureType(resp[kFullSyncInterval], [NSNumber class]) unsignedIntegerValue];
+  value = resp.full_sync_interval();
   self.syncState.fullSyncInterval = (value < 60) ? kDefaultFullSyncInterval : value;
 
-  if ([resp[kClientMode] isEqual:kClientModeMonitor]) {
-    self.syncState.clientMode = SNTClientModeMonitor;
-  } else if ([resp[kClientMode] isEqual:kClientModeLockdown]) {
-    self.syncState.clientMode = SNTClientModeLockdown;
+  switch (resp.client_mode()) {
+    case ::pbv1::MONITOR: self.syncState.clientMode = SNTClientModeMonitor; break;
+    case ::pbv1::LOCKDOWN: self.syncState.clientMode = SNTClientModeLockdown; break;
+    default: break;
   }
 
-  self.syncState.allowlistRegex =
-    EnsureType(resp[kAllowedPathRegex], [NSString class])
-      ?: EnsureType(resp[kAllowedPathRegexDeprecated], [NSString class]);
+  if (resp.has_allowed_path_regex()) {
+    self.syncState.allowlistRegex = StringToNSString(resp.allowed_path_regex());
+  } else if (resp.has_deprecated_whitelist_regex()) {
+    self.syncState.allowlistRegex = StringToNSString(resp.deprecated_whitelist_regex());
+  }
 
-  self.syncState.blocklistRegex =
-    EnsureType(resp[kBlockedPathRegex], [NSString class])
-      ?: EnsureType(resp[kBlockedPathRegexDeprecated], [NSString class]);
+  if (resp.has_blocked_path_regex()) {
+    self.syncState.blocklistRegex = StringToNSString(resp.blocked_path_regex());
+  } else if (resp.has_deprecated_blacklist_regex()) {
+    self.syncState.blocklistRegex = StringToNSString(resp.deprecated_blacklist_regex());
+  }
 
-  self.syncState.blockUSBMount = EnsureType(resp[kBlockUSBMount], [NSNumber class]);
-  self.syncState.remountUSBMode = EnsureType(resp[kRemountUSBMode], [NSArray class]);
+  if (resp.has_block_usb_mount()) {
+    self.syncState.blockUSBMount = @(resp.block_usb_mount());
+  }
 
-  self.syncState.overrideFileAccessAction =
-    EnsureType(resp[kOverrideFileAccessAction], [NSString class]);
+  self.syncState.remountUSBMode = [NSMutableArray array];
+  for (auto mode : resp.remount_usb_mode()) {
+    [(NSMutableArray *)self.syncState.remountUSBMode addObject:StringToNSString(mode)];
+  }
+
+  if (resp.has_override_file_access_action()) {
+    self.syncState.overrideFileAccessAction = StringToNSString(resp.override_file_access_action());
+  }
 
   // Default sync type is SNTSyncTypeNormal
   //
@@ -187,33 +205,31 @@ The following table expands upon the above logic to list most of the permutation
   // If kSyncType response key exists, it overrides the kCleanSyncDeprecated value
   // First check if the kSyncType reponse key exists. If so, it takes precedence
   // over the kCleanSyncDeprecated key.
-  NSString *responseSyncType = [EnsureType(resp[kSyncType], [NSString class]) lowercaseString];
-  if (responseSyncType) {
-    if ([responseSyncType isEqualToString:@"clean"]) {
-      // If the client wants to Clean All, this takes precedence. The server
-      // cannot override the client wanting to remove all rules.
+  auto responseSyncType = resp.sync_type();
+  if (!responseSyncType.empty()) {
+    // If the client wants to Clean All, this takes precedence. The server
+    // cannot override the client wanting to remove all rules.
+    if (responseSyncType == "clean") {
+      SLOGD(@"Clean sync requested by server");
       if (requestSyncType == SNTSyncTypeCleanAll) {
         self.syncState.syncType = SNTSyncTypeCleanAll;
       } else {
         self.syncState.syncType = SNTSyncTypeClean;
       }
-    } else if ([responseSyncType isEqualToString:@"clean_all"]) {
+    } else if (responseSyncType == "clean_all") {
       self.syncState.syncType = SNTSyncTypeCleanAll;
     }
-  } else if ([EnsureType(resp[kCleanSyncDeprecated], [NSNumber class]) boolValue]) {
+  } else if (resp.deprecated_clean_sync()) {
     // If the deprecated key is set, the type of sync clean performed should be
     // the type that was requested. This must be set appropriately so that it
     // can be propagated during the Rule Download stage so SNTRuleTable knows
     // which rules to delete.
+    SLOGD(@"Clean sync requested by server");
     if (requestSyncType == SNTSyncTypeCleanAll) {
       self.syncState.syncType = SNTSyncTypeCleanAll;
     } else {
       self.syncState.syncType = SNTSyncTypeClean;
     }
-  }
-
-  if (self.syncState.syncType != SNTSyncTypeNormal) {
-    SLOGD(@"Clean sync requested by server");
   }
 
   return YES;

@@ -20,9 +20,17 @@
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/String.h"
 #import "Source/santasyncservice/SNTPushNotificationsTracker.h"
 #import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
+
+#include <google/protobuf/arena.h>
+#include "Source/santasyncservice/syncv1.pb.h"
+namespace pbv1 = ::santa::sync::v1;
+
+using santa::common::NSStringToUTF8String;
+using santa::common::StringToNSString;
 
 SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
   switch (syncType) {
@@ -89,37 +97,82 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
 // Note that rules from the server are filtered.  We only keep those whose rule_type
 // is either BINARY or CERTIFICATE.  PACKAGE rules are dropped.
 - (NSArray<SNTRule *> *)downloadNewRulesFromServer {
+  google::protobuf::Arena arena;
+
   self.syncState.rulesReceived = 0;
   NSMutableArray<SNTRule *> *newRules = [NSMutableArray array];
-  NSString *cursor = nil;
-  do {
-    NSDictionary *requestDict = cursor ? @{kCursor : cursor} : @{};
-    NSDictionary *response = [self performRequest:[self requestWithDictionary:requestDict]];
+  std::string cursor;
 
-    if (![response isKindOfClass:[NSDictionary class]] ||
-        ![response[kRules] isKindOfClass:[NSArray class]]) {
+  do {
+    auto req = google::protobuf::Arena::Create<::pbv1::RuleDownloadRequest>(&arena);
+    if (!cursor.empty()) {
+      req->set_cursor(cursor);
+    }
+    ::pbv1::RuleDownloadResponse response;
+    NSError *err = [self performRequest:[self requestWithMessage:req]
+                            intoMessage:&response
+                                timeout:30];
+
+    if (err) {
+      SLOGE(@"Error downloading rules: %@", err);
       return nil;
     }
 
-    NSArray<NSDictionary *> *rules = response[kRules];
-
-    for (NSDictionary *ruleDict in rules) {
-      SNTRule *rule = [[SNTRule alloc] initWithDictionary:ruleDict];
-      if (!rule) {
-        SLOGD(@"Ignoring bad rule: %@", ruleDict);
+    for (const ::pbv1::Rule &rule : response.rules()) {
+      SNTRule *r = [self ruleFromProtoRule:rule];
+      if (!r) {
+        SLOGD(@"Ignoring bad rule: %s", rule.Utf8DebugString().c_str());
         continue;
       }
-      [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
-      [newRules addObject:rule];
+      // [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
+      [newRules addObject:r];
     }
-    SLOGI(@"Received %lu rules", (unsigned long)rules.count);
-    cursor = response[kCursor];
-    self.syncState.rulesReceived += rules.count;
-  } while (cursor);
+
+    cursor = response.cursor();
+    SLOGI(@"Received %lu rules", (unsigned long)response.rules_size());
+    self.syncState.rulesReceived += response.rules_size();
+  } while (!cursor.empty());
 
   self.syncState.rulesProcessed = newRules.count;
 
   return newRules;
+}
+
+- (SNTRule *)ruleFromProtoRule:(::pbv1::Rule)rule {
+  SNTRule *r = [[SNTRule alloc] init];
+
+  r.identifier = StringToNSString(rule.identifier());
+  if (!r.identifier.length) r.identifier = StringToNSString(rule.sha256());
+
+  SNTRuleState state;
+  switch (rule.policy()) {
+    case ::pbv1::ALLOWLIST: state = SNTRuleStateAllow; break;
+    case ::pbv1::ALLOWLIST_COMPILER: state = SNTRuleStateAllowCompiler; break;
+    case ::pbv1::BLOCKLIST: state = SNTRuleStateBlock; break;
+    case ::pbv1::SILENT_BLOCKLIST: state = SNTRuleStateSilentBlock; break;
+    case ::pbv1::REMOVE: state = SNTRuleStateRemove; break;
+    default: LOGE(@"Failed to process rule with unknown policy: %d", rule.policy()); return nil;
+  }
+  r.state = state;
+
+  SNTRuleType type;
+  switch (rule.rule_type()) {
+    case ::pbv1::BINARY: type = SNTRuleTypeBinary; break;
+    case ::pbv1::CERTIFICATE: type = SNTRuleTypeCertificate; break;
+    case ::pbv1::TEAMID: type = SNTRuleTypeTeamID; break;
+    case ::pbv1::SIGNINGID: type = SNTRuleTypeSigningID; break;
+    case ::pbv1::CDHASH: type = SNTRuleTypeCDHash; break;
+    default: LOGE(@"Failed to process rule with unknown type: %d", rule.rule_type()); return nil;
+  }
+  r.type = type;
+
+  auto custom_msg = rule.custom_msg();
+  if (!custom_msg.empty()) r.customMsg = StringToNSString(custom_msg);
+
+  auto custom_url = rule.custom_url();
+  if (!custom_url.empty()) r.customURL = StringToNSString(custom_url);
+
+  return r;
 }
 
 // Send out push notifications for allowed bundles/binaries whose rule download was preceded by

@@ -1,10 +1,21 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_command_line_application")
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("//:helper.bzl", "santa_unit_test")
 
 licenses(["notice"])
 
 package(
     default_visibility = ["//:santa_package_group"],
+)
+
+proto_library(
+    name = "sync_v1_proto",
+    srcs = ["syncv1.proto"],
+)
+
+cc_proto_library(
+    name = "sync_v1_cc_proto",
+    deps = [":sync_v1_proto"],
 )
 
 objc_library(
@@ -27,18 +38,18 @@ objc_library(
         "SNTPushNotificationsTracker.h",
         "SNTPushNotificationsTracker.m",
         "SNTSyncEventUpload.h",
-        "SNTSyncEventUpload.m",
+        "SNTSyncEventUpload.mm",
         "SNTSyncLogging.h",
         "SNTSyncLogging.m",
         "SNTSyncManager.m",
         "SNTSyncPostflight.h",
-        "SNTSyncPostflight.m",
+        "SNTSyncPostflight.mm",
         "SNTSyncPreflight.h",
-        "SNTSyncPreflight.m",
+        "SNTSyncPreflight.mm",
         "SNTSyncRuleDownload.h",
-        "SNTSyncRuleDownload.m",
+        "SNTSyncRuleDownload.mm",
         "SNTSyncStage.h",
-        "SNTSyncStage.m",
+        "SNTSyncStage.mm",
         "SNTSyncState.h",
         "SNTSyncState.m",
     ],
@@ -47,6 +58,7 @@ objc_library(
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",
+        ":sync_v1_cc_proto",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTFileInfo",
@@ -58,9 +70,11 @@ objc_library(
         "//Source/common:SNTSystemInfo",
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
+        "//Source/common:String",
         "@MOLAuthenticatingURLSession",
         "@MOLCertificate",
         "@MOLXPCConnection",
+        "@com_google_protobuf//src/google/protobuf/json",
     ],
 )
 
@@ -77,17 +91,17 @@ santa_unit_test(
         "SNTPushNotificationsTracker.h",
         "SNTPushNotificationsTracker.m",
         "SNTSyncEventUpload.h",
-        "SNTSyncEventUpload.m",
+        "SNTSyncEventUpload.mm",
         "SNTSyncLogging.h",
         "SNTSyncLogging.m",
         "SNTSyncPostflight.h",
-        "SNTSyncPostflight.m",
+        "SNTSyncPostflight.mm",
         "SNTSyncPreflight.h",
-        "SNTSyncPreflight.m",
+        "SNTSyncPreflight.mm",
         "SNTSyncRuleDownload.h",
-        "SNTSyncRuleDownload.m",
+        "SNTSyncRuleDownload.mm",
         "SNTSyncStage.h",
-        "SNTSyncStage.m",
+        "SNTSyncStage.mm",
         "SNTSyncState.h",
         "SNTSyncState.m",
         "SNTSyncTest.m",
@@ -100,6 +114,7 @@ santa_unit_test(
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",
+        ":sync_v1_cc_proto",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
         "//Source/common:SNTDropRootPrivs",
@@ -111,10 +126,12 @@ santa_unit_test(
         "//Source/common:SNTSyncConstants",
         "//Source/common:SNTSystemInfo",
         "//Source/common:SNTXPCControlInterface",
+        "//Source/common:String",
         "@MOLAuthenticatingURLSession",
         "@MOLCertificate",
         "@MOLXPCConnection",
         "@OCMock",
+        "@com_google_protobuf//src/google/protobuf/json",
     ],
 )
 
