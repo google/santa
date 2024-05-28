@@ -78,9 +78,11 @@ using santa::common::NSStringToUTF8String;
 
     // A list of bundle hashes that require their related binary events to be uploaded.
     if (response.event_upload_bundle_binaries_size()) {
-      self.syncState.bundleBinaryRequests = [NSMutableArray arrayWithCapacity:response.event_upload_bundle_binaries_size()];
+      self.syncState.bundleBinaryRequests =
+        [NSMutableArray arrayWithCapacity:response.event_upload_bundle_binaries_size()];
       for (auto bundle_binary : response.event_upload_bundle_binaries()) {
-        [(NSMutableArray *)self.syncState.bundleBinaryRequests addObject:santa::common::StringToNSString(bundle_binary)];
+        [(NSMutableArray *)self.syncState.bundleBinaryRequests
+          addObject:santa::common::StringToNSString(bundle_binary)];
       }
     }
     SLOGI(@"Uploaded %d events", uploadEvents->size());

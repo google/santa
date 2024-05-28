@@ -199,7 +199,8 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
   [tracker removeNotificationsForHashes:processed];
 }
 
-- (void)processBundleNotificationsForRule:(SNTRule *)rule fromProtoRule:(const ::pbv1::Rule *)protoRule {
+- (void)processBundleNotificationsForRule:(SNTRule *)rule
+                            fromProtoRule:(const ::pbv1::Rule *)protoRule {
   // Check rule for extra notification related info.
   if (rule.state == SNTRuleStateAllow || rule.state == SNTRuleStateAllowCompiler) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
