@@ -104,7 +104,7 @@ santa_unit_test(
         "SNTSyncStage.mm",
         "SNTSyncState.h",
         "SNTSyncState.m",
-        "SNTSyncTest.m",
+        "SNTSyncTest.mm",
     ],
     resources = glob([
         "testdata/*.json",

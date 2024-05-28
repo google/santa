@@ -217,7 +217,7 @@
 
   SNTSyncStage *sut = [[SNTSyncStage alloc] initWithState:self.syncState];
   NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u1];
-  XCTAssertTrue([sut performRequest:req]);
+  XCTAssertNil([sut performRequest:req intoMessage:NULL timeout:5]);
   XCTAssertEqualObjects(self.syncState.xsrfToken, @"my-xsrf-token");
 }
 
@@ -260,7 +260,7 @@
 
   SNTSyncStage *sut = [[SNTSyncStage alloc] initWithState:self.syncState];
   NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u1];
-  XCTAssertTrue([sut performRequest:req]);
+  XCTAssertNil([sut performRequest:req intoMessage:NULL timeout:5]);
   XCTAssertEqualObjects(self.syncState.xsrfToken, @"my-xsrf-token");
 }
 

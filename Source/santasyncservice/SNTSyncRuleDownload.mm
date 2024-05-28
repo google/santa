@@ -124,7 +124,7 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
         SLOGD(@"Ignoring bad rule: %s", rule.Utf8DebugString().c_str());
         continue;
       }
-      // [self processBundleNotificationsForRule:rule fromDictionary:ruleDict];
+      [self processBundleNotificationsForRule:r fromProtoRule:&rule];
       [newRules addObject:r];
     }
 
@@ -199,12 +199,12 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
   [tracker removeNotificationsForHashes:processed];
 }
 
-- (void)processBundleNotificationsForRule:(SNTRule *)rule fromDictionary:(NSDictionary *)dict {
+- (void)processBundleNotificationsForRule:(SNTRule *)rule fromProtoRule:(const ::pbv1::Rule *)protoRule {
   // Check rule for extra notification related info.
   if (rule.state == SNTRuleStateAllow || rule.state == SNTRuleStateAllowCompiler) {
     // primaryHash is the bundle hash if there was a bundle hash included in the rule, otherwise
     // it is simply the binary hash.
-    NSString *primaryHash = dict[kFileBundleHash];
+    NSString *primaryHash = StringToNSString(protoRule->file_bundle_hash());
     if (primaryHash.length != 64) {
       primaryHash = rule.identifier;
     }
@@ -213,7 +213,7 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
     // number of rules associated with the primary hash that still need to be downloaded and added.
     [[SNTPushNotificationsTracker tracker]
       decrementPendingRulesForHash:primaryHash
-                    totalRuleCount:dict[kFileBundleBinaryCount]];
+                    totalRuleCount:@(protoRule->file_bundle_binary_count())];
   }
 }
 

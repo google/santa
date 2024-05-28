@@ -80,19 +80,6 @@ using santa::common::NSStringToUTF8String;
   return [self requestWithData:requestBody];
 }
 
-- (NSMutableURLRequest *)requestWithDictionary:(NSDictionary *)dictionary {
-  NSData *requestBody = [NSData data];
-  if (dictionary) {
-    NSError *error;
-    requestBody = [NSJSONSerialization dataWithJSONObject:dictionary options:0 error:&error];
-    if (error) {
-      SLOGD(@"Failed to encode JSON request: %@", error);
-      return nil;
-    }
-  }
-  return [self requestWithData:requestBody];
-}
-
 - (NSMutableURLRequest *)requestWithData:(NSData *)requestBody {
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:[self stageURL]];
   [req setHTTPMethod:@"POST"];
@@ -225,25 +212,6 @@ using santa::common::NSStringToUTF8String;
   }
 
   return nil;
-}
-
-// Returns nil when there is a server connection issue.  For other errors, such as
-// an empty response or an unparseable response, an empty dictionary is returned.
-- (NSDictionary *)performRequest:(NSURLRequest *)request timeout:(NSTimeInterval)timeout {
-  NSData *data = [self dataFromRequest:request timeout:timeout];
-  if (data.length == 0) return @{};
-
-  NSError *error;
-  NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:[self stripXssi:data]
-                                                       options:0
-                                                         error:&error];
-  if (error) SLOGD(@"Failed to decode JSON response: %@", error);
-
-  return dict ?: @{};
-}
-
-- (NSDictionary *)performRequest:(NSURLRequest *)request {
-  return [self performRequest:request timeout:30];
 }
 
 #pragma mark Internal Helpers

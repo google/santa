@@ -52,14 +52,6 @@
 
 #pragma mark Internal Helpers
 
-/**
-  Creates an NSMutableURLRequest pointing at the URL for this stage and containing the JSON-encoded
-  data passed in as a dictionary.
-
-  @param dictionary The values to POST to the server.
-*/
-- (nullable NSMutableURLRequest *)requestWithDictionary:(nullable NSDictionary *)dictionary;
-
 #ifdef __cplusplus
 /**
   Creates an NSMutableURLRequest pointing at the URL for this stage and containing the JSON-encoded
@@ -83,20 +75,5 @@
                          intoMessage:(nullable google::protobuf::Message *)message
                              timeout:(NSTimeInterval)timeout;
 #endif
-
-/**
-  Perform the passed in request and attempt to parse the response as JSON into a dictionary.
-
-  @param request The request to perform
-  @param timeout The number of seconds to allow the request to run before timing out.
-
-  @return A populated dictionary if the response data was JSON, an empty dictionary if not and nil
-          if the request failed for any reason.
-*/
-- (nullable NSDictionary *)performRequest:(nonnull NSURLRequest *)request
-                                  timeout:(NSTimeInterval)timeout;
-
-/** Convenience version of performRequest:timeout: using a 30s timeout. */
-- (nullable NSDictionary *)performRequest:(nonnull NSURLRequest *)request;
 
 @end

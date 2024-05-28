@@ -205,7 +205,11 @@ message Rule {
   // See: https://santa.dev/deployment/configuration#eventdetailurl
   string custom_url = 5;
 
-  string deprecated_sha256 = 1000 [deprecated=true];  // Use identifier instead
+  // These two fields are used for bundle binaries.
+  string file_bundle_hash = 6;
+  uint32 file_bundle_binary_count = 7;
+
+  string deprecated_sha256 = 1000 [json_name="sha256", deprecated=true];  // Use identifier instead
 }
 
 message RuleDownloadRequest {

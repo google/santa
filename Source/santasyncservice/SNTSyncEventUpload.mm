@@ -13,7 +13,6 @@
 ///    limitations under the License.
 
 #import "Source/santasyncservice/SNTSyncEventUpload.h"
-#include <Foundation/Foundation.h>
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -68,12 +67,22 @@ using santa::common::NSStringToUTF8String;
 
   if (self.syncState.syncType == SNTSyncTypeNormal ||
       [[SNTConfigurator configurator] enableCleanSyncEventUpload]) {
-    NSDictionary *r = [self performRequest:[self requestWithMessage:req]];
-    if (!r) return NO;
+    ::pbv1::EventUploadResponse response;
+    NSError *err = [self performRequest:[self requestWithMessage:req]
+                            intoMessage:&response
+                                timeout:30];
+    if (err) {
+      SLOGE(@"Failed to upload events: %@", err);
+      return NO;
+    }
 
     // A list of bundle hashes that require their related binary events to be uploaded.
-    self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
-
+    if (response.event_upload_bundle_binaries_size()) {
+      self.syncState.bundleBinaryRequests = [NSMutableArray arrayWithCapacity:response.event_upload_bundle_binaries_size()];
+      for (auto bundle_binary : response.event_upload_bundle_binaries()) {
+        [(NSMutableArray *)self.syncState.bundleBinaryRequests addObject:santa::common::StringToNSString(bundle_binary)];
+      }
+    }
     SLOGI(@"Uploaded %d events", uploadEvents->size());
   }
 
