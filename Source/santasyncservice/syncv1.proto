@@ -194,17 +194,18 @@ enum RuleType {
 
 message Rule {
   string identifier = 1;
-  string sha256 = 2;  // This field is deprecated, use identifier!
-  Policy policy = 3;
-  RuleType rule_type = 4;
+  Policy policy = 2;
+  RuleType rule_type = 3;
 
   // For BLOCK_* rules, this will override the default block message shown to users.
-  string custom_msg = 5;
+  string custom_msg = 4;
 
   // For BLOCK_* rules, this will override the URL used by the "Open" button in the UI.
   // The same format values used by the EventDetailURL configuration value can be used here.
   // See: https://santa.dev/deployment/configuration#eventdetailurl
-  string custom_url = 6;
+  string custom_url = 5;
+
+  string deprecated_sha256 = 1000 [deprecated=true];  // Use identifier instead
 }
 
 message RuleDownloadRequest {

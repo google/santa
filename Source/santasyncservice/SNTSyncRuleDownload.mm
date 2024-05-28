@@ -142,7 +142,7 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
   SNTRule *r = [[SNTRule alloc] init];
 
   r.identifier = StringToNSString(rule.identifier());
-  if (!r.identifier.length) r.identifier = StringToNSString(rule.sha256());
+  if (!r.identifier.length) r.identifier = StringToNSString(rule.deprecated_sha256());
 
   SNTRuleState state;
   switch (rule.policy()) {
