@@ -50,6 +50,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   // Ensure the client subscribes to expected event types
   std::set<es_event_type_t> expectedEventSubs{
     ES_EVENT_TYPE_AUTH_KEXTLOAD,
+    ES_EVENT_TYPE_AUTH_SIGNAL,
     ES_EVENT_TYPE_AUTH_UNLINK,
     ES_EVENT_TYPE_AUTH_RENAME,
   };
@@ -213,6 +214,28 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   // Check KEXTLOAD tamper events
   {
     esMsg.event_type = ES_EVENT_TYPE_AUTH_KEXTLOAD;
+
+    for (const auto &kv : kextIdToResult) {
+      Message msg(mockESApi, &esMsg);
+      esMsg.event.kextload.identifier = *kv.first;
+
+      [mockTamperClient
+             handleMessage:std::move(msg)
+        recordEventMetrics:^(EventDisposition d) {
+          XCTAssertEqual(d, kv.second == ES_AUTH_RESULT_DENY ? EventDisposition::kProcessed
+                                                             : EventDisposition::kDropped);
+          dispatch_semaphore_signal(semaMetrics);
+        }];
+
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
+      XCTAssertEqual(gotAuthResult, kv.second);
+      XCTAssertEqual(gotCachable, kv.second == ES_AUTH_RESULT_ALLOW);
+    }
+  }
+
+  // Check SIGNAL tamper events
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_SIGNAL;
 
     for (const auto &kv : kextIdToResult) {
       Message msg(mockESApi, &esMsg);
