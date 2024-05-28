@@ -166,10 +166,10 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
   }
   r.type = type;
 
-  auto custom_msg = rule.custom_msg();
+  std::string custom_msg = rule.custom_msg();
   if (!custom_msg.empty()) r.customMsg = StringToNSString(custom_msg);
 
-  auto custom_url = rule.custom_url();
+  std::string custom_url = rule.custom_url();
   if (!custom_url.empty()) r.customURL = StringToNSString(custom_url);
 
   return r;

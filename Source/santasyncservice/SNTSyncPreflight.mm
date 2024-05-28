@@ -138,17 +138,13 @@ The following table expands upon the above logic to list most of the permutation
   self.syncState.eventBatchSize = resp.batch_size();
 
   // Don't let these go too low
-  auto value = resp.push_notification_full_sync_interval();
-  if (value == 0) {
-    value = resp.deprecated_fcm_full_sync_interval();
-  }
+  uint64_t value =
+    resp.push_notification_full_sync_interval() ?: resp.deprecated_fcm_full_sync_interval();
   self.syncState.pushNotificationsFullSyncInterval =
     (value < kDefaultFullSyncInterval) ? kDefaultPushNotificationsFullSyncInterval : value;
 
-  value = resp.push_notification_global_rule_sync_deadline();
-  if (value == 0) {
-    value = resp.deprecated_fcm_global_rule_sync_deadline();
-  }
+  value = resp.push_notification_global_rule_sync_deadline()
+            ?: resp.deprecated_fcm_global_rule_sync_deadline();
   self.syncState.pushNotificationsGlobalRuleSyncDeadline =
     (value < kDefaultPushNotificationsGlobalRuleSyncDeadline)
       ? kDefaultPushNotificationsGlobalRuleSyncDeadline
@@ -181,7 +177,7 @@ The following table expands upon the above logic to list most of the permutation
   }
 
   self.syncState.remountUSBMode = [NSMutableArray array];
-  for (auto mode : resp.remount_usb_mode()) {
+  for (std::string mode : resp.remount_usb_mode()) {
     [(NSMutableArray *)self.syncState.remountUSBMode addObject:StringToNSString(mode)];
   }
 
@@ -207,7 +203,7 @@ The following table expands upon the above logic to list most of the permutation
   // If kSyncType response key exists, it overrides the kCleanSyncDeprecated value
   // First check if the kSyncType reponse key exists. If so, it takes precedence
   // over the kCleanSyncDeprecated key.
-  auto responseSyncType = resp.sync_type();
+  std::string responseSyncType = resp.sync_type();
   if (!responseSyncType.empty()) {
     // If the client wants to Clean All, this takes precedence. The server
     // cannot override the client wanting to remove all rules.

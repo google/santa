@@ -56,7 +56,7 @@ using santa::common::NSStringToUTF8String;
 - (BOOL)uploadEvents:(NSArray *)events {
   google::protobuf::Arena arena;
   auto req = google::protobuf::Arena::Create<::pbv1::EventUploadRequest>(&arena);
-  auto uploadEvents = req->mutable_events();
+  google::protobuf::RepeatedPtrField<::pbv1::Event> *uploadEvents = req->mutable_events();
 
   NSMutableSet *eventIds = [NSMutableSet setWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
@@ -80,7 +80,7 @@ using santa::common::NSStringToUTF8String;
     if (response.event_upload_bundle_binaries_size()) {
       self.syncState.bundleBinaryRequests =
         [NSMutableArray arrayWithCapacity:response.event_upload_bundle_binaries_size()];
-      for (auto bundle_binary : response.event_upload_bundle_binaries()) {
+      for (std::string bundle_binary : response.event_upload_bundle_binaries()) {
         [(NSMutableArray *)self.syncState.bundleBinaryRequests
           addObject:santa::common::StringToNSString(bundle_binary)];
       }
@@ -168,7 +168,7 @@ using santa::common::NSStringToUTF8String;
   e->set_cdhash(NSStringToUTF8String(event.cdhash));
 
   for (MOLCertificate *cert in event.signingChain) {
-    auto c = e->add_signing_chain();
+    ::pbv1::Certificate *c = e->add_signing_chain();
     c->set_sha256(NSStringToUTF8String(cert.SHA256));
     c->set_cn(NSStringToUTF8String(cert.commonName));
     c->set_org(NSStringToUTF8String(cert.orgName));
