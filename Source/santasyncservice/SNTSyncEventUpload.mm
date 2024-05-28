@@ -13,6 +13,7 @@
 ///    limitations under the License.
 
 #import "Source/santasyncservice/SNTSyncEventUpload.h"
+#include <Foundation/Foundation.h>
 
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
@@ -24,9 +25,16 @@
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/String.h"
 #import "Source/santasyncservice/NSData+Zlib.h"
 #import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
+
+#include <google/protobuf/arena.h>
+#include "Source/santasyncservice/syncv1.pb.h"
+namespace pbv1 = ::santa::sync::v1;
+
+using santa::common::NSStringToUTF8String;
 
 @implementation SNTSyncEventUpload
 
@@ -47,32 +55,35 @@
 }
 
 - (BOOL)uploadEvents:(NSArray *)events {
-  NSMutableArray *uploadEvents = [[NSMutableArray alloc] init];
+  google::protobuf::Arena arena;
+  auto req = google::protobuf::Arena::Create<::pbv1::EventUploadRequest>(&arena);
+  auto uploadEvents = req->mutable_events();
 
   NSMutableSet *eventIds = [NSMutableSet setWithCapacity:events.count];
   for (SNTStoredEvent *event in events) {
-    [uploadEvents addObject:[self dictionaryForEvent:event]];
+    uploadEvents->Add([self messageForEvent:event]);
     if (event.idx) [eventIds addObject:event.idx];
-    if (uploadEvents.count >= self.syncState.eventBatchSize) break;
+    if (uploadEvents->size() >= self.syncState.eventBatchSize) break;
   }
 
   if (self.syncState.syncType == SNTSyncTypeNormal ||
       [[SNTConfigurator configurator] enableCleanSyncEventUpload]) {
-    NSDictionary *r = [self performRequest:[self requestWithDictionary:@{kEvents : uploadEvents}]];
+    NSDictionary *r = [self performRequest:[self requestWithMessage:req]];
     if (!r) return NO;
 
     // A list of bundle hashes that require their related binary events to be uploaded.
     self.syncState.bundleBinaryRequests = r[kEventUploadBundleBinaries];
 
-    SLOGI(@"Uploaded %lu events", uploadEvents.count);
+    SLOGI(@"Uploaded %d events", uploadEvents->size());
   }
 
   // Remove event IDs. For Bundle Events the ID is 0 so nothing happens.
   [[self.daemonConn remoteObjectProxy] databaseRemoveEventsWithIDs:[eventIds allObjects]];
 
   // See if there are any events remaining to upload
-  if (uploadEvents.count < events.count) {
-    NSRange nextEventsRange = NSMakeRange(uploadEvents.count, events.count - uploadEvents.count);
+  if (uploadEvents->size() < events.count) {
+    NSRange nextEventsRange =
+      NSMakeRange(uploadEvents->size(), events.count - uploadEvents->size());
     NSArray *nextEvents = [events subarrayWithRange:nextEventsRange];
     return [self uploadEvents:nextEvents];
   }
@@ -80,88 +91,82 @@
   return YES;
 }
 
-- (NSDictionary *)dictionaryForEvent:(SNTStoredEvent *)event {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wobjc-literal-conversion"
-#define ADDKEY(dict, key, value) \
-  if (value) dict[key] = value
-  NSMutableDictionary *newEvent = [NSMutableDictionary dictionary];
+- (::pbv1::Event)messageForEvent:(SNTStoredEvent *)event {
+  google::protobuf::Arena arena;
+  ::pbv1::Event *e = google::protobuf::Arena::Create<::pbv1::Event>(&arena);
 
-  ADDKEY(newEvent, kFileSHA256, event.fileSHA256);
-  ADDKEY(newEvent, kFilePath, [event.filePath stringByDeletingLastPathComponent]);
-  ADDKEY(newEvent, kFileName, [event.filePath lastPathComponent]);
-  ADDKEY(newEvent, kExecutingUser, event.executingUser);
-  ADDKEY(newEvent, kExecutionTime, @([event.occurrenceDate timeIntervalSince1970]));
-  ADDKEY(newEvent, kLoggedInUsers, event.loggedInUsers);
-  ADDKEY(newEvent, kCurrentSessions, event.currentSessions);
+  e->set_file_sha256(NSStringToUTF8String(event.fileSHA256));
+  e->set_file_path(NSStringToUTF8String([event.filePath stringByDeletingLastPathComponent]));
+  e->set_file_name(NSStringToUTF8String([event.filePath lastPathComponent]));
+  e->set_executing_user(NSStringToUTF8String(event.executingUser));
+  e->set_execution_time([event.occurrenceDate timeIntervalSince1970]);
+
+  for (NSString *user in event.loggedInUsers) {
+    e->add_logged_in_users(NSStringToUTF8String(user));
+  }
+  for (NSString *session in event.currentSessions) {
+    e->add_current_sessions(NSStringToUTF8String(session));
+  }
 
   switch (event.decision) {
-    case SNTEventStateAllowUnknown: ADDKEY(newEvent, kDecision, kDecisionAllowUnknown); break;
-    case SNTEventStateAllowBinary: ADDKEY(newEvent, kDecision, kDecisionAllowBinary); break;
+    case SNTEventStateAllowUnknown: e->set_decision(::pbv1::ALLOW_UNKNOWN); break;
+    case SNTEventStateAllowBinary: e->set_decision(::pbv1::ALLOW_BINARY); break;
     case SNTEventStateAllowCertificate:
-      ADDKEY(newEvent, kDecision, kDecisionAllowCertificate);
+      e->set_decision(::pbv1::ALLOW_CERTIFICATE);
       break;
-    case SNTEventStateAllowScope: ADDKEY(newEvent, kDecision, kDecisionAllowScope); break;
-    case SNTEventStateAllowTeamID: ADDKEY(newEvent, kDecision, kDecisionAllowTeamID); break;
-    case SNTEventStateAllowSigningID: ADDKEY(newEvent, kDecision, kDecisionAllowSigningID); break;
-    case SNTEventStateAllowCDHash: ADDKEY(newEvent, kDecision, kDecisionAllowCDHash); break;
-    case SNTEventStateBlockUnknown: ADDKEY(newEvent, kDecision, kDecisionBlockUnknown); break;
-    case SNTEventStateBlockBinary: ADDKEY(newEvent, kDecision, kDecisionBlockBinary); break;
-    case SNTEventStateBlockCertificate:
-      ADDKEY(newEvent, kDecision, kDecisionBlockCertificate);
       break;
-    case SNTEventStateBlockScope: ADDKEY(newEvent, kDecision, kDecisionBlockScope); break;
-    case SNTEventStateBlockTeamID: ADDKEY(newEvent, kDecision, kDecisionBlockTeamID); break;
-    case SNTEventStateBlockSigningID: ADDKEY(newEvent, kDecision, kDecisionBlockSigningID); break;
-    case SNTEventStateBlockCDHash: ADDKEY(newEvent, kDecision, kDecisionBlockCDHash); break;
+    case SNTEventStateAllowScope: e->set_decision(::pbv1::ALLOW_SCOPE); break;
+    case SNTEventStateAllowTeamID: e->set_decision(::pbv1::ALLOW_TEAMID); break;
+    case SNTEventStateAllowSigningID: e->set_decision(::pbv1::ALLOW_SIGNINGID); break;
+    case SNTEventStateAllowCDHash: e->set_decision(::pbv1::ALLOW_CDHASH); break;
+    case SNTEventStateBlockUnknown: e->set_decision(::pbv1::BLOCK_UNKNOWN); break;
+    case SNTEventStateBlockBinary: e->set_decision(::pbv1::BLOCK_BINARY); break;
+    case SNTEventStateBlockCertificate: e->set_decision(::pbv1::BLOCK_CERTIFICATE); break;
+    case SNTEventStateBlockScope: e->set_decision(::pbv1::BLOCK_SCOPE); break;
+    case SNTEventStateBlockTeamID: e->set_decision(::pbv1::BLOCK_TEAMID); break;
+    case SNTEventStateBlockSigningID: e->set_decision(::pbv1::BLOCK_SIGNINGID); break;
+    case SNTEventStateBlockCDHash: e->set_decision(::pbv1::BLOCK_CDHASH); break;
     case SNTEventStateBundleBinary:
-      ADDKEY(newEvent, kDecision, kDecisionBundleBinary);
-      [newEvent removeObjectForKey:kExecutionTime];
+      e->set_decision(::pbv1::BUNDLE_BINARY);
+      e->clear_execution_time();
       break;
-    default: ADDKEY(newEvent, kDecision, kDecisionUnknown);
+    default: e->set_decision(::pbv1::DECISION_UNKNOWN);
   }
 
-  ADDKEY(newEvent, kFileBundleID, event.fileBundleID);
-  ADDKEY(newEvent, kFileBundlePath, event.fileBundlePath);
-  ADDKEY(newEvent, kFileBundleExecutableRelPath, event.fileBundleExecutableRelPath);
-  ADDKEY(newEvent, kFileBundleName, event.fileBundleName);
-  ADDKEY(newEvent, kFileBundleVersion, event.fileBundleVersion);
-  ADDKEY(newEvent, kFileBundleShortVersionString, event.fileBundleVersionString);
-  ADDKEY(newEvent, kFileBundleHash, event.fileBundleHash);
-  ADDKEY(newEvent, kFileBundleHashMilliseconds, event.fileBundleHashMilliseconds);
-  ADDKEY(newEvent, kFileBundleBinaryCount, event.fileBundleBinaryCount);
+  e->set_file_bundle_id(NSStringToUTF8String(event.fileBundleID));
+  e->set_file_bundle_path(NSStringToUTF8String(event.fileBundlePath));
+  e->set_file_bundle_executable_rel_path(NSStringToUTF8String(event.fileBundleExecutableRelPath));
+  e->set_file_bundle_name(NSStringToUTF8String(event.fileBundleName));
+  e->set_file_bundle_version(NSStringToUTF8String(event.fileBundleVersion));
+  e->set_file_bundle_version_string(NSStringToUTF8String(event.fileBundleVersionString));
+  e->set_file_bundle_hash(NSStringToUTF8String(event.fileBundleHash));
+  e->set_file_bundle_hash_millis([event.fileBundleHashMilliseconds longLongValue]);
+  e->set_file_bundle_binary_count([event.fileBundleBinaryCount longLongValue]);
 
-  ADDKEY(newEvent, kPID, event.pid);
-  ADDKEY(newEvent, kPPID, event.ppid);
-  ADDKEY(newEvent, kParentName, event.parentName);
+  e->set_pid([event.pid unsignedIntValue]);
+  e->set_ppid([event.ppid unsignedIntValue]);
+  e->set_parent_name(NSStringToUTF8String(event.parentName));
 
-  ADDKEY(newEvent, kQuarantineDataURL, event.quarantineDataURL);
-  ADDKEY(newEvent, kQuarantineRefererURL, event.quarantineRefererURL);
-  ADDKEY(newEvent, kQuarantineTimestamp, @([event.quarantineTimestamp timeIntervalSince1970]));
-  ADDKEY(newEvent, kQuarantineAgentBundleID, event.quarantineAgentBundleID);
+  e->set_quarantine_data_url(NSStringToUTF8String(event.quarantineDataURL));
+  e->set_quarantine_referer_url(NSStringToUTF8String(event.quarantineRefererURL));
+  e->set_quarantine_timestamp([event.quarantineTimestamp timeIntervalSince1970]);
+  e->set_quarantine_agent_bundle_id(NSStringToUTF8String(event.quarantineAgentBundleID));
 
-  NSMutableArray *signingChain = [NSMutableArray arrayWithCapacity:event.signingChain.count];
-  for (NSUInteger i = 0; i < event.signingChain.count; ++i) {
-    MOLCertificate *cert = [event.signingChain objectAtIndex:i];
+  e->set_team_id(NSStringToUTF8String(event.teamID));
+  e->set_signing_id(NSStringToUTF8String(event.signingID));
+  e->set_cdhash(NSStringToUTF8String(event.cdhash));
 
-    NSMutableDictionary *certDict = [NSMutableDictionary dictionary];
-    ADDKEY(certDict, kCertSHA256, cert.SHA256);
-    ADDKEY(certDict, kCertCN, cert.commonName);
-    ADDKEY(certDict, kCertOrg, cert.orgName);
-    ADDKEY(certDict, kCertOU, cert.orgUnit);
-    ADDKEY(certDict, kCertValidFrom, @([cert.validFrom timeIntervalSince1970]));
-    ADDKEY(certDict, kCertValidUntil, @([cert.validUntil timeIntervalSince1970]));
-
-    [signingChain addObject:certDict];
+  for (MOLCertificate *cert in event.signingChain) {
+    auto c = e->add_signing_chain();
+    c->set_sha256(NSStringToUTF8String(cert.SHA256));
+    c->set_cn(NSStringToUTF8String(cert.commonName));
+    c->set_org(NSStringToUTF8String(cert.orgName));
+    c->set_ou(NSStringToUTF8String(cert.orgUnit));
+    c->set_valid_from([cert.validFrom timeIntervalSince1970]);
+    c->set_valid_until([cert.validUntil timeIntervalSince1970]);
   }
-  newEvent[kSigningChain] = signingChain;
-  ADDKEY(newEvent, kTeamID, event.teamID);
-  ADDKEY(newEvent, kSigningID, event.signingID);
-  ADDKEY(newEvent, kCDHash, event.cdhash);
 
-  return newEvent;
-#undef ADDKEY
-#pragma clang diagnostic pop
+  return *e;
 }
 
 @end
