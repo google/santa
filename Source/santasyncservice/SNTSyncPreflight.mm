@@ -145,12 +145,12 @@ The following table expands upon the above logic to list most of the permutation
   self.syncState.pushNotificationsFullSyncInterval =
     (value < kDefaultFullSyncInterval) ? kDefaultPushNotificationsFullSyncInterval : value;
 
-  value = resp.push_notification_global_rule_sync_interval();
+  value = resp.push_notification_global_rule_sync_deadline();
   if (value == 0) {
     value = resp.deprecated_fcm_global_rule_sync_deadline();
   }
-  self.syncState.pushNotificationsFullSyncInterval =
-    (value < kDefaultFullSyncInterval) ? kDefaultPushNotificationsFullSyncInterval : value;
+  self.syncState.pushNotificationsGlobalRuleSyncDeadline =
+    (value < kDefaultPushNotificationsGlobalRuleSyncDeadline) ? kDefaultPushNotificationsGlobalRuleSyncDeadline : value;
 
   // Check if our sync interval has changed
   value = resp.full_sync_interval();

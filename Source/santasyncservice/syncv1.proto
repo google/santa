@@ -50,6 +50,7 @@ message PreflightRequest {
 
 message PreflightResponse {
   ClientMode client_mode = 1;
+
   // Possible values are "normal" (default if unspecified), "clean", or "clean_all".
   // "normal" is a standard progressive sync
   // "clean" deletes all previously received rules before applying the newly received rules.
@@ -58,25 +59,54 @@ message PreflightResponse {
   // enum values are also lowercase (which is odd), and this is the behavior from the pre-proto protocol.
   string sync_type = 2;
 
-  // Deprecated but still supported key that acts like sync_type was set to "clean" unless
-  // the client had requested a clean sync, in which case it acts like "clean_all"
+  // Controls how many events Santa should upload in a single EventUpload request.
+  // If the server doesn't specify, the default is 50.
   uint32 batch_size = 3;
 
+  // Enable bundle hashing and bundle rules.
   bool enable_bundles = 4;
+
+  // Enable transitive (ALLOWLIST_COMPILER) rules.
+  // Without this enabled, any received ALLOWLIST_COMPILER rules will be treated as ALLOWLIST.
   bool enable_transitive_rules = 5;
+
+  // Ordinarily, Santa will only upload events about executions that are denied or would be denied if the machine
+  // were in LOCKDOWN mode. With this enabled, Santa will upload details about all events.
   bool enable_all_event_upload = 6;
+
+  // Ordinarily, Santa will only upload events about executions that are denied or would be denied if the machine
+  // were in LOCKDOWN mode. With this enabled, Santa will NOT upload events for binaries that would have been blocked in LOCKDOWN.
   bool disable_unknown_event_upload = 7;
 
+  // Specifies the time interval in seconds between full syncs. Defaults to 600 (10 minutes). Cannot be set lower than 60.
   uint64 full_sync_interval = 8;
-  uint64 push_notification_full_sync_interval = 9;
-  uint64 push_notification_global_rule_sync_interval = 10;
 
+  // When push notifications are enabled, this overrides the full_sync_interval above. It is expected that Santa will not
+  // need to perform a full sync as frequently when push notifications are working. Defaults to 14400 (6 hours).
+  uint64 push_notification_full_sync_interval = 9;
+
+  // The maximum number of seconds Santa can wait before triggering a rule sync after receiving a "global rule sync" notification.
+  // As these notifications cause every Santa client to try and sync, we add a random delay to each client to try and spread the
+  // load out on the sync server. This defaults to 600 (10 minutes).
+  uint64 push_notification_global_rule_sync_deadline = 10;
+
+  // These two regexes are used to allow/block executions whose path matches. The provided regex must conform to ICU format.
+  // While this feature can be useful, its use should be very carefully considered as it is much riskier than real rules.
   optional string allowed_path_regex = 11;
   optional string blocked_path_regex = 12;
 
+  // Enable USB mount blocking
   optional bool block_usb_mount = 13;
+
+  // If set, if a mount of a USB device happens and the mount flags match, the mount will be allowed.
+  // If the flags do not match, Santa will deny the mount but then remount with the provided flags.
   repeated string remount_usb_mode = 14;
 
+  // Overrides the File Access Authorization (FAA) policy to change the performed action.
+  // Allowed values:
+  //   `disable`: No action will be taken
+  //   `auditonly`: Actions that would be denied are logged but allowed
+  //   `none`: The policy will be applied as written
   optional string override_file_access_action = 15;
 
   // These fields are deprecated forms of other fields and exist here solely for backwards compatibility
@@ -87,6 +117,9 @@ message PreflightResponse {
   optional uint64 deprecated_fcm_global_rule_sync_deadline = 1004 [json_name="fcm_global_rule_sync_deadline", deprecated=true];
   optional string deprecated_whitelist_regex = 1005 [json_name="whitelist_regex", deprecated=true];
   optional string deprecated_blacklist_regex = 1006 [json_name="blacklist_regex", deprecated=true];
+
+  // Deprecated but still supported key that acts like sync_type was set to "clean" unless
+  // the client had requested a clean sync, in which case it acts like "clean_all"
   optional bool deprecated_clean_sync = 1007 [json_name="clean_sync", deprecated=true];
 }
 
