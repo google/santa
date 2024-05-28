@@ -80,14 +80,14 @@ message PreflightResponse {
   optional string override_file_access_action = 15;
 
   // These fields are deprecated forms of other fields and exist here solely for backwards compatibility
-  optional bool deprecated_enabled_transitive_whitelisting = 80 [json_name="enabled_transitive_whitelisting", deprecated=true];
-  optional bool deprecated_transitive_whitelisting_enabled = 81 [json_name="transitive_whitelisting_enabled", deprecated=true];
-  optional bool deprecated_bundles_enabled = 82 [json_name="bundles_enabled", deprecated=true];
-  optional uint64 deprecated_fcm_full_sync_interval = 83 [json_name="fcm_full_sync_interval", deprecated=true];
-  optional uint64 deprecated_fcm_global_rule_sync_deadline = 84 [json_name="fcm_global_rule_sync_deadline", deprecated=true];
-  optional string deprecated_whitelist_regex = 85 [json_name="whitelist_regex", deprecated=true];
-  optional string deprecated_blacklist_regex = 86 [json_name="blacklist_regex", deprecated=true];
-  optional bool deprecated_clean_sync = 87 [json_name="clean_sync", deprecated=true];
+  optional bool deprecated_enabled_transitive_whitelisting = 1000 [json_name="enabled_transitive_whitelisting", deprecated=true];
+  optional bool deprecated_transitive_whitelisting_enabled = 1001 [json_name="transitive_whitelisting_enabled", deprecated=true];
+  optional bool deprecated_bundles_enabled = 1002 [json_name="bundles_enabled", deprecated=true];
+  optional uint64 deprecated_fcm_full_sync_interval = 1003 [json_name="fcm_full_sync_interval", deprecated=true];
+  optional uint64 deprecated_fcm_global_rule_sync_deadline = 1004 [json_name="fcm_global_rule_sync_deadline", deprecated=true];
+  optional string deprecated_whitelist_regex = 1005 [json_name="whitelist_regex", deprecated=true];
+  optional string deprecated_blacklist_regex = 1006 [json_name="blacklist_regex", deprecated=true];
+  optional bool deprecated_clean_sync = 1007 [json_name="clean_sync", deprecated=true];
 }
 
 enum Decision {
