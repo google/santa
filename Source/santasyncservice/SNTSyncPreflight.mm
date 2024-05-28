@@ -150,7 +150,9 @@ The following table expands upon the above logic to list most of the permutation
     value = resp.deprecated_fcm_global_rule_sync_deadline();
   }
   self.syncState.pushNotificationsGlobalRuleSyncDeadline =
-    (value < kDefaultPushNotificationsGlobalRuleSyncDeadline) ? kDefaultPushNotificationsGlobalRuleSyncDeadline : value;
+    (value < kDefaultPushNotificationsGlobalRuleSyncDeadline)
+      ? kDefaultPushNotificationsGlobalRuleSyncDeadline
+      : value;
 
   // Check if our sync interval has changed
   value = resp.full_sync_interval();
