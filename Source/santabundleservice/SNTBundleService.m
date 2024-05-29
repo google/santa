@@ -25,6 +25,7 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCNotifierInterface.h"
+#import "Source/common/SigningIDHelpers.h"
 
 @interface SNTBundleService ()
 @property MOLXPCConnection *notifierConnection;
@@ -228,13 +229,7 @@
       se.signingChain = cs.certificates;
       se.cdhash = cs.cdhash;
       se.teamID = cs.teamID;
-      if (cs.signingID) {
-        if (cs.teamID) {
-          se.signingID = [NSString stringWithFormat:@"%@:%@", cs.teamID, cs.signingID];
-        } else if (cs.platformBinary) {
-          se.signingID = [NSString stringWithFormat:@"platform:%@", cs.signingID];
-        }
-      }
+      se.signingID = FormatSigningID(cs);
 
       dispatch_sync(dispatch_get_main_queue(), ^{
         relatedEvents[se.fileSHA256] = se;

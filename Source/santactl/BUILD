@@ -76,6 +76,7 @@ objc_library(
         "//Source/common:SNTXPCControlInterface",
         "//Source/common:SNTXPCSyncServiceInterface",
         "//Source/common:SNTXPCUnprivilegedControlInterface",
+        "//Source/common:SigningIDHelpers",
         "//Source/santasyncservice:sync_lib",
         "@FMDB",
         "@MOLCertificate",

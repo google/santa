@@ -26,6 +26,7 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
+#import "Source/common/SigningIDHelpers.h"
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "absl/container/flat_hash_map.h"
 
@@ -136,6 +137,11 @@ static void UpdateCachedDecisionSigningInfo(
   // Check if we need to get teamID from code signing.
   if (!cd.teamID) {
     cd.teamID = csInfo.teamID;
+  }
+
+  // Check if we need to get signing ID from code signing.
+  if (!cd.signingID) {
+    cd.signingID = FormatSigningID(csInfo);
   }
 
   // Ensure that if no teamID exists that the signing info confirms it is a
