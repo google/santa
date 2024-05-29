@@ -21,9 +21,14 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/String.h"
 #import "Source/santasyncservice/NSData+Zlib.h"
 #import "Source/santasyncservice/SNTSyncLogging.h"
 #import "Source/santasyncservice/SNTSyncState.h"
+
+#include <google/protobuf/json/json.h>
+
+using santa::common::NSStringToUTF8String;
 
 @interface SNTSyncStage ()
 
@@ -55,17 +60,27 @@
   __builtin_unreachable();
 }
 
-- (NSMutableURLRequest *)requestWithDictionary:(NSDictionary *)dictionary {
+- (NSMutableURLRequest *)requestWithMessage:(google::protobuf::Message *)message {
   NSData *requestBody = [NSData data];
-  if (dictionary) {
-    NSError *error;
-    requestBody = [NSJSONSerialization dataWithJSONObject:dictionary options:0 error:&error];
-    if (error) {
-      SLOGD(@"Failed to encode JSON request: %@", error);
+  if (message) {
+    google::protobuf::json::PrintOptions options{
+      .always_print_enums_as_ints = false,
+      .preserve_proto_field_names = true,
+    };
+    std::string json;
+    absl::Status status = google::protobuf::json::MessageToJsonString(*message, &json, options);
+
+    if (!status.ok()) {
+      SLOGE(@"Failed to convert protobuf to JSON: %s", status.ToString().c_str());
       return nil;
     }
-  }
 
+    requestBody = [NSData dataWithBytes:json.data() length:json.size()];
+  }
+  return [self requestWithData:requestBody];
+}
+
+- (NSMutableURLRequest *)requestWithData:(NSData *)requestBody {
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:[self stageURL]];
   [req setHTTPMethod:@"POST"];
   [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
@@ -129,9 +144,7 @@
                                  }];
 }
 
-// Returns nil when there is a server connection issue.  For other errors, such as
-// an empty response or an unparseable response, an empty dictionary is returned.
-- (NSDictionary *)performRequest:(NSURLRequest *)request timeout:(NSTimeInterval)timeout {
+- (NSData *)dataFromRequest:(NSURLRequest *)request timeout:(NSTimeInterval)timeout {
   NSHTTPURLResponse *response;
   NSError *error;
   NSData *data;
@@ -141,7 +154,7 @@
     if (attempt >= 2) {
       // Exponentially back off with larger and larger delays.
       int exponentialBackoffMultiplier = 2;  // E.g. 2^2 = 4, 2^3 = 8, 2^4 = 16...
-      struct timespec ts = {.tv_sec = pow(exponentialBackoffMultiplier, attempt)};
+      struct timespec ts = {.tv_sec = __darwin_time_t(pow(exponentialBackoffMultiplier, attempt))};
       nanosleep(&ts, NULL);
     }
 
@@ -177,19 +190,28 @@
     LOGE(@"HTTP Response: %ld %@", code, errStr);
     return nil;
   }
-
-  if (data.length == 0) return @{};
-
-  NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:[self stripXssi:data]
-                                                       options:0
-                                                         error:&error];
-  if (error) SLOGD(@"Failed to decode JSON response: %@", error);
-
-  return dict ?: @{};
+  return data;
 }
 
-- (NSDictionary *)performRequest:(NSURLRequest *)request {
-  return [self performRequest:request timeout:30];
+- (NSError *)performRequest:(NSURLRequest *)request
+                intoMessage:(google::protobuf::Message *)message
+                    timeout:(NSTimeInterval)timeout {
+  NSData *data = [self dataFromRequest:request timeout:timeout];
+  if (data.length == 0) return nil;
+
+  google::protobuf::json::ParseOptions options{
+    .ignore_unknown_fields = true,
+  };
+  NSString *jsonData = [[NSString alloc] initWithData:[self stripXssi:data]
+                                             encoding:NSUTF8StringEncoding];
+  absl::Status status =
+    google::protobuf::json::JsonStringToMessage(NSStringToUTF8String(jsonData), message, options);
+  if (!status.ok()) {
+    SLOGE(@"Failed to parse response JSON into message: %s", status.ToString().c_str());
+    return nil;
+  }
+
+  return nil;
 }
 
 #pragma mark Internal Helpers
@@ -236,10 +258,12 @@
 - (NSData *)stripXssi:(NSData *)data {
   static const char xssiOne[5] = {')', ']', '}', '\'', '\n'};
   static const char xssiTwo[3] = {']', ')', '}'};
-  if (data.length >= sizeof(xssiOne) && strncmp(data.bytes, xssiOne, sizeof(xssiOne)) == 0) {
+  if (data.length >= sizeof(xssiOne) &&
+      strncmp((const char *)data.bytes, xssiOne, sizeof(xssiOne)) == 0) {
     return [data subdataWithRange:NSMakeRange(sizeof(xssiOne), data.length - sizeof(xssiOne))];
   }
-  if (data.length >= sizeof(xssiTwo) && strncmp(data.bytes, xssiTwo, sizeof(xssiTwo)) == 0) {
+  if (data.length >= sizeof(xssiTwo) &&
+      strncmp((const char *)data.bytes, xssiTwo, sizeof(xssiTwo)) == 0) {
     return [data subdataWithRange:NSMakeRange(sizeof(xssiTwo), data.length - sizeof(xssiTwo))];
   }
   return data;

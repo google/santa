@@ -14,6 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
+#ifdef __cplusplus
+#include <google/protobuf/message.h>
+#endif
+
 @class SNTSyncState;
 @class MOLXPCConnection;
 
@@ -48,27 +52,28 @@
 
 #pragma mark Internal Helpers
 
+#ifdef __cplusplus
 /**
   Creates an NSMutableURLRequest pointing at the URL for this stage and containing the JSON-encoded
-  data passed in as a dictionary.
+  data passed in as a protocol buffer message.
 
   @param dictionary The values to POST to the server.
 */
-- (nullable NSMutableURLRequest *)requestWithDictionary:(nullable NSDictionary *)dictionary;
+- (nullable NSMutableURLRequest *)requestWithMessage:(nullable google::protobuf::Message *)message;
 
 /**
-  Perform the passed in request and attempt to parse the response as JSON into a dictionary.
+  Perform the passed in request and attempt to parse the response as JSON into the provided protobuf
+  Message.
 
   @param request The request to perform
-  @param timeout The number of seconds to allow the request to run before timing out.
+  @param message The message to parse the response into
+  @Param timeout The number of seconds to allow the request to run before timing out.
 
-  @return A populated dictionary if the response data was JSON, an empty dictionary if not and nil
-          if the request failed for any reason.
+  @return An error if performing the request failed.
 */
-- (nullable NSDictionary *)performRequest:(nonnull NSURLRequest *)request
-                                  timeout:(NSTimeInterval)timeout;
-
-/** Convenience version of performRequest:timeout: using a 30s timeout. */
-- (nullable NSDictionary *)performRequest:(nonnull NSURLRequest *)request;
+- (nullable NSError *)performRequest:(nonnull NSURLRequest *)request
+                         intoMessage:(nullable google::protobuf::Message *)message
+                             timeout:(NSTimeInterval)timeout;
+#endif
 
 @end
