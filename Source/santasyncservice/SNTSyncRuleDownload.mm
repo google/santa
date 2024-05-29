@@ -29,7 +29,6 @@
 #include "Source/santasyncservice/syncv1.pb.h"
 namespace pbv1 = ::santa::sync::v1;
 
-using santa::common::NSStringToUTF8String;
 using santa::common::StringToNSString;
 
 SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
@@ -166,10 +165,10 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
   }
   r.type = type;
 
-  std::string custom_msg = rule.custom_msg();
+  const std::string &custom_msg = rule.custom_msg();
   if (!custom_msg.empty()) r.customMsg = StringToNSString(custom_msg);
 
-  std::string custom_url = rule.custom_url();
+  const std::string &custom_url = rule.custom_url();
   if (!custom_url.empty()) r.customURL = StringToNSString(custom_url);
 
   return r;

@@ -346,13 +346,13 @@
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   struct RuleCounts ruleCounts = {
-    .cdhash = 11,
     .binary = 5,
     .certificate = 8,
     .compiler = 2,
     .transitive = 19,
     .teamID = 3,
     .signingID = 123,
+    .cdhash = 11,
   };
 
   OCMStub([self.daemonConnRop

@@ -80,7 +80,7 @@ using santa::common::NSStringToUTF8String;
     if (response.event_upload_bundle_binaries_size()) {
       self.syncState.bundleBinaryRequests =
         [NSMutableArray arrayWithCapacity:response.event_upload_bundle_binaries_size()];
-      for (std::string bundle_binary : response.event_upload_bundle_binaries()) {
+      for (const std::string &bundle_binary : response.event_upload_bundle_binaries()) {
         [(NSMutableArray *)self.syncState.bundleBinaryRequests
           addObject:santa::common::StringToNSString(bundle_binary)];
       }
@@ -104,7 +104,7 @@ using santa::common::NSStringToUTF8String;
 
 - (::pbv1::Event)messageForEvent:(SNTStoredEvent *)event {
   google::protobuf::Arena arena;
-  ::pbv1::Event *e = google::protobuf::Arena::Create<::pbv1::Event>(&arena);
+  auto e = google::protobuf::Arena::Create<::pbv1::Event>(&arena);
 
   e->set_file_sha256(NSStringToUTF8String(event.fileSHA256));
   e->set_file_path(NSStringToUTF8String([event.filePath stringByDeletingLastPathComponent]));
@@ -122,10 +122,7 @@ using santa::common::NSStringToUTF8String;
   switch (event.decision) {
     case SNTEventStateAllowUnknown: e->set_decision(::pbv1::ALLOW_UNKNOWN); break;
     case SNTEventStateAllowBinary: e->set_decision(::pbv1::ALLOW_BINARY); break;
-    case SNTEventStateAllowCertificate:
-      e->set_decision(::pbv1::ALLOW_CERTIFICATE);
-      break;
-      break;
+    case SNTEventStateAllowCertificate: e->set_decision(::pbv1::ALLOW_CERTIFICATE); break;
     case SNTEventStateAllowScope: e->set_decision(::pbv1::ALLOW_SCOPE); break;
     case SNTEventStateAllowTeamID: e->set_decision(::pbv1::ALLOW_TEAMID); break;
     case SNTEventStateAllowSigningID: e->set_decision(::pbv1::ALLOW_SIGNINGID); break;

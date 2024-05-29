@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package santa.sync.v1;
 
+// Note: Many of the enums in this proto file do not conform to protocol buffer
+// best practices. The reason for this is that this proto was developed to be
+// backward-compatible with an existing JSON API and unlike field names, enum
+// values cannot have their JSON representation overridden.
+
 // SantaSync is service used to distribute configuration settings and rules to Santa.
 service SantaSync {
   // Preflight is used to send current configuration data to the server and to
@@ -79,16 +84,16 @@ message PreflightResponse {
   bool disable_unknown_event_upload = 7;
 
   // Specifies the time interval in seconds between full syncs. Defaults to 600 (10 minutes). Cannot be set lower than 60.
-  uint64 full_sync_interval = 8;
+  uint64 full_sync_interval_seconds = 8 [json_name="full_sync_interval"];
 
   // When push notifications are enabled, this overrides the full_sync_interval above. It is expected that Santa will not
   // need to perform a full sync as frequently when push notifications are working. Defaults to 14400 (6 hours).
-  uint64 push_notification_full_sync_interval = 9;
+  uint64 push_notification_full_sync_interval_seconds = 9 [json_name="push_notification_full_sync_interval"];
 
   // The maximum number of seconds Santa can wait before triggering a rule sync after receiving a "global rule sync" notification.
   // As these notifications cause every Santa client to try and sync, we add a random delay to each client to try and spread the
   // load out on the sync server. This defaults to 600 (10 minutes).
-  uint64 push_notification_global_rule_sync_deadline = 10;
+  uint64 push_notification_global_rule_sync_deadline_seconds = 10 [json_name="push_notification_global_rule_sync_deadline"];
 
   // These two regexes are used to allow/block executions whose path matches. The provided regex must conform to ICU format.
   // While this feature can be useful, its use should be very carefully considered as it is much riskier than real rules.
@@ -113,8 +118,8 @@ message PreflightResponse {
   optional bool deprecated_enabled_transitive_whitelisting = 1000 [json_name="enabled_transitive_whitelisting", deprecated=true];
   optional bool deprecated_transitive_whitelisting_enabled = 1001 [json_name="transitive_whitelisting_enabled", deprecated=true];
   optional bool deprecated_bundles_enabled = 1002 [json_name="bundles_enabled", deprecated=true];
-  optional uint64 deprecated_fcm_full_sync_interval = 1003 [json_name="fcm_full_sync_interval", deprecated=true];
-  optional uint64 deprecated_fcm_global_rule_sync_deadline = 1004 [json_name="fcm_global_rule_sync_deadline", deprecated=true];
+  optional uint64 deprecated_fcm_full_sync_interval_seconds = 1003 [json_name="fcm_full_sync_interval", deprecated=true];
+  optional uint64 deprecated_fcm_global_rule_sync_deadline_seconds = 1004 [json_name="fcm_global_rule_sync_deadline", deprecated=true];
   optional string deprecated_whitelist_regex = 1005 [json_name="whitelist_regex", deprecated=true];
   optional string deprecated_blacklist_regex = 1006 [json_name="blacklist_regex", deprecated=true];
 
@@ -156,7 +161,7 @@ message Event {
   string file_path = 2;
   string file_name = 3;
   string executing_user = 4;
-  double execution_time = 5; // Seconds since UNIX epoch
+  double execution_time = 5;
   repeated string logged_in_users = 6;
   repeated string current_sessions = 7;
   Decision decision = 8;
