@@ -217,7 +217,7 @@
 
   SNTSyncStage *sut = [[SNTSyncStage alloc] initWithState:self.syncState];
   NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u1];
-  XCTAssertTrue([sut performRequest:req]);
+  XCTAssertNil([sut performRequest:req intoMessage:NULL timeout:5]);
   XCTAssertEqualObjects(self.syncState.xsrfToken, @"my-xsrf-token");
 }
 
@@ -260,7 +260,7 @@
 
   SNTSyncStage *sut = [[SNTSyncStage alloc] initWithState:self.syncState];
   NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:u1];
-  XCTAssertTrue([sut performRequest:req]);
+  XCTAssertNil([sut performRequest:req intoMessage:NULL timeout:5]);
   XCTAssertEqualObjects(self.syncState.xsrfToken, @"my-xsrf-token");
 }
 
@@ -346,13 +346,13 @@
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   struct RuleCounts ruleCounts = {
-    .cdhash = 11,
     .binary = 5,
     .certificate = 8,
     .compiler = 2,
     .transitive = 19,
     .teamID = 3,
     .signingID = 123,
+    .cdhash = 11,
   };
 
   OCMStub([self.daemonConnRop

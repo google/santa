@@ -14,8 +14,16 @@
 
 #import "Source/common/SNTLogging.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void logSyncMessage(LogLevel level, NSString *format, ...)
   __attribute__((format(__NSString__, 2, 3)));
+
+#ifdef __cplusplus
+}
+#endif
 
 ///
 ///  Send logs to the standard pipeline AND to any active sync listeners.
