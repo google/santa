@@ -106,6 +106,10 @@ them to. The following sequences will be replaced in the final URL:
 | %file_identifier%              | SHA-256 of the file that was blocked                                           |
 | %bundle\_or\_file\_identifier% | SHA-256 of the file that was blocked or the bundle containing it, if available |
 | %file_sha%                     | Deprecated, acts like bundle\_or\_file\_identifier                             |
+| %file\_bundle\_id%             | The bundle ID that this binary is part of, if any.
+| %team\_id%                     | The team ID that signed this binary, if any.
+| %signing\_id%                  | The signing ID of this binary, if any.
+| %cdhash%                       | The binary's CDHash, if any.
 | %machine\_id%                  | ID of the machine                                                              |
 | %username%                     | The executing user                                                             |
 | %serial%                       | System's serial number                                                         |
