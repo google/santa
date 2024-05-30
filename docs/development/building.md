@@ -5,6 +5,7 @@ parent: Development
 
 # Building
 
+<!-- markdown-link-check-disable-next-line -->
 Santa uses [Bazel](https://bazel.build) for building, testing and releases. The
 `main` branch on GitHub is the source-of-truth with features developed in
 personal forks.
