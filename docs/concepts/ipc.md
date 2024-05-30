@@ -10,40 +10,53 @@ Most IPC within Santa is done by way of Apple's
 to provide client multiplexing, signature validation of connecting clients and
 forced connection establishment. This is called SNTXPCConnection.
 
-##### Who starts who?
+## Who starts who?
 
-The santad and Santa (GUI) processes are both started and kept alive by launchd
-as a LaunchDaemon and a LaunchAgent, respectively. This means santad runs as
-root and Santa (GUI) runs as the console user.
+The primary Santa daemon, `santad` is a System Extension. It gets submitted as a
+`launchd(8)` job by `endpointsecurityd(8)` via `sysextd(8)`. This happens at
+system startup or when Santa is installed/upgraded.
 
-There can be multiple Santa (GUI) processes running, one per user logged into
-the GUI (assuming fast-user switching is enabled). While multiple processes
+The `Santa` GUI component runs as a launch agent when a user logs into the
+system. There can be multiple Santa (GUI) processes running, one per user logged
+into the GUI (assuming fast-user switching is enabled). While multiple processes
 might be running, only the one for the user currently logged-in will be
-connected to santad and receiving notifications.
+connected to `santad` and receiving notifications.
 
-When using a sync server, the santactl process is started by santad. Before the
-new process starts, all privileges are dropped. santactl runs as _nobody_.
+Both `santasyncservice` and `santabundleservice` run as launch daemons. If a
+sync server is configured, `santasyncservice` gets launched when `santad` starts
+up and establishes an XPC connection. The `santabundleservice` starts up when a
+binary is blocked and the `Santa` GUI establishes an XPC connection. Note, the
+`santabundleservice` also communicates back with `santad`.
 
-The santabs process is started by launchd via an XPC service connection from
-santad. XPC services inherit their initiator's privileges meaning santabs runs
-as root, which is necessary to ensure it has permission to read all files.
+The `santametricservice` also runs as a launch daemon and starts when the system
+comes up. `santad` opens and maintains an XPC connection it.
 
-Process  | Parent Process | Running User
--------- | -------------- | ------------
-santad   | launchd        | root
-Santa    | launchd        | user
-santactl | santad         | nobody
-santabs  | launchd        | root
+`santactl` is a commandline utility that is executed at will by a user. It can
+communicate with `santad` and the `santasyncservice` via XPC in order to issue
+commands or collect information.
 
-##### Who communicates with who?
+The `santabundleservice` process is started by launchd via a connection from the
+Santa GUI. `santabundleservice` runs as root, which is necessary to ensure it
+has permission to read all files.
 
-In short, santad has two-way communication with every other process. In
-addition, Santa and santabs have two-way communication between each other. For
-other combinations, there is no direct communication.
+| Process            | Parent Process | Running User |
+| ------------------ | -------------- | ------------ |
+| santad             | launchd        | root         |
+| Santa (GUI)        | launchd        | user         |
+| santactl           | varies         | user         |
+| santasyncservice   | launchd        | nobody       |
+| santametricservice | launchd        | nobody       |
+| santabundleservice | launchd        | root         |
+
+## Who communicates with who?
+
+In short, `santad` has two-way communication with every other process. In
+addition, `Santa` and `santabundleservice` have two-way communication between
+each other. For other combinations, there is no direct communication.
 
 ![Santa IPC](santa_ipc.png)
 
-##### SNTXPCConnection and two way communication
+## SNTXPCConnection and two way communication
 
 `SNTXPCConnection` enforces a server / client model for XPC connections. This
 allows for strong signature validation and forced connection establishment. The
