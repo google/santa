@@ -12,8 +12,6 @@ jobs:
       - name: "Checkout Santa"
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
       - name: "Check for deadlinks"
-        uses: gaurav-nelson/github-action-markdown-link-check@5c5dfc0ac2e225883c0e5f03a85311ec2830d368 # ratchet:gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          check-modified-files-only: 'yes'
+        uses: lycheeverse/lychee-action@2b973e86fc7b1f6b36a93795fe2c9c6ae1118621 # ratchet:lycheeverse/lychee-action@v1
       - name: "Check for trailing whitespace and newlines"
         run: "! git grep -EIn $'[ \t]+$' -- ':(exclude)*.patch'"
