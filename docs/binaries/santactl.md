@@ -7,14 +7,13 @@ parent: Binaries
 `santactl` is a command line utility for interacting with Santa. It provides the
 following commands:
 
-*   [`status`](#status): Viewing Santa status and configuration
-*   [`version`](#version): View version information
-*   [`fileinfo`](#fileinfo): Inspect individual files and see how Santa would
-    apply policy
-*   [`rule`](#rule): If a sync server isn't configured, can be used to manually
-    manage rules
-*   [`sync`](#sync): Trigger an immediate sync operation
-*   [`printlog`](#printlog): Printing protobuf logs as JSON
+*   [`status`](#status): View Santa status and configuration.
+*   [`version`](#version): View version information.
+*   [`fileinfo`](#fileinfo): Inspect individual files and check how Santa would
+    apply policy.
+*   [`rule`](#rule): If a sync server is not configured, use to manage rules manually.
+*   [`sync`](#sync): Trigger an immediate sync operation.
+*   [`printlog`](#printlog): Print protobuf logs as JSON.
 
 ## status
 
@@ -64,11 +63,11 @@ To view the status of Santa run `santactl status`
   Export Interval (seconds) | 30
 ```
 
-The `status` command can print JSON output via `santactl status --json`
+The `status` command can print JSON output via `santactl status --json`.
 
 ## version
 
-To view all of the component versions run `santactl version`
+To view all of the component versions run `santactl version`:
 
 ```sh
 ⇒  santactl version
@@ -77,14 +76,13 @@ santactl        | 2024.4 (build 622252801)
 SantaGUI        | 2024.4 (build 622252801)
 ```
 
-The `version` command can print JSON output via `santactl status --json`
+The `version` command can print JSON output via `santactl status --json`.
 
 ## fileinfo
 
-The `fileinfo` verb is very powerful and can be used to tease out just about
-anything you wish to know about a file, with respect to the domain of Santa.
+The `fileinfo` command can print out information to inspect different files.
 
-Here is an example of using `santactl fileinfo` to inspect the main executable
+Here is an example of `santactl fileinfo` inspecting the main executable
 within `/Applications/Hex Fiend.app`.
 
 ```sh
@@ -180,7 +178,7 @@ Type: Executable (arm64, x86_64)
 ... Additional items omitted ...
 ```
 
-The `--bundleinfo` flag can be used to display the bundle hash and the hash of
+The `--bundleinfo` flag can display the bundle hash and the hash of
 all binaries contained within the bundle:
 
 ```sh
@@ -198,7 +196,7 @@ Bundle Info:
               15507e8790bedd738c528364123268b5cabe43861e0c3e149bbad96e712c5c4a  /System/Applications/Calendar.app/Contents/MacOS/Calendar
 ```
 
-The `fileinfo` command can print JSON output via `santactl status --json`
+The `fileinfo` command can print JSON output via `santactl status --json`.
 
 ## rule
 
@@ -206,8 +204,7 @@ The rule command is covered in the [Rules](../concepts/rules.md) document.
 
 ## sync
 
-The sync command triggers an immediate full sync. More details on syncing are
-covered in the [Syncing Overview](../introduction/syncing-overview.md) document.
+The sync command triggers an immediate full sync. For details on syncing, refer to the [Syncing Overview](../introduction/syncing-overview.md) page.
 
 ```sh
 ⇒  santactl sync
@@ -222,7 +219,7 @@ will result in all previously existing rules first being removed.
 
 ## printlog
 
-If Santa is configured to use protobuf logging, this command can be used on the
+If Santa is configured to use protobuf logging, `printlog` can be used on the
 resultant log files to print the contents as JSON.
 
 ```sh

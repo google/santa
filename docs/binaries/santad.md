@@ -4,18 +4,18 @@ parent: Binaries
 
 # santad
 
-The `santad` process does the heavy lifting when it comes to making decisions
+The `santad` process makes decisions
 about binary executions, file access, and mounting USB mass storage devices. It
 also handles brokering all of the XPC connections between the various components
 of Santa. It does all of this with performance being at the forefront.
 
 ## On Launch
 
-When `santad` starts several pieces are initially configured:
+When `santad` starts, it configures the following:
 
-*   The rule and event databases are initialized
-*   Connections to `Santa` (GUI) and `santasyncservice` daemon are established.
-*   The config file is processed.
+*   Initializes the rule and event databases.
+*   Establishes connections to `Santa` (GUI) and `santasyncservice` daemon.
+*   Processes the config file.
 
 Next, if configured to do so, `santad` begins to unmount/remount any connected
 USB mass storage devices that violate policy.
@@ -37,7 +37,7 @@ unique set of event streams.
 | Recorder               | Gathering telemetry, creating transitive rules |
 | File Access Authorizer | Enforcing FAA policy by tracking all file access events |
 | Device Manager         | Blocking USB mounts or enforcing mounts contain specified flags |
-| Tamper Resistance      | Protects Santa components from malicious/accidental tampering |
+| Tamper Resistance      | Protects Santa components from tampering |
 
 ## Logging
 
