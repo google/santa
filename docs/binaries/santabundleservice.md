@@ -4,7 +4,7 @@ parent: Binaries
 
 # santabundleservice
 
-The `santabundleservice` is a small launch daemon responsible for creating
+The `santabundleservice` is a small daemon responsible for creating
 non-execution events for the contents of a bundle. When an execution is blocked,
 the `santabundleservice` is tasked with determining if the binary is part of a
 bundle and, if so, locating other executables contained within that bundle.
@@ -39,6 +39,6 @@ be sent to the sync server if requested.
 ## Bundle Hash
 
 To compute the bundle hash, the found events are sorted by their file SHA-256
-hash. The hashes are concatenated and then SHA-256 hashed. This is now a strong
-indicator on what Mach-O executables were within the bundle at the time of scan.
-This can then be verified by the sync server when deciding to generate rules.
+hash. The hashes are concatenated and then SHA-256 hashed. This is a strong
+indicator of what Mach-O executables were within the bundle at the time of scan.
+The sync server can then verify the hashes when deciding to generate rules.
