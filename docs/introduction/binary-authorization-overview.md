@@ -31,11 +31,11 @@ before it any code in that binary is executed.
         that result immediately without collecting event information or waiting
         for a new result. This can greatly reduce performance impact.
 1.  The `authorizer client`'s callback is called by the ES framework with the
-    event information
+    event information.
 1.  `santad` first checks if the event from another ES client on the system and,
     if configured to do so, immediately allows the event and stops all further
     processing for this event.
-1.  Some final sanity checks on the event are made before continuing to handle
+1.  Some final checks on the event are made before continuing to handle
     the event asynchronously on a concurrent dispatch queue.
     *   Note: A second asynchronous dispatch block is also submitted to execute
         immediately before the event's deadline with the configured default
@@ -51,19 +51,19 @@ before it any code in that binary is executed.
     wait for the original event to be processed and result placed into the cache
     instead of performing duplicate processing.
 1.  Next, `santad` extracts relevant file and code signing information from the
-    event. It computes the file's hash as well verifies the binary's code
+    event. It computes the file's hash and verifies the binary's code
     signature.
     *   Note: If code signature validation fails, `santad` will not attempt to
         lookup rules for any properties validated by the code signature
         (currently TeamID, SigningID and CDHash). This means only file hash and
         file scope rules apply.
 1.  The extracted information is then used to lookup any matching rules and make
-    a decision
+    a decision.
     *   There are more details on how these decisions are made in the
         [Rules](../concepts/rules.md) and [Scopes](../concepts/scopes.md)
         documents.
 1.  The decision is then posted back to the ES subsystem and local caches are
     updated.
 1.  If the binary was blocked, the `Santa GUI` will
-    [display a message](../binaries/santa-gui.html#blocked-executions) if
+    [display a message](../binaries/santa-gui.html#blocked-executions), if
     configured to do so.

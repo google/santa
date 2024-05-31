@@ -4,10 +4,9 @@ parent: Binaries
 
 # santametricservice
 
-The `santametricservice` is responsible for managing various counter and gauges
+The `santametricservice` is responsible for managing various counters and gauges
 used by the Santa development team for monitoring important aspects of Santa
-including CPU/memory usage, event counters, event processing timers and much
-more. Metrics are also often added for new and experimental features to help
+such as: CPU/memory usage, event counters, and event processing timers. Metrics are also often added for new and experimental features to help
 ensure proper functionality.
 
 Periodically, the state of all metrics are collected, converted to the

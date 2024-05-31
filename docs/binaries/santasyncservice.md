@@ -7,8 +7,7 @@ parent: Binaries
 The `santasyncservice` daemon is responsible for performing all sync service
 interactions.
 
-Information on syncing can be found in the
-[Syncing Overview](../introduction/syncing-overview.md) document.
+For more details on syncing, refer to the [Syncing Overview](../introduction/syncing-overview.md) page.
 
-Please refer to the [Sync Protocol](../development/sync-protocol.md) document
+For full details on implementing your own sync server, refer to the [Sync Protocol](../development/sync-protocol.md) page.
 for full details on how to implement your own sync server.

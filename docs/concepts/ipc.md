@@ -29,13 +29,13 @@ binary is blocked and the `Santa` GUI establishes an XPC connection. Note, the
 `santabundleservice` also communicates back with `santad`.
 
 The `santametricservice` also runs as a launch daemon and starts when the system
-comes up. `santad` opens and maintains an XPC connection it.
+comes up. `santad` opens and maintains an XPC connection to it.
 
-`santactl` is a commandline utility that is executed at will by a user. It can
+`santactl` is a command-line utility that is executed at will by a user. It can
 communicate with `santad` and the `santasyncservice` via XPC in order to issue
 commands or collect information.
 
-The `santabundleservice` process is started by launchd via a connection from the
+The `santabundleservice` process is started by `launchd` via a connection from the
 Santa GUI. `santabundleservice` runs as root, which is necessary to ensure it
 has permission to read all files.
 
@@ -56,7 +56,7 @@ each other. For other combinations, there is no direct communication.
 
 ![Santa IPC](santa_ipc.png)
 
-## SNTXPCConnection and two way communication
+## SNTXPCConnection and two-way communication
 
 `SNTXPCConnection` enforces a server / client model for XPC connections. This
 allows for strong signature validation and forced connection establishment. The

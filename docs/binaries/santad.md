@@ -45,10 +45,10 @@ unique set of event streams.
 
 | Log Type | Description |
 | ------   | ----------- |
-| syslog   | Emits events as a human readable, key/value pair string to the [Apple ULS](https://developer.apple.com/documentation/os/logging?language=objc) |
+| syslog   | Emits events as a human-readable, key/value pair string to the [Apple ULS](https://developer.apple.com/documentation/os/logging?language=objc) |
 | file     | Similar output to `syslog`, but logs are sent to a file instead of the ULS |
-| protobuf | Emits events with an extremely rich set of data defined by the [santa.proto](https://github.com/google/santa/blob/main/Source/common/santa.proto) schema |
-| json     | Similar to `protobuf`, but the output is converted to JSON (Note: This is not a performant option and should only be used in targeted situations or when logging is ecpected to be minimal) |
+| protobuf | Emits events with a rich set of data defined by the [santa.proto](https://github.com/google/santa/blob/main/Source/common/santa.proto) schema |
+| json     | Similar to `protobuf`, but the output is converted to JSON (Note: This is not a performant option and should only be used in targeted situations or when logging is expected to be minimal) |
 | null     | Disables logging |
 
 ## A note on performance

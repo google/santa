@@ -200,7 +200,7 @@ The `fileinfo` command can print JSON output via `santactl status --json`.
 
 ## rule
 
-The rule command is covered in the [Rules](../concepts/rules.md) document.
+For details on the `rule` command, refer to the [Rules](../concepts/rules.md) page.
 
 ## sync
 

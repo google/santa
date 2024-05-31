@@ -25,7 +25,7 @@ account of each part, see the documentation on the
 
 Syncing is performed by the `santasyncservice` daemon. The daemon performs
 routine full syncs and rule download only syncs, as well as listens for FCM push
-notifications. The daemon is also used by `santad` which can trigger event
+notifications (when enabled). The daemon is also used by `santad` which can trigger event
 uploads via an XPC call when a binary is blocked. The `santactl` command line
 utility can also trigger full syncs via an XPC call with the `santactl sync`
 command.
@@ -56,7 +56,7 @@ command.
     configured FCM messages will continue to be digested and acted upon.
 
 *The Firebase Cloud Messaging (FCM) based Push Notification system is only
-available on the internal Google deployment of Santa at this time
+available on the internal Google deployment of Santa at this time.
 
 ## Blocked Events
 

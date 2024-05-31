@@ -4,7 +4,7 @@ parent: Concepts
 
 # Mode
 
-Santa can run in one of two modes, Lockdown or Monitor. To check the current
+Santa can run in one of two modes, `Lockdown` or `Monitor`. To check the current
 mode, use the `santactl status` command, for example:
 
 ```sh
