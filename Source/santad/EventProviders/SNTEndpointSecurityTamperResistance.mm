@@ -173,6 +173,11 @@ es_auth_result_t ValidateLaunchctlExec(const Message &esMsg) {
   // Check for some allowed subcommands
   es_string_token_t arg = esApi->ExecArg(&esMsg->event.exec, 1);
   static const std::unordered_set<std::string> safe_commands{
+    "blame",
+    "help",
+    "hostinfo",
+    "list",
+    "plist",
     "print",
     "procinfo",
   };
