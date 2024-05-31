@@ -15,7 +15,7 @@ several types of notifications it can display:
 ## Blocked Executions
 
 When Santa prevents a binary from executing, it presents a dialog to the user containing information about the binary that was denied. The message presented to the user, and the text of the
-**Open** button, are configurable on both a global and per-rule basis. 
+**Open** button, are configurable on both a global and per-rule basis.
 
 If the rule was configured as `silent`, it will not display a dialog when Santa denies a binary from executing.
 
@@ -25,8 +25,9 @@ If the rule was configured as `silent`, it will not display a dialog when Santa 
 
 [File Access Authorization](https://santa.dev/deployment/file-access-auth.html)
 allows admins to configure Santa to monitor filesystem paths for potentially
-unwanted access and optionally deny the operation. The message presented to the user, and the text of the
-**Open** button, are configurable on both a global and per-rule basis. 
+unwanted access and optionally deny the operation. The message presented to the
+user, and the text of the **Open** button, are configurable on both a global and
+per-rule basis.
 
 ![Example File Access Authorization block dialog blocking access to Chrome
 Cookies](blocked_faa.png)
@@ -40,7 +41,9 @@ options to be applied when mounting, such as mounting read-only.
 
 ## User Notifications
 
-Notifications when the client mode changes (e.g. from Monitor Mode to Lockdown
-Mode) specific rules arrive (when using FCM for push notifications).
+User notifications display for the following reasons:
+
+*   The [client mode](https://santa.dev/concepts/mode.html) changes
+*   Specific rules arrive when using FCM for push notifications
 
 ![Notification](push.png)

@@ -7,7 +7,7 @@ parent: Binaries
 The `santad` process makes decisions
 about binary executions, file access, and mounting USB mass storage devices. It
 also handles brokering all of the XPC connections between the various components
-of Santa. It does all of this with performance being at the forefront.
+of Santa.
 
 ## On Launch
 
@@ -37,7 +37,7 @@ unique set of event streams.
 | Recorder               | Gathering telemetry, creating transitive rules |
 | File Access Authorizer | Enforcing FAA policy by tracking all file access events |
 | Device Manager         | Blocking USB mounts or enforcing mounts contain specified flags |
-| Tamper Resistance      | Protects Santa components from tampering |
+| Tamper Resistance      | Protecting Santa components from tampering |
 
 ## Logging
 
