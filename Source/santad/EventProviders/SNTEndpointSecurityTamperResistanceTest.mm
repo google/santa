@@ -49,11 +49,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 - (void)testEnable {
   // Ensure the client subscribes to expected event types
   std::set<es_event_type_t> expectedEventSubs{
-    ES_EVENT_TYPE_AUTH_KEXTLOAD,
-    ES_EVENT_TYPE_AUTH_SIGNAL,
-    ES_EVENT_TYPE_AUTH_EXEC,
-    ES_EVENT_TYPE_AUTH_UNLINK,
-    ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_KEXTLOAD, ES_EVENT_TYPE_AUTH_SIGNAL, ES_EVENT_TYPE_AUTH_EXEC,
+    ES_EVENT_TYPE_AUTH_UNLINK,   ES_EVENT_TYPE_AUTH_RENAME,
   };
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -248,7 +245,9 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
     for (const auto &kv : pidsToResult) {
       Message msg(mockESApi, &esMsg);
-      esMsg.event.signal.target->audit_token = MakeAuditToken(kv.first.first, 42);
+      es_process_t target_proc = MakeESProcess(&file);
+      target_proc.audit_token = MakeAuditToken(kv.first.first, 42);
+      esMsg.event.signal.target = &target_proc;
       esMsg.process->audit_token = MakeAuditToken(kv.first.second, 42);
 
       [mockTamperClient
