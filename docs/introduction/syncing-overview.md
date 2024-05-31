@@ -38,7 +38,7 @@ command.
 1.  The full sync starts. This includes a number of stages:
     1.  `preflight`: The sync server can set various settings for Santa.
     1.  `eventupload` (optional): If Santa has generated events, it will upload
-        them to the sync-server.
+        them to the sync server.
     1.  `ruledownload`: Download rules from the sync server.
     1.  `postflight`: Updates timestamps for successful syncs.
 1.  After the full sync completes a new full sync will be scheduled, by default

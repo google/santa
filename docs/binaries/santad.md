@@ -2,7 +2,7 @@
 parent: Binaries
 ---
 
-# santad
+# santad  (com.google.santa.daemon)
 
 The `santad` process makes decisions
 about binary executions, file access, and mounting USB mass storage devices. It
