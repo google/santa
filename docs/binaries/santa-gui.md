@@ -14,8 +14,11 @@ several types of notifications it can display:
 
 ## Blocked Executions
 
-When Santa prevents a binary from executing, it presents a dialog to the user containing information about the binary that was denied. The message presented to the user, and the text of the
-**Open** button, are configurable on both a global and per-rule basis.
+When Santa prevents a binary from executing, it presents a dialog to the user
+containing information about the binary that was denied. The message presented
+to the user, the text of the **Open** button, and the destination URL for where
+to send users when the **Open** button is clicked are all configurable on both a
+global and per-rule basis.
 
 If the rule was configured as `silent`, it will not display a dialog when Santa denies a binary from executing.
 

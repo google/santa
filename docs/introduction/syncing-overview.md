@@ -16,9 +16,6 @@ macOS systems. This document explains the syncing process.
 
 ## Flow of a Full Sync
 
-**NOTE:** Synchronization is now performed by its own daemon, the
-`santasyncservice`.
-
 This is a high level overview of the syncing process. For a more detailed
 account of each part, see the documentation on the
 [Sync Protocol](../development/sync-protocol.md).
@@ -40,7 +37,8 @@ command.
     1.  `eventupload` (optional): If Santa has generated events, it will upload
         them to the sync server.
     1.  `ruledownload`: Download rules from the sync server.
-    1.  `postflight`: Updates timestamps for successful syncs.
+    1.  `postflight`: Posts some stats about the sync to the sync server and
+        updates timestamps for successful syncs.
 1.  After the full sync completes a new full sync will be scheduled, by default
     this will be 10 min. However there are a few ways to manipulate this:
     1.  The sync server can send down a configuration in the preflight to
@@ -50,7 +48,7 @@ command.
         start listening for FCM messages. If a connection to FCM is made, the
         full sync interval drops to a default of 4 hours. A preflight
         configuration can override this. The FCM connection allows the
-        sync-server to talk directly with Santa. This way we can reduce polling
+        sync server to talk directly with Santa. This way we can reduce polling
         the sync server dramatically.
 1.  Full syncs will continue to take place at their configured interval. If
     configured FCM messages will continue to be digested and acted upon.

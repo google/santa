@@ -261,7 +261,7 @@ ways to install configuration profiles:
 | Key                                 | Value Type | Description                              |
 | ----------------------------------- | ---------- | ---------------------------------------- |
 | client\_mode                        | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
-| clean\_sync\*\*                     | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync-server. Defaults to `False`. |
+| clean\_sync\*\*                     | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync server. Defaults to `False`. |
 | batch\_size                         | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
 | upload\_logs\_url\*\*               | String     | If set, the endpoint to send Santa's current logs. No default. |
 | allowed\_path\_regex                | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
@@ -298,8 +298,3 @@ An example payload for this use case is provided [here](tcc.configuration-profil
 
 This would be used alongside a payload allowing [notifications](notificationsettings.santa.example.mobileconfig) to be sent,
 and for allowing the [system extension](https://github.com/google/santa/blob/main/docs/deployment/system-extension-policy.santa.example.mobileconfig) to be loaded without end user interaction.
-
-Please note that for release package installers that included the kernel extension
-as part of the payload (prior to 2021.8) the end user was prompted to allow it to load
-unless explicitly allowed with another MDM-delivered configuration profile to the
-supervised system.

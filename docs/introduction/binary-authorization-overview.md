@@ -14,7 +14,7 @@ redirect_from:
 (ES) framework events to authorize new executions in its
 [authorizer client](../binaries/santad#event-streams). This framework ensures
 that `santad` has the opportunity to allow or deny the execution of a binary
-before it any code in that binary is executed.
+before any code in that binary is executed.
 
 ## Flow of a New Execution
 
@@ -53,10 +53,10 @@ before it any code in that binary is executed.
 1.  Next, `santad` extracts relevant file and code signing information from the
     event. It computes the file's hash and verifies the binary's code
     signature.
-    *   Note: If code signature validation fails, `santad` will not attempt to
-        lookup rules for any properties validated by the code signature
-        (currently TeamID, SigningID and CDHash). This means only file hash and
-        file scope rules apply.
+    *   **IMPORTANT:** If code signature validation fails, `santad` will not
+        attempt to lookup rules for any properties validated by the code
+        signature (currently TeamID, SigningID and CDHash). This means only file
+        hash and file scope rules apply.
 1.  The extracted information is then used to lookup any matching rules and make
     a decision.
     *   There are more details on how these decisions are made in the
