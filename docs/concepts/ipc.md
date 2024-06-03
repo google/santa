@@ -22,14 +22,15 @@ into the GUI (assuming fast-user switching is enabled). While multiple processes
 might be running, only the one for the user currently logged-in will be
 connected to `santad` and receiving notifications.
 
-Both `santasyncservice` and `santabundleservice` run as launch daemons. If a
-sync server is configured, `santasyncservice` gets launched when `santad` starts
-up and establishes an XPC connection. The `santabundleservice` starts up when a
-binary is blocked and the `Santa` GUI establishes an XPC connection. Note, the
-`santabundleservice` also communicates back with `santad`.
+`santasyncservice`, `santabundleservice` and `santametricservice` all run as
+launch daemons. If a sync server is configured, `santasyncservice` gets launched
+when `santad` starts up and establishes an XPC connection. The
+`santabundleservice` starts up when a binary is blocked and the `Santa` GUI
+establishes an XPC connection. Note, the `santabundleservice` also communicates
+back with `santad`.
 
-The `santametricservice` also runs as a launch daemon and starts when the system
-comes up. `santad` opens and maintains an XPC connection to it.
+The `santametricservice` starts when the system comes up. `santad` opens and
+maintains an XPC connection to the `santametricservice`.
 
 `santactl` is a command-line utility that is executed at will by a user. It can
 communicate with `santad` and the `santasyncservice` via XPC in order to issue

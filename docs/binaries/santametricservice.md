@@ -18,5 +18,5 @@ sent to whatever server is configured, which is nothing by default.
 **NOTE:** At Google,
 [Monarch](https://research.google/pubs/monarch-googles-planet-scale-in-memory-time-series-database/)
 is used for its metrics system but this has limited value for other deployments.
-Ideally Santa should change to using a more open source friendly solution in the
-future ([#563](https://github.com/google/santa/issues/563)).
+See [Known Limitations](https://santa.dev/known-limitations) for more
+information.
