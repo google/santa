@@ -42,7 +42,9 @@ locate the highest ancestor bundle containing the blocked binary.
 Once the containing bundle is identified, the directory tree is scanned for all
 contained binaries. Pseudo-events are created for each entry that contain all of
 the same information as normal [execution events](../concepts/events.md). These
-events can be sent to the sync server if requested.
+events can be sent to the sync server if requested (see the
+[Event Upload section of the Sync Protocol](../development/sync-protocol.html#eventupload-response)
+for more information).
 
 ## Bundle Hash
 
