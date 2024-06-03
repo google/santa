@@ -9,7 +9,8 @@ non-execution events for the contents of a bundle. When an execution is blocked,
 the `santabundleservice` is tasked with determining if the binary is part of a
 bundle and, if so, locating other executables contained within that bundle.
 Finally, the service is responsible for generating the
-[bundle hash](#bundle-hash) and computing the hash of all found binaries.
+[bundle hash](#bundle-hash) and creating [events](#events) for all found
+binaries.
 
 ## Bundle Identification
 
@@ -39,8 +40,9 @@ locate the highest ancestor bundle containing the blocked binary.
 ## Events
 
 Once the containing bundle is identified, the directory tree is scanned for all
-contained binaries. Pseudo-events are created for each entry. These events can
-be sent to the sync server if requested.
+contained binaries. Pseudo-events are created for each entry that contain all of
+the same information as normal [execution events](../concepts/events.md). These
+events can be sent to the sync server if requested.
 
 ## Bundle Hash
 
