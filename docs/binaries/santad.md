@@ -15,11 +15,12 @@ of Santa.
 
 ## On Launch
 
-When `santad` starts, it configures the following:
+When `santad` starts, it immediately performs the following setup tasks:
 
-*   Initializes the rule and event databases.
-*   Establishes connections to `Santa` (GUI) and `santasyncservice` daemon.
-*   Processes the config file.
+*   Initializes the rule and event databases
+*   Establishes an XPC listener for incoming connections
+*   Establishes an XPC connection to the `santasyncservice` daemon
+*   Processes the config file
 
 Next, if configured to do so, `santad` begins to unmount/remount any connected
 USB mass storage devices that violate policy.
