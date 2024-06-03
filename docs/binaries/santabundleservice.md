@@ -13,6 +13,12 @@ Finally, the service is responsible for generating the
 
 ## Bundle Identification
 
+macOS application bundles are formed by a directory with a
+[loosely-defined structure](https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html).
+Bundles may also contain nested bundles (e.g. XPC services, app extensions,
+etc.). `santabundleservice` applies some heuristics to locate the highest
+ancestor bundle containing the blocked binary.
+
 Bundle structures for macOS applications is a loosely defined structure and is
 further complicated by supporting nested bundles for common scenarios (e.g. XPC
 services, app extensions, etc.). `santabundleservice` applies some heuristics to

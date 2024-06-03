@@ -12,7 +12,7 @@ redirect_from:
 `santad` subscribes to appropriate
 [Endpoint Security](https://developer.apple.com/documentation/endpointsecurity)
 (ES) framework events to authorize new executions in its
-[authorizer client](../binaries/santad#event-streams). This framework ensures
+[authorizer client](../binaries/santad.md#event-streams). This framework ensures
 that `santad` has the opportunity to allow or deny the execution of a binary
 before any code in that binary is executed.
 
@@ -65,5 +65,5 @@ before any code in that binary is executed.
 1.  The decision is then posted back to the ES subsystem and local caches are
     updated.
 1.  If the binary was blocked, the `Santa GUI` will
-    [display a message](../binaries/santa-gui.html#blocked-executions), if
+    [display a message](../binaries/santa-gui.md#blocked-executions), if
     configured to do so.
