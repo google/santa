@@ -15,7 +15,9 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 
 #include <EndpointSecurity/ESTypes.h>
+#include <bsm/libbsm.h>
 #include <string.h>
+#include <algorithm>
 
 #import "Source/common/SNTLogging.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
@@ -85,6 +87,26 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
       break;
     }
 
+    case ES_EVENT_TYPE_AUTH_SIGNAL: {
+      // Only block signals sent to us and not from launchd.
+      if (audit_token_to_pid(esMsg->event.signal.target->audit_token) == getpid() &&
+          audit_token_to_pid(esMsg->process->audit_token) != 1) {
+        LOGW(@"Preventing attempt to kill Santa daemon");
+        result = ES_AUTH_RESULT_DENY;
+      }
+      break;
+    }
+
+    case ES_EVENT_TYPE_AUTH_EXEC: {
+      // When not running a debug build, prevent attempts to kill Santa
+      // by launchctl commands.
+#ifndef DEBUG
+      result = ValidateLaunchctlExec(esMsg);
+      if (result == ES_AUTH_RESULT_DENY) LOGW(@"Preventing attempt to kill Santa daemon");
+#endif
+      break;
+    }
+
     case ES_EVENT_TYPE_AUTH_KEXTLOAD: {
       // TODO(mlw): Since we don't package the kext anymore, we should consider removing this.
       // TODO(mlw): Consider logging when kext loads are attempted.
@@ -120,15 +142,53 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   for (const auto &path : protectedPaths) {
     watchPaths.push_back({path, WatchItemPathType::kLiteral});
   }
+  watchPaths.push_back({"/Library/SystemExtensions", WatchItemPathType::kPrefix});
+  watchPaths.push_back({"/bin/launchctl", WatchItemPathType::kLiteral});
 
   // Begin watching the protected set
   [super muteTargetPaths:watchPaths];
 
   [super subscribeAndClearCache:{
                                   ES_EVENT_TYPE_AUTH_KEXTLOAD,
+                                  ES_EVENT_TYPE_AUTH_SIGNAL,
+                                  ES_EVENT_TYPE_AUTH_EXEC,
                                   ES_EVENT_TYPE_AUTH_UNLINK,
                                   ES_EVENT_TYPE_AUTH_RENAME,
                                 }];
+}
+
+es_auth_result_t ValidateLaunchctlExec(const Message &esMsg) {
+  es_string_token_t exec_path = esMsg->event.exec.target->executable->path;
+  if (strncmp(exec_path.data, "/bin/launchctl", exec_path.length) != 0) {
+    return ES_AUTH_RESULT_ALLOW;
+  }
+
+  // Ensure there are at least 2 arguments after the command
+  std::shared_ptr<EndpointSecurityAPI> esApi = esMsg.ESAPI();
+  uint32_t argCount = esApi->ExecArgCount(&esMsg->event.exec);
+  if (argCount < 2) {
+    return ES_AUTH_RESULT_ALLOW;
+  }
+
+  // Check for some allowed subcommands
+  es_string_token_t arg = esApi->ExecArg(&esMsg->event.exec, 1);
+  static const std::unordered_set<std::string> safe_commands{
+    "blame", "help", "hostinfo", "list", "plist", "print", "procinfo",
+  };
+  if (safe_commands.find(std::string(arg.data, arg.length)) != safe_commands.end()) {
+    return ES_AUTH_RESULT_ALLOW;
+  }
+
+  // Check whether com.google.santa.daemon is in the argument list.
+  // launchctl no longer accepts PIDs to operate on.
+  for (int i = 2; i < argCount; i++) {
+    es_string_token_t arg = esApi->ExecArg(&esMsg->event.exec, i);
+    if (strnstr(arg.data, "com.google.santa.daemon", arg.length) != NULL) {
+      return ES_AUTH_RESULT_DENY;
+    }
+  }
+
+  return ES_AUTH_RESULT_ALLOW;
 }
 
 @end
