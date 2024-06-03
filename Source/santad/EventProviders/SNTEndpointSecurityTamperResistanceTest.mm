@@ -49,9 +49,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 - (void)testEnable {
   // Ensure the client subscribes to expected event types
   std::set<es_event_type_t> expectedEventSubs{
-    ES_EVENT_TYPE_AUTH_KEXTLOAD,
-    ES_EVENT_TYPE_AUTH_UNLINK,
-    ES_EVENT_TYPE_AUTH_RENAME,
+    ES_EVENT_TYPE_AUTH_KEXTLOAD, ES_EVENT_TYPE_AUTH_SIGNAL, ES_EVENT_TYPE_AUTH_EXEC,
+    ES_EVENT_TYPE_AUTH_UNLINK,   ES_EVENT_TYPE_AUTH_RENAME,
   };
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
@@ -70,6 +69,8 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   // Setup mocks to handle muting the rules db and events db
   EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, testing::_, WatchItemPathType::kLiteral))
     .WillRepeatedly(testing::Return(true));
+  EXPECT_CALL(*mockESApi, MuteTargetPath(testing::_, testing::_, WatchItemPathType::kPrefix))
+    .WillRepeatedly(testing::Return(true));
 
   SNTEndpointSecurityTamperResistance *tamperClient =
     [[SNTEndpointSecurityTamperResistance alloc] initWithESAPI:mockESApi
@@ -86,7 +87,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 - (void)testHandleMessage {
   es_file_t file = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&file);
-  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_EXEC, &proc, ActionType::Auth);
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_AUTH_LINK, &proc, ActionType::Auth);
 
   es_file_t fileEventsDB = MakeESFile(kEventsDBPath.data());
   es_file_t fileRulesDB = MakeESFile(kRulesDBPath.data());
@@ -104,6 +105,12 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   std::map<es_string_token_t *, es_auth_result_t> kextIdToResult{
     {&santaTok, ES_AUTH_RESULT_DENY},
     {&benignTok, ES_AUTH_RESULT_ALLOW},
+  };
+
+  std::map<std::pair<pid_t, pid_t>, es_auth_result_t> pidsToResult{
+    {{getpid(), 31838}, ES_AUTH_RESULT_DENY},
+    {{getpid(), 1}, ES_AUTH_RESULT_ALLOW},
+    {{435, 98381}, ES_AUTH_RESULT_ALLOW},
   };
 
   dispatch_semaphore_t semaMetrics = dispatch_semaphore_create(0);
@@ -217,6 +224,31 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
     for (const auto &kv : kextIdToResult) {
       Message msg(mockESApi, &esMsg);
       esMsg.event.kextload.identifier = *kv.first;
+
+      [mockTamperClient
+             handleMessage:std::move(msg)
+        recordEventMetrics:^(EventDisposition d) {
+          XCTAssertEqual(d, kv.second == ES_AUTH_RESULT_DENY ? EventDisposition::kProcessed
+                                                             : EventDisposition::kDropped);
+          dispatch_semaphore_signal(semaMetrics);
+        }];
+
+      XCTAssertSemaTrue(semaMetrics, 5, "Metrics not recorded within expected window");
+      XCTAssertEqual(gotAuthResult, kv.second);
+      XCTAssertEqual(gotCachable, kv.second == ES_AUTH_RESULT_ALLOW);
+    }
+  }
+
+  // Check SIGNAL tamper events
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_SIGNAL;
+
+    for (const auto &kv : pidsToResult) {
+      Message msg(mockESApi, &esMsg);
+      es_process_t target_proc = MakeESProcess(&file);
+      target_proc.audit_token = MakeAuditToken(kv.first.first, 42);
+      esMsg.event.signal.target = &target_proc;
+      esMsg.process->audit_token = MakeAuditToken(kv.first.second, 42);
 
       [mockTamperClient
              handleMessage:std::move(msg)
