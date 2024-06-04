@@ -4,8 +4,7 @@ parent: Binaries
 
 # Santa GUI
 
-The Santa GUI displays user GUI notifications. The types of notifications are:
-several types of notifications it can display:
+The Santa GUI displays user GUI notifications. The types of notifications it can display are:
 
 - [Blocked Executions](#blocked-executions)
 - [Blocked File Access](#blocked-file-access)
