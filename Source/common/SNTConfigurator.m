@@ -373,6 +373,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingSyncEnableProtoTransfer {
+  return [self configStateSet];
+}
+
 + (NSSet *)keyPathsForValuesAffectingSyncExtraHeaders {
   return [self configStateSet];
 }
