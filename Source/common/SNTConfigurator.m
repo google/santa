@@ -73,6 +73,7 @@ static NSString *const kMobileConfigDomain = @"com.google.santa";
 /// The keys managed by a mobileconfig.
 static NSString *const kStaticRules = @"StaticRules";
 static NSString *const kSyncBaseURLKey = @"SyncBaseURL";
+static NSString *const kSyncEnableProtoTransfer = @"SyncEnableProtoTransfer";
 static NSString *const kSyncProxyConfigKey = @"SyncProxyConfiguration";
 static NSString *const kSyncExtraHeadersKey = @"SyncExtraHeaders";
 static NSString *const kSyncEnableCleanSyncEventUpload = @"SyncEnableCleanSyncEventUpload";
@@ -234,6 +235,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
       kModeNotificationLockdown : string,
       kStaticRules : array,
       kSyncBaseURLKey : string,
+      kSyncEnableProtoTransfer : number,
       kSyncEnableCleanSyncEventUpload : number,
       kSyncProxyConfigKey : dictionary,
       kSyncExtraHeadersKey : dictionary,
@@ -368,6 +370,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncBaseURL {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingSyncEnableProtoTransfer {
   return [self configStateSet];
 }
 
@@ -717,6 +723,11 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
   if (![urlString hasSuffix:@"/"]) urlString = [urlString stringByAppendingString:@"/"];
   NSURL *url = [NSURL URLWithString:urlString];
   return url;
+}
+
+- (BOOL)syncEnableProtoTransfer {
+  NSNumber *number = self.configState[kSyncEnableProtoTransfer];
+  return number ? [number boolValue] : NO;
 }
 
 - (NSDictionary *)syncProxyConfig {

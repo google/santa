@@ -394,6 +394,12 @@
 @property(readonly, nonatomic) NSURL *syncBaseURL;
 
 ///
+///  If enabled, syncing will use binary protobufs for transfer instead
+///  of JSON. Defaults to NO.
+///
+@property(readonly, nonatomic) BOOL syncEnableProtoTransfer;
+
+///
 ///  Proxy settings for syncing.
 ///  This dictionary is passed directly to NSURLSession. The allowed keys
 ///  are loosely documented at

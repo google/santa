@@ -61,29 +61,42 @@ using santa::common::NSStringToUTF8String;
 }
 
 - (NSMutableURLRequest *)requestWithMessage:(google::protobuf::Message *)message {
-  NSData *requestBody = [NSData data];
-  if (message) {
-    google::protobuf::json::PrintOptions options{
-      .always_print_enums_as_ints = false,
-      .preserve_proto_field_names = true,
-    };
-    std::string json;
-    absl::Status status = google::protobuf::json::MessageToJsonString(*message, &json, options);
+  if (!message) return [self requestWithData:[NSData data] contentType:nil];
 
-    if (!status.ok()) {
-      SLOGE(@"Failed to convert protobuf to JSON: %s", status.ToString().c_str());
+  if ([[SNTConfigurator configurator] syncEnableProtoTransfer]) {
+    std::string data;
+    if (!message->SerializeToString(&data)) {
+      SLOGE(@"Failed to serialize protobuf");
       return nil;
     }
 
-    requestBody = [NSData dataWithBytes:json.data() length:json.size()];
+    return [self requestWithData:[NSData dataWithBytes:data.data() length:data.size()]
+                     contentType:@"application/x-protobuf"];
   }
-  return [self requestWithData:requestBody];
+
+  google::protobuf::json::PrintOptions options{
+    .always_print_enums_as_ints = false,
+    .preserve_proto_field_names = true,
+  };
+  std::string json;
+  absl::Status status = google::protobuf::json::MessageToJsonString(*message, &json, options);
+
+  if (!status.ok()) {
+    SLOGE(@"Failed to convert protobuf to JSON: %s", status.ToString().c_str());
+    return nil;
+  }
+
+  SLOGD(@"Request JSON: %s", json.c_str());
+  return [self requestWithData:[NSData dataWithBytes:json.data() length:json.size()]
+                   contentType:@"application/json"];
 }
 
-- (NSMutableURLRequest *)requestWithData:(NSData *)requestBody {
+- (NSMutableURLRequest *)requestWithData:(NSData *)requestBody contentType:(NSString *)contentType {
+  if (contentType.length) contentType = @"application/octet-stream";
+
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:[self stageURL]];
   [req setHTTPMethod:@"POST"];
-  [req setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+  [req setValue:contentType forHTTPHeaderField:@"Content-Type"];
   NSString *xsrfHeader = self.syncState.xsrfTokenHeader ?: kDefaultXSRFTokenHeader;
   [req setValue:self.syncState.xsrfToken forHTTPHeaderField:xsrfHeader];
 
