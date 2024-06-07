@@ -5,65 +5,69 @@ parent: Intro
 
 # Syncing Overview
 
-#### Background
+## Background
 
 Santa can be run and configured without a sync server. Doing so will enable an
 admin to configure rules with the `santactl rule` command. Using a sync server
-will enable an admin to configures rules and multiple other settings from the
+will enable an admin to configure rules and multiple other settings from the
 sync server itself. Santa was designed from the start with a sync server in
 mind. This allows an admin to easily configure and sync rules across a fleet of
 macOS systems. This document explains the syncing process.
 
-#### Flow of a full sync
-
-NOTE: Synchronization is now performed by its own agent, the `santasyncservice`.
-The phases of synchronization described below still apply, but references to how
-the process starts is outdated. This will be updated soon.
+## Flow of a Full Sync
 
 This is a high level overview of the syncing process. For a more detailed
-account of each part, see the respective documentation. The santaclt binary can
-be run in one of two modes, daemon and non-daemon. The non-daemon mode does one
-full sync and exits. This is the typical way a user will interact with Santa,
-mainly to force a full sync. The daemon mode is used by santad to schedule full
-syncs, listen for push notifications and upload events.
+account of each part, see the documentation on the
+[Sync Protocol](../development/sync-protocol.md).
 
-1.  When the santad process starts up, it looks for a `SyncBaseURL` key/value in
-    the config. If one exists it will `fork()` and `execve()` `santactl sync
-    —-daemon`. All privileges are dropped before the new process calls `execve()`.
-    All privileged actions are then restricted to the XPC interface
-    made available to santactl by santad. Since this santactl process is running
-    as a daemon it too exports an XPC interface so santad can interact with the
-    process efficiently and securely. To ensure syncing reliability santad will
-    restart the santactl daemon if it is killed or crashes.
-2.  The santactl daemon process now schedules a full sync for 15 sec in the
-    future. The 15 sec is used to let santad settle before santactl starts
-    sending rules from the sync server to process.
-3.  The full sync starts. There are a number of stages to a full sync:
-    1.  preflight: The sync server can set various settings for Santa.
-    2.  eventupload (optional): If Santa has generated events, it will upload
-        them to the sync-server.
-    3.  ruledownload: Download rules from the sync server.
-    4.  postflight: Updates timestamps for successful syncs.
-4.  After the full sync completes a new full sync will be scheduled, by default
-    this will be 10min. However there are a few ways to manipulate this:
+Syncing is performed by the `santasyncservice` daemon. The daemon performs
+routine full syncs and rule download only syncs, as well as listens for FCM push
+notifications (when enabled). The daemon is also used by `santad` which can trigger event
+uploads via an XPC call when a binary is blocked. The `santactl` command line
+utility can also trigger full syncs via an XPC call with the `santactl sync`
+command.
+
+1.  When the `santad` process starts up, it establishes an XPC connection with
+    the `santasyncservice` provided the `SyncBaseURL` configuration key is set.
+1.  `santasyncservice` schedules a full sync to run 15 seconds in the future
+    when the process starts up. This time is used to let `santad` settle before
+    it would need to start receiving and updating rules.
+1.  The full sync starts. This includes a number of stages:
+    1.  `preflight`: The sync server can set various settings for Santa.
+    1.  `eventupload` (optional): If Santa has generated events, it will upload
+        them to the sync server.
+    1.  `ruledownload`: Download rules from the sync server.
+    1.  `postflight`: Posts some stats about the sync to the sync server and
+        updates timestamps for successful syncs.
+1.  After the full sync completes a new full sync will be scheduled, by default
+    this will be 10 min. However there are a few ways to manipulate this:
     1.  The sync server can send down a configuration in the preflight to
-        override the 10min interval. It can be anything greater than 10min.
-    2.  Firebase Cloud Messaging (FCM) can be used*. The sync server can send
+        override the 10 min interval. It can be anything greater than 1 min.
+    1.  Firebase Cloud Messaging (FCM) can be used*. The sync server can send
         down a configuration in the preflight to have the santactl daemon to
         start listening for FCM messages. If a connection to FCM is made, the
-        full sync interval drops to a default of 4 hours. A preflight configuration can override this.
-        The FCM connection allows the
-        sync-sever to talk directly with Santa. This way we can reduce polling
+        full sync interval drops to a default of 4 hours. A preflight
+        configuration can override this. The FCM connection allows the
+        sync server to talk directly with Santa. This way we can reduce polling
         the sync server dramatically.
-5.  Full syncs will continue to take place at their configured interval. If
+1.  Full syncs will continue to take place at their configured interval. If
     configured FCM messages will continue to be digested and acted upon.
 
-*The Firebase Cloud Messaging (FCM) based Push Notification system is only available on the internal Google deployment of Santa at this time
+*The Firebase Cloud Messaging (FCM) based Push Notification system is only
+available on the internal Google deployment of Santa at this time.
 
-#### santactl XPC interface
+## Blocked Events
 
-When running as a daemon, the santactl process makes available an XPC interface
-for use by santad. This allows santad to send blocked binary or bundle events
-directly to santactl for immediate upload to the sync-server, enabling a
-smoother user experience. The binary blocked on macOS is immediately
-available for viewing or handling on the sync-server.
+The `santad` daemon keeps an open XPC channel to the `santasyncservice`. This is
+used by `santad` to send information about blocked binaries or bundle events as
+they occur so that the information is immediately available for handling by the
+sync server (e.g. making information about a blocked binary available for
+viewing and potentially generating new rule sets).
+
+## Manually Triggered Syncs
+
+A full sync can be triggered at any time by using the `santactl sync` command.
+This will message the `santasyncservice` via XPC to perform the required work.
+Note that if a sync is already in progress, this command will block until that
+sync is complete. Only normal user permissions are needed to trigger a sync
+manually.

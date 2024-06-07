@@ -4,30 +4,12 @@ parent: Concepts
 
 # Mode
 
-Santa can run in one of two modes, Lockdown or Monitor. To check the current
-status run the following command:
+Santa can run in one of two modes, `Lockdown` or `Monitor`. To check the current
+mode, use the `santactl status` command, for example:
 
 ```sh
-⇒  santactl status
->>> Daemon Info
-  Mode                      | Monitor
-  File Logging              | Yes
-  Watchdog CPU Events       | 0  (Peak: 13.59%)
-  Watchdog RAM Events       | 0  (Peak: 31.49MB)
->>> Kernel Info
-  Root cache count          | 107
-  Non-root cache count      | 0
->>> Database Info
-  Binary Rules              | 5
-  Certificate Rules         | 2
-  Events Pending Upload     | 0
->>> Sync Info
-  Sync Server               | https://sync-server-hostname.com
-  Clean Sync Required       | No
-  Last Successful Full Sync | 2017/08/02 21:44:17 -0400
-  Last Successful Rule Sync | 2017/08/02 21:44:17 -0400
-  Push Notifications        | Connected
-  Bundle Scanning           | Yes
+⇒  santactl status | grep "^  Mode"
+  Mode                      | Lockdown
 ```
 
 ##### Monitor mode
