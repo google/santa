@@ -122,6 +122,7 @@ santa_unit_test(
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCControlInterface",
+        "//Source/common:SigningIDHelpers",
         "@MOLCertificate",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",

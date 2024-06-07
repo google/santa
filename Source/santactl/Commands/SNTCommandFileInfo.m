@@ -23,10 +23,10 @@
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTRuleIdentifiers.h"
-#import "Source/common/SigningIDHelpers.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTXPCBundleServiceInterface.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/SigningIDHelpers.h"
 #import "Source/santactl/SNTCommand.h"
 #import "Source/santactl/SNTCommandController.h"
 
@@ -383,9 +383,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
 
     NSString *cdhash = csc.cdhash;
     NSString *teamID = csc.teamID;
-    NSString *identifier = csc.signingID;
     NSString *signingID = FormatSigningID(csc);
-    
+
     struct RuleIdentifiers identifiers = {
       .cdhash = cdhash,
       .binarySHA256 = fileInfo.SHA256,
@@ -516,15 +515,7 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   return ^id(SNTCommandFileInfo *cmd, SNTFileInfo *fileInfo) {
     MOLCodesignChecker *csc = [fileInfo codesignCheckerWithError:NULL];
 
-    NSString *identifier = csc.signingID;
-    NSString *teamID = csc.teamID;
-    if (!identifier) return nil;
-    if (teamID) {
-      return [NSString stringWithFormat:@"%@:%@", teamID, identifier];
-    } else if (csc.platformBinary) {
-      return [NSString stringWithFormat:@"platform:%@", identifier];
-    }
-    return nil;
+    return FormatSigningID(csc);
   };
 }
 

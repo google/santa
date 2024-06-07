@@ -12,20 +12,20 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 
-#import "Source/common/SNTLogging.h"
 #import "Source/common/SigningIDHelpers.h"
+#import "Source/common/SNTLogging.h"
 
-NSString *FormatSigningID(MOLCodesignChecker * csc) {
-      if (csc.signingID) {
-      	if (csc.platformBinary) {
-        	return [NSString stringWithFormat:@"%@:%@", @"platform", csc.signingID];
-      	} else if (csc.teamID) {
-        	return [NSString stringWithFormat:@"%@:%@", csc.teamID, csc.signingID];
-	} else {
-		LOGE(@"unable to format signing ID missing team ID");
-		return @"";
-	}
-      }
-      LOGE(@"unable to format signing ID as it's missing");
-      return @"";
+NSString *FormatSigningID(MOLCodesignChecker *csc) {
+  if (csc.signingID) {
+    if (csc.platformBinary) {
+      return [NSString stringWithFormat:@"%@:%@", @"platform", csc.signingID];
+    } else if (csc.teamID) {
+      return [NSString stringWithFormat:@"%@:%@", csc.teamID, csc.signingID];
+    } else {
+      LOGD(@"unable to format signing ID missing team ID for non-platform binary");
+      return nil;
+    }
+  }
+  LOGD(@"unable to format signing ID as it's missing");
+  return nil;
 }
