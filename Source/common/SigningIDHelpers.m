@@ -16,7 +16,7 @@
 #import "Source/common/SNTLogging.h"
 
 NSString *FormatSigningID(MOLCodesignChecker *csc) {
-  if (csc == nil || !csc.signingID) {
+  if (!csc.signingID.length) {
     LOGD(@"unable to format signing ID as it's missing");
     return nil;
   }
