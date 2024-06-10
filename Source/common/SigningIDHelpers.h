@@ -1,4 +1,4 @@
-/// Copyright 2023 Google LLC
+/// Copyright 2024 Google LLC
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ __BEGIN_DECLS
 
   @param csc A MOLCodesignChecker instance
 
-  @return An NSString formated as teamID:signingID or "" if there isn't a valid signing ID.
+  @return An NSString formated as teamID:signingID or nil if there isn't a valid signing ID.
 */
 NSString *FormatSigningID(MOLCodesignChecker *csc);
 
