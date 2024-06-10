@@ -16,19 +16,19 @@
 #import "Source/common/SNTLogging.h"
 
 NSString *FormatSigningID(MOLCodesignChecker *csc) {
-	if (csc == nil || !csc.signingID) {
- 		LOGD(@"unable to format signing ID as it's missing");
-		return nil;
-	}
+  if (csc == nil || !csc.signingID) {
+    LOGD(@"unable to format signing ID as it's missing");
+    return nil;
+  }
 
-	if (csc.teamID == nil) {
-		if (csc.platformBinary) {
-			return [NSString stringWithFormat:@"%@:%@", @"platform", csc.signingID];
-		} else {
-			LOGD(@"unable to format signing ID missing team ID for non-platform binary");
-			return nil;
-		}
-	}
+  if (csc.teamID == nil) {
+    if (csc.platformBinary) {
+      return [NSString stringWithFormat:@"%@:%@", @"platform", csc.signingID];
+    } else {
+      LOGD(@"unable to format signing ID missing team ID for non-platform binary");
+      return nil;
+    }
+  }
 
-    return [NSString stringWithFormat:@"%@:%@", csc.teamID, csc.signingID];
+  return [NSString stringWithFormat:@"%@:%@", csc.teamID, csc.signingID];
 }
