@@ -21,7 +21,7 @@ NSString *FormatSigningID(MOLCodesignChecker *csc) {
     return nil;
   }
 
-  if (csc.teamID == nil) {
+  if (!csc.teamID.length) {
     if (csc.platformBinary) {
       return [NSString stringWithFormat:@"%@:%@", @"platform", csc.signingID];
     } else {
