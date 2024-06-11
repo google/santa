@@ -151,6 +151,17 @@ objc_library(
 )
 
 objc_library(
+    name = "SigningIDHelpers",
+    srcs = ["SigningIDHelpers.m"],
+    hdrs = ["SigningIDHelpers.h"],
+    deps = [
+        "@MOLCodesignChecker",
+	":SNTLogging",
+    ],
+)
+
+
+objc_library(
     name = "SNTBlockMessage",
     srcs = ["SNTBlockMessage.m"],
     hdrs = ["SNTBlockMessage.h"],

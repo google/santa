@@ -19,6 +19,7 @@ objc_library(
         "//Source/common:SNTStoredEvent",
         "//Source/common:SNTXPCBundleServiceInterface",
         "//Source/common:SNTXPCNotifierInterface",
+        "//Source/common:SigningIDHelpers",
         "@FMDB",
         "@MOLCodesignChecker",
         "@MOLXPCConnection",
