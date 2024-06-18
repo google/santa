@@ -16,4 +16,5 @@ jobs:
         with:
           fail: true
       - name: "Check for trailing whitespace and newlines"
+        if: '!cancelled()'
         run: "! git grep -EIn $'[ \t]+$' -- ':(exclude)*.patch'"
