@@ -538,6 +538,229 @@ message FileAccess {
   optional PolicyDecision policy_decision = 6;
 }
 
+////////////////////
+//
+// New Shared Types
+//
+////////////////////
+
+message GraphicalSession {
+  optional uint32 id = 1;
+}
+
+message Address {
+  optional bytes address = 1;
+
+  enum AddressType {
+    ADDRESS_TYPE_UNKNOWN = 0;
+    ADDRESS_TYPE_IPV4 = 1;
+    ADDRESS_TYPE_IPV6 = 2;
+    ADDRESS_TYPE_NAMED_SOCKET = 3;
+  }
+
+  AddressType type = 2;
+}
+
+////////////////////
+//
+// START OPTION 1
+//
+////////////////////
+
+message LoginWindowSessionLogin {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSessionLogout {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSessionLock {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSessionUnlock {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSession {
+  oneof event {
+    LoginWindowSessionLogin login = 1;
+    LoginWindowSessionLogout logout = 2;
+    LoginWindowSessionLock lock = 3;
+    LoginWindowSessionUnlock unlock = 4;
+  }
+}
+
+message LoginLogoutLogin {
+  optional bool success = 1;
+  optional bytes failure_message = 2;
+  optional UserInfo user = 3;
+}
+
+message LoginLogoutLogout {
+  optional UserInfo user = 1;
+}
+
+message LoginLogout {
+  oneof event {
+    LoginLogoutLogin login = 1;
+    LoginLogoutLogout logout = 2;
+  }
+}
+
+message ScreenSharingAttach {
+  optional Address source = 1;
+  optional bytes viewer = 2;
+  optional bytes authentication_type = 3;
+  optional UserInfo authentication_user = 4;
+  optional UserInfo session_user = 5;
+  optional bool existing_session = 6;
+  optional GraphicalSession graphical_session = 7;
+}
+
+message ScreenSharingDetach {
+  optional Address source = 1;
+  optional bytes viewer = 2;
+  optional GraphicalSession graphical_session = 3;
+}
+
+message ScreenSharing {
+  oneof event {
+    ScreenSharingAttach attach = 1;
+    ScreenSharingDetach detach = 2;
+  }
+}
+
+message OpenSSHLogin {
+  enum Result {
+    RESULT_UNKNOWN = 0;
+    RESULT_LOGIN_EXCEED_MAXTRIES = 1;
+    RESULT_LOGIN_ROOT_DENIED = 2;
+    RESULT_AUTH_SUCCESS = 3;
+    RESULT_AUTH_FAIL_NONE = 4;
+    RESULT_AUTH_FAIL_PASSWD = 5;
+    RESULT_AUTH_FAIL_KBDINT = 6;
+    RESULT_AUTH_FAIL_PUBKEY = 7;
+    RESULT_AUTH_FAIL_HOSTBASED = 8;
+    RESULT_AUTH_FAIL_GSSAPI = 9;
+    RESULT_INVALID_USER = 10;
+  }
+
+  optional Result result = 1;
+  optional Address source = 2;
+  optional UserInfo user = 3;
+}
+
+message OpenSSHLogout {
+  optional Address source = 1;
+  optional UserInfo user = 2;
+}
+
+message OpenSSH {
+  oneof event {
+    OpenSSHLogin login = 1;
+    OpenSSHLogout logout = 2;
+  }
+}
+
+////////////////////
+//
+// END OPTION 1
+//
+////////////////////
+
+////////////////////
+//
+// START OPTION 2
+//
+////////////////////
+
+message LoginWindowSession {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+
+  enum Type {
+    TYPE_UNKNOWN = 0;
+    TYPE_LOGIN = 1;
+    TYPE_LOGOUT = 2;
+    TYPE_LOCK = 3;
+    TYPE_UNLOCK = 4;
+  }
+
+  optional Type type = 3;
+}
+
+message LoginLogout {
+  optional bool success = 1;
+  optional bytes failure_message = 2;
+  optional UserInfo user = 3;
+
+  enum Type {
+    TYPE_UNKNOWN = 0;
+    TYPE_LOGIN = 1;
+    TYPE_LOGOUT = 2;
+  }
+
+  optional Type type = 4;
+}
+
+message ScreenSharing {
+  enum Type {
+    TYPE_UNKNOWN = 0;
+    TYPE_ATTACH = 1;
+    TYPE_DETACH = 2;
+  }
+
+  optional Type type = 1;
+
+  optional Address source = 2;
+  optional bytes viewer = 3;
+  optional bytes authentication_type = 4;
+  optional UserInfo authentication_user = 5;
+  optional UserInfo session_user = 6;
+  optional bool existing_session = 7;
+  optional GraphicalSession graphical_session = 8;
+}
+
+message OpenSSH {
+  enum Type {
+    TYPE_UNKNOWN = 0;
+    TYPE_LOGIN = 1;
+    TYPE_LOGOUT = 2;
+  }
+
+  optional Type type = 1;
+
+  enum Result {
+    RESULT_UNKNOWN = 0;
+    RESULT_LOGIN_EXCEED_MAXTRIES = 1;
+    RESULT_LOGIN_ROOT_DENIED = 2;
+    RESULT_AUTH_SUCCESS = 3;
+    RESULT_AUTH_FAIL_NONE = 4;
+    RESULT_AUTH_FAIL_PASSWD = 5;
+    RESULT_AUTH_FAIL_KBDINT = 6;
+    RESULT_AUTH_FAIL_PUBKEY = 7;
+    RESULT_AUTH_FAIL_HOSTBASED = 8;
+    RESULT_AUTH_FAIL_GSSAPI = 9;
+    RESULT_INVALID_USER = 10;
+  }
+
+  optional Result result = 2;
+  optional Address source = 3;
+  optional UserInfo user = 4;
+}
+
+////////////////////
+//
+// END OPTION 2
+//
+////////////////////
+
 // A message encapsulating a single event
 message SantaMessage {
   // Machine ID of the host emitting this log
@@ -565,6 +788,10 @@ message SantaMessage {
     Allowlist allowlist = 20;
     FileAccess file_access = 21;
     CodesigningInvalidated codesigning_invalidated = 22;
+    LoginWindowSession login_window_session = 23;
+    LoginLogout login_logout = 24;
+    ScreenSharing screen_sharing = 25;
+    OpenSSH openssh = 26;
   };
 }
 
