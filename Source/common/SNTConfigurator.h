@@ -403,7 +403,7 @@
 ///  Proxy settings for syncing.
 ///  This dictionary is passed directly to NSURLSession. The allowed keys
 ///  are loosely documented at
-///  https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants.
+///  https://developer.apple.com/documentation/cfnetwork/global-proxy-settings-constants.
 ///
 @property(readonly, nonatomic) NSDictionary *syncProxyConfig;
 

@@ -40,7 +40,7 @@ All submissions related to the use of different identifiers should adhere to the
 | Identifier | Notes | Example |
 | -------- | ------- | ------- |
 | SHA-256  | lowercase |  `801d1dd8bc78984c126a269aca053642d16eef4389dfdc8df575af929fdcf279` |
-| CDHash | lowercase | `2d1cff4b1080058e7e5913e5a3398bcd0199b6a4` | 
+| CDHash | lowercase | `2d1cff4b1080058e7e5913e5a3398bcd0199b6a4` |
 | TeamID | uppercase | `43AQ936H96` |
 | Signing ID | case insensitive | `EQHXZ8M8AV:com.google.Chrome` |
 
