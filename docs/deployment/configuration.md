@@ -45,7 +45,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | ModeNotificationLockdown           | String     | The notification text to display when the client goes into Lockdown mode. Defaults to "Switching into Lockdown mode". |
 | SyncBaseURL                        | String     | The base URL of the sync server. |
 | SyncEnableProtoTransfer            | Bool       | If true, sync will happen using binary protos instead of JSON. Defaults to false. |
-| SyncProxyConfiguration             | Dictionary | The proxy configuration to use when syncing. See the [Apple Documentation](https://developer.apple.com/documentation/cfnetwork/global_proxy_settings_constants) for details on the keys that can be used in this dictionary. |
+| SyncProxyConfiguration             | Dictionary | The proxy configuration to use when syncing. See the [Apple Documentation](https://developer.apple.com/documentation/cfnetwork/global-proxy-settings-constants) for details on the keys that can be used in this dictionary. |
 | SyncEnableCleanSyncEventUpload     | Bool       | If true, events will be uploaded to the sync server even if a clean sync is requested. Defaults to false. |
 | ClientAuthCertificateFile          | String     | If set, this contains the location of a PKCS#12 certificate to be used for sync authentication. |
 | ClientAuthCertificatePassword      | String     | Contains the password for the PKCS#12 certificate. |
