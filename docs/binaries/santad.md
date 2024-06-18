@@ -2,7 +2,7 @@
 parent: Binaries
 ---
 
-# santad  (com.google.santa.daemon)
+# santad
 
 **Note:** This documentation refers to the main Santa daemon as `santad`, but
 this process will typically be seen on the system by its full name:
