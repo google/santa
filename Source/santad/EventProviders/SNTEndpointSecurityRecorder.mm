@@ -195,6 +195,17 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
                      ES_EVENT_TYPE_NOTIFY_LINK,
                      ES_EVENT_TYPE_NOTIFY_RENAME,
                      ES_EVENT_TYPE_NOTIFY_UNLINK,
+                     ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN,
+                     ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT,
+                     ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK,
+                     ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK,
+                     ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH,
+                     ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH,
+                     ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN,
+                     ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT,
+                     ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN,
+                     ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT,
+                     ES_EVENT_TYPE_NOTIFY_SUDO,
                    }];
 }
 

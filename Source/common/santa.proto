@@ -538,6 +538,152 @@ message FileAccess {
   optional PolicyDecision policy_decision = 6;
 }
 
+message GraphicalSession {
+  optional uint32 id = 1;
+}
+
+message SocketAddress {
+  optional bytes address = 1;
+
+  enum Type {
+    TYPE_UNKNOWN = 0;
+    TYPE_IPV4 = 1;
+    TYPE_IPV6 = 2;
+    TYPE_NAMED_SOCKET = 3;
+  }
+
+  optional Type type = 2;
+}
+
+message LoginWindowSessionLogin {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSessionLogout {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSessionLock {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSessionUnlock {
+  optional UserInfo user = 1;
+  optional GraphicalSession graphical_session = 2;
+}
+
+message LoginWindowSession {
+  oneof event {
+    LoginWindowSessionLogin login = 1;
+    LoginWindowSessionLogout logout = 2;
+    LoginWindowSessionLock lock = 3;
+    LoginWindowSessionUnlock unlock = 4;
+  }
+}
+
+message LoginLogoutLogin {
+  optional bool success = 1;
+  optional bytes failure_message = 2;
+  optional UserInfo user = 3;
+}
+
+message LoginLogoutLogout {
+  optional UserInfo user = 1;
+}
+
+message LoginLogout {
+  oneof event {
+    LoginLogoutLogin login = 1;
+    LoginLogoutLogout logout = 2;
+  }
+}
+
+message ScreenSharingAttach {
+  optional SocketAddress source = 1;
+  optional bytes viewer = 2;
+  optional bytes authentication_type = 3;
+  optional UserInfo authentication_user = 4;
+  optional UserInfo session_user = 5;
+  optional bool existing_session = 6;
+  optional GraphicalSession graphical_session = 7;
+}
+
+message ScreenSharingDetach {
+  optional SocketAddress source = 1;
+  optional bytes viewer = 2;
+  optional GraphicalSession graphical_session = 3;
+}
+
+message ScreenSharing {
+  oneof event {
+    ScreenSharingAttach attach = 1;
+    ScreenSharingDetach detach = 2;
+  }
+}
+
+message SSHLogin {
+  enum Result {
+    RESULT_UNKNOWN = 0;
+    RESULT_LOGIN_EXCEED_MAXTRIES = 1;
+    RESULT_LOGIN_ROOT_DENIED = 2;
+    RESULT_AUTH_SUCCESS = 3;
+    RESULT_AUTH_FAIL_NONE = 4;
+    RESULT_AUTH_FAIL_PASSWD = 5;
+    RESULT_AUTH_FAIL_KBDINT = 6;
+    RESULT_AUTH_FAIL_PUBKEY = 7;
+    RESULT_AUTH_FAIL_HOSTBASED = 8;
+    RESULT_AUTH_FAIL_GSSAPI = 9;
+    RESULT_INVALID_USER = 10;
+  }
+
+  optional Result result = 1;
+  optional SocketAddress source = 2;
+  optional UserInfo user = 3;
+}
+
+message SSHLogout {
+  optional SocketAddress source = 1;
+  optional UserInfo user = 2;
+}
+
+message SSH {
+  oneof event {
+    SSHLogin login = 1;
+    SSHLogout logout = 2;
+  }
+}
+
+message Sudo {
+  optional bool success = 1;
+
+  message RejectionInfo {
+    optional bytes plugin_name = 1;
+
+    enum PluginType {
+      PLUGIN_TYPE_UNKNOWN = 0;
+      PLUGIN_TYPE_FRONT_END = 1;
+      PLUGIN_TYPE_POLICY = 2;
+      PLUGIN_TYPE_IO = 3;
+      PLUGIN_TYPE_AUDIT = 4;
+      PLUGIN_TYPE_APPROVAL = 5;
+    }
+
+    optional PluginType plugin_type = 2;
+
+    optional bytes failure_message = 3;
+  }
+
+  optional RejectionInfo rejection_info = 2;
+
+  optional UserInfo from_user = 3;
+  optional UserInfo to_user = 4;
+
+  optional bytes command = 5;
+}
+
 // A message encapsulating a single event
 message SantaMessage {
   // Machine ID of the host emitting this log
@@ -565,6 +711,11 @@ message SantaMessage {
     Allowlist allowlist = 20;
     FileAccess file_access = 21;
     CodesigningInvalidated codesigning_invalidated = 22;
+    LoginWindowSession login_window_session = 23;
+    LoginLogout login_logout = 24;
+    ScreenSharing screen_sharing = 25;
+    SSH ssh = 26;
+    Sudo sudo = 27;
   };
 }
 

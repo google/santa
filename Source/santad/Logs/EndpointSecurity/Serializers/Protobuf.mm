@@ -54,8 +54,19 @@ using santa::santad::event_providers::endpoint_security::EnrichedExit;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
 using santa::santad::event_providers::endpoint_security::EnrichedFork;
 using santa::santad::event_providers::endpoint_security::EnrichedLink;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginLogout;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock;
+using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
+using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
+using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
+using santa::santad::event_providers::endpoint_security::EnrichedSudo;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
@@ -747,6 +758,50 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg
                          msg.es_msg().process, msg.instigator());
 
   return FinalizeProto(santa_msg);
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogin &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogout &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLock &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionUnlock &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingAttach &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingDetach &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogin &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogout &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogout &) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedSudo &) {
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeFileAccess(const std::string &policy_version,

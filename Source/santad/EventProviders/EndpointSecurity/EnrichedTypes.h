@@ -340,10 +340,104 @@ class EnrichedCSInvalidated : public EnrichedEventType {
   EnrichedCSInvalidated(const EnrichedCSInvalidated &other) = delete;
 };
 
-using EnrichedType =
-    std::variant<EnrichedClose, EnrichedExchange, EnrichedExec, EnrichedExit,
-                 EnrichedFork, EnrichedLink, EnrichedRename, EnrichedUnlink,
-                 EnrichedCSInvalidated>;
+class EnrichedLoginWindowSessionLogin : public EnrichedEventType {
+ public:
+  EnrichedLoginWindowSessionLogin(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginWindowSessionLogin(EnrichedLoginWindowSessionLogin &&) = default;
+};
+
+class EnrichedLoginWindowSessionLogout : public EnrichedEventType {
+ public:
+  EnrichedLoginWindowSessionLogout(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginWindowSessionLogout(EnrichedLoginWindowSessionLogout &&) =
+      default;
+};
+
+class EnrichedLoginWindowSessionLock : public EnrichedEventType {
+ public:
+  EnrichedLoginWindowSessionLock(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginWindowSessionLock(EnrichedLoginWindowSessionLock &&) = default;
+};
+
+class EnrichedLoginWindowSessionUnlock : public EnrichedEventType {
+ public:
+  EnrichedLoginWindowSessionUnlock(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginWindowSessionUnlock(EnrichedLoginWindowSessionUnlock &&) =
+      default;
+};
+
+class EnrichedScreenSharingAttach : public EnrichedEventType {
+ public:
+  EnrichedScreenSharingAttach(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedScreenSharingAttach(EnrichedScreenSharingAttach &&) = default;
+};
+
+class EnrichedScreenSharingDetach : public EnrichedEventType {
+ public:
+  EnrichedScreenSharingDetach(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedScreenSharingDetach(EnrichedScreenSharingDetach &&) = default;
+};
+
+class EnrichedOpenSSHLogin : public EnrichedEventType {
+ public:
+  EnrichedOpenSSHLogin(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedOpenSSHLogin(EnrichedOpenSSHLogin &&) = default;
+};
+
+class EnrichedOpenSSHLogout : public EnrichedEventType {
+ public:
+  EnrichedOpenSSHLogout(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedOpenSSHLogout(EnrichedOpenSSHLogout &&) = default;
+};
+
+class EnrichedLoginLogin : public EnrichedEventType {
+ public:
+  EnrichedLoginLogin(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginLogin(EnrichedLoginLogin &&) = default;
+};
+
+class EnrichedLoginLogout : public EnrichedEventType {
+ public:
+  EnrichedLoginLogout(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginLogout(EnrichedLoginLogout &&) = default;
+};
+
+class EnrichedSudo : public EnrichedEventType {
+ public:
+  EnrichedSudo(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedSudo(EnrichedSudo &&) = default;
+};
+
+using EnrichedType = std::variant<
+    EnrichedClose, EnrichedExchange, EnrichedExec, EnrichedExit, EnrichedFork,
+    EnrichedLink, EnrichedRename, EnrichedUnlink, EnrichedCSInvalidated,
+    EnrichedLoginWindowSessionLogin, EnrichedLoginWindowSessionLogout,
+    EnrichedLoginWindowSessionLock, EnrichedLoginWindowSessionUnlock,
+    EnrichedScreenSharingAttach, EnrichedScreenSharingDetach,
+    EnrichedOpenSSHLogin, EnrichedOpenSSHLogout, EnrichedLoginLogin,
+    EnrichedLoginLogout, EnrichedSudo>;
 
 class EnrichedMessage {
  public:

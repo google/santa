@@ -81,6 +81,39 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
     case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED:
       return std::make_unique<EnrichedMessage>(
         EnrichedCSInvalidated(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginWindowSessionLogin(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginWindowSessionLogout(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginWindowSessionLock(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginWindowSessionUnlock(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedScreenSharingAttach(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedScreenSharingDetach(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedOpenSSHLogin(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedOpenSSHLogout(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginLogin(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginLogout(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_SUDO:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedSudo(std::move(es_msg), Enrich(*es_msg->process)));
     default:
       // This is a programming error
       LOGE(@"Attempting to enrich an unhandled event type: %d", es_msg->event_type);
