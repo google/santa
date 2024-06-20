@@ -104,7 +104,6 @@ class MockLogger : public Logger {
     ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT,
     ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN,
     ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT,
-    ES_EVENT_TYPE_NOTIFY_SUDO,
   };
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 

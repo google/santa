@@ -205,7 +205,6 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
                      ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT,
                      ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN,
                      ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT,
-                     ES_EVENT_TYPE_NOTIFY_SUDO,
                    }];
 }
 

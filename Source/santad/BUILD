@@ -474,6 +474,7 @@ objc_library(
         ":EndpointSecurityEnrichedTypes",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
+        "//Source/common:String",
         "//Source/santad/ProcessTree:SNTEndpointSecurityAdapter",
         "//Source/santad/ProcessTree:process_tree",
     ],
@@ -484,7 +485,6 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
     deps = [
         ":EndpointSecurityMessage",
-        "//Source/common:String",
         "//Source/santad/ProcessTree:process_tree_cc_proto",
     ],
 )

@@ -56,7 +56,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
-using santa::santad::event_providers::endpoint_security::EnrichedSudo;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
@@ -662,10 +661,6 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginLogout &ms
                   std::make_optional<uid_t>(msg->event.login_logout->uid));
 
   return FinalizeString(str);
-}
-
-std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedSudo &) {
-  return {};
 }
 
 std::vector<uint8_t> BasicString::SerializeFileAccess(const std::string &policy_version,

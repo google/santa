@@ -25,7 +25,6 @@
 #include <string>
 #include <variant>
 
-#include "Source/common/String.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
 
@@ -437,14 +436,6 @@ class EnrichedLoginLogout : public EnrichedEventType {
   EnrichedLoginLogout(EnrichedLoginLogout &&) = default;
 };
 
-class EnrichedSudo : public EnrichedEventType {
- public:
-  EnrichedSudo(Message &&es_msg, EnrichedProcess instigator)
-      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
-
-  EnrichedSudo(EnrichedSudo &&) = default;
-};
-
 using EnrichedType = std::variant<
     EnrichedClose, EnrichedExchange, EnrichedExec, EnrichedExit, EnrichedFork,
     EnrichedLink, EnrichedRename, EnrichedUnlink, EnrichedCSInvalidated,
@@ -452,7 +443,7 @@ using EnrichedType = std::variant<
     EnrichedLoginWindowSessionLock, EnrichedLoginWindowSessionUnlock,
     EnrichedScreenSharingAttach, EnrichedScreenSharingDetach,
     EnrichedOpenSSHLogin, EnrichedOpenSSHLogout, EnrichedLoginLogin,
-    EnrichedLoginLogout, EnrichedSudo>;
+    EnrichedLoginLogout>;
 
 class EnrichedMessage {
  public:

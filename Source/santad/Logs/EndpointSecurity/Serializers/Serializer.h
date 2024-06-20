@@ -85,8 +85,6 @@ class Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedLoginLogin &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedLoginLogout &) = 0;
-  virtual std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedSudo &) = 0;
 
   virtual std::vector<uint8_t> SerializeFileAccess(
     const std::string &policy_version, const std::string &policy_name,

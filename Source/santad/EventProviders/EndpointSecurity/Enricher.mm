@@ -24,6 +24,7 @@
 #include <optional>
 
 #include "Source/common/SNTLogging.h"
+#include "Source/common/String.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/ProcessTree/SNTEndpointSecurityAdapter.h"
 #include "Source/santad/ProcessTree/process_tree.h"
@@ -117,9 +118,6 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
     case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT:
       return std::make_unique<EnrichedMessage>(
         EnrichedLoginLogout(std::move(es_msg), Enrich(*es_msg->process)));
-    case ES_EVENT_TYPE_NOTIFY_SUDO:
-      return std::make_unique<EnrichedMessage>(
-        EnrichedSudo(std::move(es_msg), Enrich(*es_msg->process)));
     default:
       // This is a programming error
       LOGE(@"Attempting to enrich an unhandled event type: %d", es_msg->event_type);

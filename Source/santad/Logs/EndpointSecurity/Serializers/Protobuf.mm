@@ -66,7 +66,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
-using santa::santad::event_providers::endpoint_security::EnrichedSudo;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
@@ -797,10 +796,6 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &) {
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogout &) {
-  return {};
-}
-
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedSudo &) {
   return {};
 }
 

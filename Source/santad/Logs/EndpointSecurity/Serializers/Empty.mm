@@ -33,7 +33,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
-using santa::santad::event_providers::endpoint_security::EnrichedSudo;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 
@@ -118,10 +117,6 @@ std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginLogin &) {
 }
 
 std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginLogout &) {
-  return {};
-}
-
-std::vector<uint8_t> Empty::SerializeMessage(const EnrichedSudo &) {
   return {};
 }
 
