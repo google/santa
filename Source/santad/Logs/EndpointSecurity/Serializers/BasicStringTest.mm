@@ -277,9 +277,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.lw_session_login = &lw_login;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=LOGIN_WINDOW_SESSION_LOGIN"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|user=daemon|uid=1|graphical_session_id=123|machineid=my_id\n";
+  std::string want = "action=LOGIN_WINDOW_SESSION_LOGIN|pid=12|ppid=56|process=foo|processpath=foo|"
+                     "uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -296,9 +296,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.lw_session_logout = &lw_logout;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=LOGIN_WINDOW_SESSION_LOGOUT"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|user=daemon|uid=1|graphical_session_id=123|machineid=my_id\n";
+  std::string want = "action=LOGIN_WINDOW_SESSION_LOGOUT|pid=12|ppid=56|process=foo|processpath="
+                     "foo|uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -315,9 +315,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.lw_session_lock = &lw_lock;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=LOGIN_WINDOW_SESSION_LOCK"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|user=daemon|uid=1|graphical_session_id=123|machineid=my_id\n";
+  std::string want = "action=LOGIN_WINDOW_SESSION_LOCK|pid=12|ppid=56|process=foo|processpath=foo|"
+                     "uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -334,9 +334,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.lw_session_unlock = &lw_unlock;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=LOGIN_WINDOW_SESSION_UNLOCK"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|user=daemon|uid=1|graphical_session_id=123|machineid=my_id\n";
+  std::string want = "action=LOGIN_WINDOW_SESSION_UNLOCK|pid=12|ppid=56|process=foo|processpath="
+                     "foo|uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -354,9 +354,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.login_login = &login;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=LOGIN|success=false|failure=my<pipe>failure"
-                     "|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|user=asdf|machineid=my_id\n";
+  std::string want =
+    "action=LOGIN|success=false|failure=my<pipe>failure|pid=12|ppid=56|process=foo|processpath=foo|"
+    "uid=-2|user=nobody|gid=-1|group=nogroup|event_user=asdf|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 
@@ -365,8 +365,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   login.uid.uid = 123;
 
   got = BasicStringSerializeMessage(&esMsg);
-  want = "action=LOGIN|success=true|pid=12|ppid=56|process=foo|processpath=foo"
-         "|user=asdf|uid=123|machineid=my_id\n";
+  want = "action=LOGIN|success=true|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|"
+         "gid=-1|group=nogroup|event_user=asdf|event_uid=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -382,8 +382,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.login_logout = &logout;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want = "action=LOGOUT|pid=12|ppid=56|process=foo|processpath=foo"
-                     "|user=asdf|uid=123|machineid=my_id\n";
+  std::string want = "action=LOGOUT|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|"
+                     "gid=-1|group=nogroup|event_user=asdf|event_uid=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -409,7 +409,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   std::string want =
     "action=SCREEN_SHARING_ATTACH|success=true|address_type=ipv6|address=::1|viewer=foo@example."
     "com|auth_type=idk|auth_user=my_auth_user|session_user=my_session_user|existing_session=true|"
-    "pid=12|ppid=56|process=foo|processpath=foo|graphical_session_id=123|machineid=my_id\n";
+    "pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|graphical_"
+    "session_id=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 
@@ -422,7 +423,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   got = BasicStringSerializeMessage(&esMsg);
   want = "action=SCREEN_SHARING_ATTACH|success=true|address_type=unknown|existing_session=true|pid="
-         "12|ppid=56|process=foo|processpath=foo|graphical_session_id=123|machineid=my_id\n";
+         "12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|graphical_"
+         "session_id=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -441,7 +443,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=SCREEN_SHARING_DETACH|address_type=ipv4|address=1.2.3.4|viewer=foo@"
-                     "example.com|graphical_session_id=123|machineid=my_id\n";
+                     "example.com|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|"
+                     "gid=-1|group=nogroup|graphical_session_id=123|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -461,9 +464,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   esMsg.event.openssh_login = &login;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
-  std::string want =
-    "action=OPENSSH_LOGIN|success=false|result_type=AUTH_FAIL_PASSWD|address_type=named_socket|"
-    "address=foo|pid=12|ppid=56|process=foo|processpath=foo|user=my_user|machineid=my_id\n";
+  std::string want = "action=OPENSSH_LOGIN|success=false|result_type=AUTH_FAIL_PASSWD|address_type="
+                     "named_socket|address=foo|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|"
+                     "user=nobody|gid=-1|group=nogroup|event_user=my_user|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 
@@ -473,9 +476,9 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   login.uid.uid = 456;
 
   got = BasicStringSerializeMessage(&esMsg);
-  want =
-    "action=OPENSSH_LOGIN|success=true|result_type=AUTH_SUCCESS|address_type=named_socket|address="
-    "foo|pid=12|ppid=56|process=foo|processpath=foo|user=my_user|uid=456|machineid=my_id\n";
+  want = "action=OPENSSH_LOGIN|success=true|result_type=AUTH_SUCCESS|address_type=named_socket|"
+         "address=foo|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group="
+         "nogroup|event_user=my_user|event_uid=456|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }
@@ -494,8 +497,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=OPENSSH_LOGOUT|address_type=ipv4|address=5.6.7.8|pid=12|ppid=56|"
-                     "process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|user=my_"
-                     "user|uid=321|machineid=my_id\n";
+                     "process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|event_"
+                     "user=my_user|event_uid=321|machineid=my_id\n";
 
   XCTAssertCppStringEqual(got, want);
 }

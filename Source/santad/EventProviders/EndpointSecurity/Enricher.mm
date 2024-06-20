@@ -29,6 +29,8 @@
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree_macos.h"
 
+using santa::common::StringTokenToStringView;
+
 namespace santa::santad::event_providers::endpoint_security {
 
 Enricher::Enricher(std::shared_ptr<::santa::santad::process_tree::ProcessTree> pt)

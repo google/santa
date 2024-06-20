@@ -180,15 +180,15 @@ static inline void AppendUserGroup(std::string &str, const audit_token_t &tok,
   str.append(group.has_value() ? group->get()->c_str() : "(null)");
 }
 
-static inline void AppendUser(std::string &str, const es_string_token_t &user,
-                              std::optional<uid_t> uid) {
+static inline void AppendEventUser(std::string &str, const es_string_token_t &user,
+                                   std::optional<uid_t> uid) {
   if (user.length > 0) {
-    str.append("|user=");
+    str.append("|event_user=");
     str.append(user.data);
   }
 
   if (uid.has_value()) {
-    str.append("|uid=");
+    str.append("|event_uid=");
     str.append(std::to_string(uid.value()));
   }
 }
@@ -502,8 +502,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSess
   std::string str = CreateDefaultString();
 
   str.append("action=LOGIN_WINDOW_SESSION_LOGIN");
-  AppendProcess(str, msg->process);
-  AppendUser(str, msg->event.lw_session_login->username, msg.UID());
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_login->username, msg.UID());
   AppendGraphicalSession(str, msg->event.lw_session_login->graphical_session_id);
 
   return FinalizeString(str);
@@ -513,8 +513,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSess
   std::string str = CreateDefaultString();
 
   str.append("action=LOGIN_WINDOW_SESSION_LOGOUT");
-  AppendProcess(str, msg->process);
-  AppendUser(str, msg->event.lw_session_logout->username, msg.UID());
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_logout->username, msg.UID());
   AppendGraphicalSession(str, msg->event.lw_session_logout->graphical_session_id);
 
   return FinalizeString(str);
@@ -524,8 +524,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSess
   std::string str = CreateDefaultString();
 
   str.append("action=LOGIN_WINDOW_SESSION_LOCK");
-  AppendProcess(str, msg->process);
-  AppendUser(str, msg->event.lw_session_lock->username, msg.UID());
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_lock->username, msg.UID());
   AppendGraphicalSession(str, msg->event.lw_session_lock->graphical_session_id);
 
   return FinalizeString(str);
@@ -535,8 +535,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSess
   std::string str = CreateDefaultString();
 
   str.append("action=LOGIN_WINDOW_SESSION_UNLOCK");
-  AppendProcess(str, msg->process);
-  AppendUser(str, msg->event.lw_session_unlock->username, msg.UID());
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_unlock->username, msg.UID());
   AppendGraphicalSession(str, msg->event.lw_session_unlock->graphical_session_id);
 
   return FinalizeString(str);
@@ -575,7 +575,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedScreenSharingAt
   str.append("|existing_session=");
   str.append(msg->event.screensharing_attach->existing_session ? "true" : "false");
 
-  AppendProcess(str, msg->process);
+  AppendInstigator(str, msg);
   AppendGraphicalSession(str, msg->event.screensharing_attach->graphical_session_id);
 
   return FinalizeString(str);
@@ -594,6 +594,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedScreenSharingDe
     str.append(SanitizableString(msg->event.screensharing_detach->viewer_appleid).Sanitized());
   }
 
+  AppendInstigator(str, msg);
   AppendGraphicalSession(str, msg->event.screensharing_detach->graphical_session_id);
 
   return FinalizeString(str);
@@ -609,11 +610,11 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedOpenSSHLogin &m
 
   AppendSocketAddress(str, msg->event.openssh_login->source_address_type,
                       msg->event.openssh_login->source_address);
-  AppendProcess(str, msg->process);
-  AppendUser(str, msg->event.openssh_login->username,
-             msg->event.openssh_login->has_uid
-               ? std::make_optional<uid_t>(msg->event.openssh_login->uid.uid)
-               : std::nullopt);
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.openssh_login->username,
+                  msg->event.openssh_login->has_uid
+                    ? std::make_optional<uid_t>(msg->event.openssh_login->uid.uid)
+                    : std::nullopt);
 
   return FinalizeString(str);
 }
@@ -626,8 +627,8 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedOpenSSHLogout &
   AppendSocketAddress(str, msg->event.openssh_logout->source_address_type,
                       msg->event.openssh_logout->source_address);
   AppendInstigator(str, msg);
-  AppendUser(str, msg->event.openssh_logout->username,
-             std::make_optional<uid_t>(msg->event.openssh_logout->uid));
+  AppendEventUser(str, msg->event.openssh_logout->username,
+                  std::make_optional<uid_t>(msg->event.openssh_logout->uid));
 
   return FinalizeString(str);
 }
@@ -642,11 +643,11 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginLogin &msg
     str.append(SanitizableString(msg->event.login_login->failure_message).Sanitized());
   }
 
-  AppendProcess(str, msg->process);
-  AppendUser(str, msg->event.login_login->username,
-             msg->event.login_login->has_uid
-               ? std::make_optional<uid_t>(msg->event.login_login->uid.uid)
-               : std::nullopt);
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.login_login->username,
+                  msg->event.login_login->has_uid
+                    ? std::make_optional<uid_t>(msg->event.login_login->uid.uid)
+                    : std::nullopt);
 
   return FinalizeString(str);
 }
@@ -656,9 +657,9 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginLogout &ms
 
   str.append("action=LOGOUT");
 
-  AppendProcess(str, msg->process);
-  AppendUser(str, msg->event.login_logout->username,
-             std::make_optional<uid_t>(msg->event.login_logout->uid));
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.login_logout->username,
+                  std::make_optional<uid_t>(msg->event.login_logout->uid));
 
   return FinalizeString(str);
 }
