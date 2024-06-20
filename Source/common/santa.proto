@@ -556,23 +556,27 @@ message SocketAddress {
 }
 
 message LoginWindowSessionLogin {
-  optional UserInfo user = 1;
-  optional GraphicalSession graphical_session = 2;
+  optional ProcessInfoLight instigator = 1;
+  optional UserInfo user = 2;
+  optional GraphicalSession graphical_session = 3;
 }
 
 message LoginWindowSessionLogout {
-  optional UserInfo user = 1;
-  optional GraphicalSession graphical_session = 2;
+  optional ProcessInfoLight instigator = 1;
+  optional UserInfo user = 2;
+  optional GraphicalSession graphical_session = 3;
 }
 
 message LoginWindowSessionLock {
-  optional UserInfo user = 1;
-  optional GraphicalSession graphical_session = 2;
+  optional ProcessInfoLight instigator = 1;
+  optional UserInfo user = 2;
+  optional GraphicalSession graphical_session = 3;
 }
 
 message LoginWindowSessionUnlock {
-  optional UserInfo user = 1;
-  optional GraphicalSession graphical_session = 2;
+  optional ProcessInfoLight instigator = 1;
+  optional UserInfo user = 2;
+  optional GraphicalSession graphical_session = 3;
 }
 
 message LoginWindowSession {
@@ -584,31 +588,35 @@ message LoginWindowSession {
   }
 }
 
-message LoginLogoutLogin {
-  optional bool success = 1;
-  optional bytes failure_message = 2;
-  optional UserInfo user = 3;
+message Login {
+  optional ProcessInfoLight instigator = 1;
+  optional bool success = 2;
+  optional bytes failure_message = 3;
+  optional UserInfo user = 4;
 }
 
-message LoginLogoutLogout {
-  optional UserInfo user = 1;
+message Logout {
+  optional ProcessInfoLight instigator = 1;
+  optional UserInfo user = 2;
 }
 
 message LoginLogout {
   oneof event {
-    LoginLogoutLogin login = 1;
-    LoginLogoutLogout logout = 2;
+    Login login = 1;
+    Logout logout = 2;
   }
 }
 
 message ScreenSharingAttach {
-  optional SocketAddress source = 1;
-  optional bytes viewer = 2;
-  optional bytes authentication_type = 3;
-  optional UserInfo authentication_user = 4;
-  optional UserInfo session_user = 5;
-  optional bool existing_session = 6;
-  optional GraphicalSession graphical_session = 7;
+  optional ProcessInfoLight instigator = 1;
+  optional bool success = 2;
+  optional SocketAddress source = 3;
+  optional bytes viewer = 4;
+  optional bytes authentication_type = 5;
+  optional UserInfo authentication_user = 6;
+  optional UserInfo session_user = 7;
+  optional bool existing_session = 8;
+  optional GraphicalSession graphical_session = 9;
 }
 
 message ScreenSharingDetach {
@@ -624,64 +632,39 @@ message ScreenSharing {
   }
 }
 
-message SSHLogin {
-  enum Result {
-    RESULT_UNKNOWN = 0;
-    RESULT_LOGIN_EXCEED_MAXTRIES = 1;
-    RESULT_LOGIN_ROOT_DENIED = 2;
-    RESULT_AUTH_SUCCESS = 3;
-    RESULT_AUTH_FAIL_NONE = 4;
-    RESULT_AUTH_FAIL_PASSWD = 5;
-    RESULT_AUTH_FAIL_KBDINT = 6;
-    RESULT_AUTH_FAIL_PUBKEY = 7;
-    RESULT_AUTH_FAIL_HOSTBASED = 8;
-    RESULT_AUTH_FAIL_GSSAPI = 9;
-    RESULT_INVALID_USER = 10;
+message OpenSSHLogin {
+  optional ProcessInfoLight instigator = 1;
+  bool success = 2;
+
+  enum ResultType {
+    RESULT_TYPE_UNKNOWN = 0;
+    RESULT_TYPE_LOGIN_EXCEED_MAXTRIES = 1;
+    RESULT_TYPE_LOGIN_ROOT_DENIED = 2;
+    RESULT_TYPE_AUTH_SUCCESS = 3;
+    RESULT_TYPE_AUTH_FAIL_NONE = 4;
+    RESULT_TYPE_AUTH_FAIL_PASSWD = 5;
+    RESULT_TYPE_AUTH_FAIL_KBDINT = 6;
+    RESULT_TYPE_AUTH_FAIL_PUBKEY = 7;
+    RESULT_TYPE_AUTH_FAIL_HOSTBASED = 8;
+    RESULT_TYPE_AUTH_FAIL_GSSAPI = 9;
+    RESULT_TYPE_INVALID_USER = 10;
   }
 
-  optional Result result = 1;
-  optional SocketAddress source = 2;
-  optional UserInfo user = 3;
+  optional ResultType result_type = 3;
+  optional SocketAddress source = 4;
+  optional UserInfo user = 5;
 }
 
-message SSHLogout {
+message OpenSSHLogout {
   optional SocketAddress source = 1;
   optional UserInfo user = 2;
 }
 
-message SSH {
+message OpenSSH {
   oneof event {
-    SSHLogin login = 1;
-    SSHLogout logout = 2;
+    OpenSSHLogin login = 1;
+    OpenSSHLogout logout = 2;
   }
-}
-
-message Sudo {
-  optional bool success = 1;
-
-  message RejectionInfo {
-    optional bytes plugin_name = 1;
-
-    enum PluginType {
-      PLUGIN_TYPE_UNKNOWN = 0;
-      PLUGIN_TYPE_FRONT_END = 1;
-      PLUGIN_TYPE_POLICY = 2;
-      PLUGIN_TYPE_IO = 3;
-      PLUGIN_TYPE_AUDIT = 4;
-      PLUGIN_TYPE_APPROVAL = 5;
-    }
-
-    optional PluginType plugin_type = 2;
-
-    optional bytes failure_message = 3;
-  }
-
-  optional RejectionInfo rejection_info = 2;
-
-  optional UserInfo from_user = 3;
-  optional UserInfo to_user = 4;
-
-  optional bytes command = 5;
 }
 
 // A message encapsulating a single event
@@ -715,7 +698,6 @@ message SantaMessage {
     LoginLogout login_logout = 24;
     ScreenSharing screen_sharing = 25;
     SSH ssh = 26;
-    Sudo sudo = 27;
   };
 }
 

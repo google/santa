@@ -15,6 +15,7 @@
 #define SANTA__SANTAD__EVENTPROVIDERS_ENDPOINTSECURITY_ENRICHER_H
 
 #include <memory>
+#include <string_view>
 
 #include "Source/common/SantaCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -46,6 +47,11 @@ class Enricher {
       uid_t uid, EnrichOptions options = EnrichOptions::kDefault);
   virtual std::optional<std::shared_ptr<std::string>> UsernameForGID(
       gid_t gid, EnrichOptions options = EnrichOptions::kDefault);
+
+  // This method does not chache. It should not be used on a hot path.
+  virtual std::optional<uid_t> UIDForUsername(
+      std::string_view username,
+      EnrichOptions options = EnrichOptions::kDefault);
 
  private:
   SantaCache<uid_t, std::optional<std::shared_ptr<std::string>>>

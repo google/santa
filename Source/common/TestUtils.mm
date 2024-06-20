@@ -64,7 +64,7 @@ struct stat MakeStat(int offset) {
 
 es_string_token_t MakeESStringToken(const char *s) {
   return es_string_token_t{
-    .length = strlen(s),
+    .length = s ? strlen(s) : 0,
     .data = s,
   };
 }

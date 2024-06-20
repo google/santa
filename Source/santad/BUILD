@@ -484,6 +484,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/EnrichedTypes.h"],
     deps = [
         ":EndpointSecurityMessage",
+        "//Source/common:String",
         "//Source/santad/ProcessTree:process_tree_cc_proto",
     ],
 )
