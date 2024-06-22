@@ -697,7 +697,7 @@ message SantaMessage {
     LoginWindowSession login_window_session = 23;
     LoginLogout login_logout = 24;
     ScreenSharing screen_sharing = 25;
-    OpenSSH ssh = 26;
+    OpenSSH open_ssh = 26;
   };
 }
 
