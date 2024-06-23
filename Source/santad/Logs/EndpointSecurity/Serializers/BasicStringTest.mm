@@ -23,6 +23,7 @@
 #include <map>
 #include <string>
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
@@ -265,6 +266,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   XCTAssertCppStringEqual(got, want);
 }
 
+#if HAVE_MACOS_13
+
 - (void)testSerializeMessageLoginWindowSessionLogin {
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
@@ -502,6 +505,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
 
   XCTAssertCppStringEqual(got, want);
 }
+
+#endif
 
 - (void)testGetAccessTypeString {
   std::map<es_event_type_t, std::string> accessTypeToString = {

@@ -1020,6 +1020,7 @@ santa_unit_test(
         ":EndpointSecuritySerializerBasicString",
         ":MockEndpointSecurityAPI",
         ":SNTDecisionCache",
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTConfigurator",
