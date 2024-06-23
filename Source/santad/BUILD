@@ -555,6 +555,7 @@ objc_library(
         ":EndpointSecuritySerializer",
         ":EndpointSecuritySerializerUtilities",
         ":SNTDecisionCache",
+        "//Source/common:Platform",
         "//Source/common:SNTCachedDecision",
         "//Source/common:SNTLogging",
         "//Source/common:SNTStoredEvent",

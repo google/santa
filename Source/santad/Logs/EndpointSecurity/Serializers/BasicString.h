@@ -21,6 +21,7 @@
 #include <sstream>
 #include <vector>
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
@@ -57,6 +58,7 @@ class BasicString : public Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated &) override;
+#if HAVE_MACOS_13
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin &)
     override;
@@ -83,6 +85,7 @@ class BasicString : public Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedLoginLogin &) override;
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedLoginLogout &) override;
+#endif
 
   std::vector<uint8_t> SerializeFileAccess(
     const std::string &policy_version, const std::string &policy_name,

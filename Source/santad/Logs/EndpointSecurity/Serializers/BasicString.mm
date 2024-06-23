@@ -179,6 +179,8 @@ static inline void AppendUserGroup(std::string &str, const audit_token_t &tok,
   str.append(group.has_value() ? group->get()->c_str() : "(null)");
 }
 
+#if HAVE_MACOS_13
+
 static inline void AppendEventUser(std::string &str, const es_string_token_t &user,
                                    std::optional<uid_t> uid) {
   if (user.length > 0) {
@@ -192,15 +194,17 @@ static inline void AppendEventUser(std::string &str, const es_string_token_t &us
   }
 }
 
+static inline void AppendGraphicalSession(std::string &str, es_graphical_session_id_t session_id) {
+  str.append("|graphical_session_id=");
+  str.append(std::to_string(session_id));
+}
+
+#endif
+
 static inline void AppendInstigator(std::string &str, const EnrichedEventType &event) {
   AppendProcess(str, event->process);
   AppendUserGroup(str, event->process->audit_token, event.instigator().real_user(),
                   event.instigator().real_group());
-}
-
-static inline void AppendGraphicalSession(std::string &str, es_graphical_session_id_t session_id) {
-  str.append("|graphical_session_id=");
-  str.append(std::to_string(session_id));
 }
 
 static inline void AppendSocketAddress(std::string &str, es_address_type_t type,
@@ -294,9 +298,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedClose &msg) {
   str.append("action=WRITE|path=");
   str.append(FilePath(esm.event.close.target).Sanitized());
 
-  AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
-                  msg.instigator().real_group());
+  AppendInstigator(str, msg);
 
   return FinalizeString(str);
 }
@@ -310,9 +312,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExchange &msg) 
   str.append("|newpath=");
   str.append(FilePath(esm.event.exchangedata.file2).Sanitized());
 
-  AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
-                  msg.instigator().real_group());
+  AppendInstigator(str, msg);
 
   return FinalizeString(str);
 }
@@ -436,9 +436,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLink &msg) {
   str.append("/");
   str.append(SanitizableString(esm.event.link.target_filename).Sanitized());
 
-  AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
-                  msg.instigator().real_group());
+  AppendInstigator(str, msg);
 
   return FinalizeString(str);
 }
@@ -463,9 +461,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedRename &msg) {
     default: str.append("(null)"); break;
   }
 
-  AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
-                  msg.instigator().real_group());
+  AppendInstigator(str, msg);
 
   return FinalizeString(str);
 }
@@ -477,9 +473,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedUnlink &msg) {
   str.append("action=DELETE|path=");
   str.append(FilePath(esm.event.unlink.target).Sanitized());
 
-  AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
-                  msg.instigator().real_group());
+  AppendInstigator(str, msg);
 
   return FinalizeString(str);
 }
@@ -489,14 +483,13 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedCSInvalidated &
   std::string str = CreateDefaultString();
 
   str.append("action=CODESIGNING_INVALIDATED");
-  AppendProcess(str, esm.process);
-  AppendUserGroup(str, esm.process->audit_token, msg.instigator().real_user(),
-                  msg.instigator().real_group());
+  AppendInstigator(str, msg);
   str.append("|codesigning_flags=");
   str.append([NSString stringWithFormat:@"0x%08x", esm.process->codesigning_flags].UTF8String);
   return FinalizeString(str);
 }
 
+#if HAVE_MACOS_13
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSessionLogin &msg) {
   std::string str = CreateDefaultString();
 
@@ -662,6 +655,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginLogout &ms
 
   return FinalizeString(str);
 }
+#endif
 
 std::vector<uint8_t> BasicString::SerializeFileAccess(const std::string &policy_version,
                                                       const std::string &policy_name,
