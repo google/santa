@@ -473,6 +473,7 @@ objc_library(
     hdrs = ["EventProviders/EndpointSecurity/Enricher.h"],
     deps = [
         ":EndpointSecurityEnrichedTypes",
+        "//Source/common:Platform",
         "//Source/common:SNTLogging",
         "//Source/common:SantaCache",
         "//Source/common:String",

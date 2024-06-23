@@ -23,6 +23,7 @@
 #include <memory>
 #include <optional>
 
+#include "Source/common/Platform.h"
 #include "Source/common/SNTLogging.h"
 #include "Source/common/String.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
@@ -84,6 +85,7 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
     case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED:
       return std::make_unique<EnrichedMessage>(
         EnrichedCSInvalidated(std::move(es_msg), Enrich(*es_msg->process)));
+#if HAVE_MACOS_13
     case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN:
       return std::make_unique<EnrichedMessage>(EnrichedLoginWindowSessionLogin(
         std::move(es_msg), Enrich(*es_msg->process),
@@ -118,6 +120,7 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
     case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT:
       return std::make_unique<EnrichedMessage>(
         EnrichedLoginLogout(std::move(es_msg), Enrich(*es_msg->process)));
+#endif
     default:
       // This is a programming error
       LOGE(@"Attempting to enrich an unhandled event type: %d", es_msg->event_type);
