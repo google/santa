@@ -179,6 +179,12 @@ static inline void AppendUserGroup(std::string &str, const audit_token_t &tok,
   str.append(group.has_value() ? group->get()->c_str() : "(null)");
 }
 
+static inline void AppendInstigator(std::string &str, const EnrichedEventType &event) {
+  AppendProcess(str, event->process);
+  AppendUserGroup(str, event->process->audit_token, event.instigator().real_user(),
+                  event.instigator().real_group());
+}
+
 #if HAVE_MACOS_13
 
 static inline void AppendEventUser(std::string &str, const es_string_token_t &user,
@@ -197,14 +203,6 @@ static inline void AppendEventUser(std::string &str, const es_string_token_t &us
 static inline void AppendGraphicalSession(std::string &str, es_graphical_session_id_t session_id) {
   str.append("|graphical_session_id=");
   str.append(std::to_string(session_id));
-}
-
-#endif
-
-static inline void AppendInstigator(std::string &str, const EnrichedEventType &event) {
-  AppendProcess(str, event->process);
-  AppendUserGroup(str, event->process->audit_token, event.instigator().real_user(),
-                  event.instigator().real_group());
 }
 
 static inline void AppendSocketAddress(std::string &str, es_address_type_t type,
@@ -240,6 +238,8 @@ static inline std::string GetOpenSSHLoginResult(std::string &str,
     default: return "UNKNOWN";
   }
 }
+
+#endif
 
 static char *FormattedDateString(char *buf, size_t len) {
   struct timeval tv;
