@@ -8,7 +8,7 @@ Most IPC within Santa is done by way of Apple's
 [XPC](https://developer.apple.com/documentation/xpc?language=objc). Santa wraps
 [NSXPCConnection](https://developer.apple.com/documentation/foundation/nsxpcconnection?language=objc)
 to provide client multiplexing, signature validation of connecting clients and
-forced connection establishment. This is called SNTXPCConnection.
+forced connection establishment. This is called MOLXPCConnection.
 
 ## Who starts who?
 
@@ -57,9 +57,9 @@ each other. For other combinations, there is no direct communication.
 
 ![Santa IPC](santa_ipc.png)
 
-## SNTXPCConnection and two-way communication
+## MOLXPCConnection and two-way communication
 
-`SNTXPCConnection` enforces a server / client model for XPC connections. This
+`MOLXPCConnection` enforces a server / client model for XPC connections. This
 allows for strong signature validation and forced connection establishment. The
 only problem with this model is the lack of two-way communication. For example,
 process A can call methods on process B and retrieve a response, but process B
@@ -69,8 +69,9 @@ To accomplish two-way communication, the following approach can be used:
 
 1.  Process A creates a server with an anonymous `NSXPCListener`.
 2.  Process A sends the anonymous `NSXPCListenerEndpoint` to process B over an
-    already established `SNTXPCConnection`.
+    already established `MOLXPCConnection`.
 3.  Process B can now communicate directly with process A.
 
 This is a powerful notion. It enables forced connection establishment between
 both processes, which is critical when reliability is a concern.
+
