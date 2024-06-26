@@ -81,6 +81,10 @@ class MockAuthResultCache : public AuthResultCache {
 
   [authClient enable];
 
+  for (const auto &event : expectedEventSubs) {
+    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+  }
+
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 

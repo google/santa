@@ -80,6 +80,10 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 
   [mockTamperClient enable];
 
+  for (const auto &event : expectedEventSubs) {
+    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+  }
+
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
   [mockTamperClient stopMocking];
 }

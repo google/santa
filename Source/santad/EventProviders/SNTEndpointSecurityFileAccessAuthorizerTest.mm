@@ -753,6 +753,10 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
 
   [fileAccessClient enable];
 
+  for (const auto &event : expectedEventSubs) {
+    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+  }
+
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
