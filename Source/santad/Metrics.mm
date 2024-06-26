@@ -39,6 +39,7 @@ static NSString *const kEventTypeAuthMount = @"AuthMount";
 static NSString *const kEventTypeAuthOpen = @"AuthOpen";
 static NSString *const kEventTypeAuthRemount = @"AuthRemount";
 static NSString *const kEventTypeAuthRename = @"AuthRename";
+static NSString *const kEventTypeAuthSignal = @"AuthSignal";
 static NSString *const kEventTypeAuthTruncate = @"AuthTruncate";
 static NSString *const kEventTypeAuthUnlink = @"AuthUnlink";
 static NSString *const kEventTypeNotifyClose = @"NotifyClose";
@@ -102,6 +103,7 @@ NSString *const EventTypeToString(es_event_type_t eventType) {
     case ES_EVENT_TYPE_AUTH_OPEN: return kEventTypeAuthOpen;
     case ES_EVENT_TYPE_AUTH_REMOUNT: return kEventTypeAuthRemount;
     case ES_EVENT_TYPE_AUTH_RENAME: return kEventTypeAuthRename;
+    case ES_EVENT_TYPE_AUTH_SIGNAL: return kEventTypeAuthSignal;
     case ES_EVENT_TYPE_AUTH_TRUNCATE: return kEventTypeAuthTruncate;
     case ES_EVENT_TYPE_AUTH_UNLINK: return kEventTypeAuthUnlink;
     case ES_EVENT_TYPE_NOTIFY_CLOSE: return kEventTypeNotifyClose;
