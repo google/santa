@@ -100,6 +100,10 @@ class MockLogger : public Logger {
 
   [recorderClient enable];
 
+  for (const auto &event : expectedEventSubs) {
+    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+  }
+
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
 }
 
