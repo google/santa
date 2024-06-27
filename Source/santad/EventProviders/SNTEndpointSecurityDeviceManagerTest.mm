@@ -387,15 +387,15 @@ class MockAuthResultCache : public AuthResultCache {
   // Create mock disks with desired args
   MockDADisk * (^CreateMockDisk)(NSString *, NSString *) =
     ^MockDADisk *(NSString *mountOn, NSString *mountFrom) {
-    MockDADisk *mockDisk = [[MockDADisk alloc] init];
-    mockDisk.diskDescription = @{
-      @"DAVolumePath" : mountOn,      // f_mntonname,
-      @"DADevicePath" : mountOn,      // f_mntonname,
-      @"DAMediaBSDName" : mountFrom,  // f_mntfromname,
-    };
+      MockDADisk *mockDisk = [[MockDADisk alloc] init];
+      mockDisk.diskDescription = @{
+        @"DAVolumePath" : mountOn,      // f_mntonname,
+        @"DADevicePath" : mountOn,      // f_mntonname,
+        @"DAMediaBSDName" : mountFrom,  // f_mntfromname,
+      };
 
-    return mockDisk;
-  };
+      return mockDisk;
+    };
 
   // Reset the Mock DA property, setup disks and remount args, then trigger the test
   void (^PerformStartupTest)(NSArray<MockDADisk *> *, NSArray<NSString *> *,

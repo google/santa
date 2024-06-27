@@ -26,10 +26,10 @@ class OriginatorAnnotator : public Annotator {
  public:
   OriginatorAnnotator()
       : originator_(::santa::pb::v1::process_tree::Annotations::Originator::
-                        Annotations_Originator_UNSPECIFIED){};
+                        Annotations_Originator_UNSPECIFIED) {};
   explicit OriginatorAnnotator(
       ::santa::pb::v1::process_tree::Annotations::Originator originator)
-      : originator_(originator){};
+      : originator_(originator) {};
 
   void AnnotateFork(ProcessTree &tree, const Process &parent,
                     const Process &child) override;

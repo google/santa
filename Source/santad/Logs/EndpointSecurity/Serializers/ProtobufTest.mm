@@ -108,19 +108,20 @@ NSString *EventTypeToFilename(es_event_type_t eventType) {
   }
 }
 
-NSString *TestJsonPath(NSString *jsonFileName, uint32_t version) {
-  NSString *p = [NSString pathWithComponents:@[
+NSString *LoadTestJson(NSString *jsonFileName, uint32_t version) {
+  if (!jsonFileName) {
+    return nil;
+  }
+
+  NSString *path = [NSString pathWithComponents:@[
     [[NSBundle bundleForClass:[ProtobufTest class]] resourcePath],
     @"protobuf",
     [NSString stringWithFormat:@"v%u", version],
     jsonFileName,
   ]];
-  return p;
-}
 
-NSString *LoadTestJson(NSString *jsonFileName, uint32_t version) {
   NSError *err = nil;
-  NSString *jsonData = [NSString stringWithContentsOfFile:TestJsonPath(jsonFileName, version)
+  NSString *jsonData = [NSString stringWithContentsOfFile:path
                                                  encoding:NSUTF8StringEncoding
                                                     error:&err];
 
@@ -206,8 +207,8 @@ void SerializeAndCheck(es_event_type_t eventType,
                        SNTDecisionCache *decisionCache, bool json = false) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
-       cur_version++) {
+  for (uint32_t cur_version = MinSupportedESMessageVersion(eventType);
+       cur_version <= MaxSupportedESMessageVersionForCurrentOS(); cur_version++) {
     if (cur_version == 3) {
       // Note: Version 3 was only in a macOS beta.
       continue;
@@ -287,7 +288,7 @@ void SerializeAndCheck(es_event_type_t eventType,
 }
 
 void SerializeAndCheckNonESEvents(
-  es_event_type_t eventType, NSString *filename,
+  uint32_t minAssociatedESVersion, es_event_type_t eventType, NSString *filename,
   void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>, es_message_t *),
   std::vector<uint8_t> (^RunSerializer)(std::shared_ptr<Serializer> serializer,
                                         const Message &msg)) {
@@ -295,8 +296,8 @@ void SerializeAndCheckNonESEvents(
   mockESApi->SetExpectationsRetainReleaseMessage();
   std::shared_ptr<Serializer> bs = Protobuf::Create(mockESApi, nil);
 
-  for (uint32_t cur_version = 1; cur_version <= MaxSupportedESMessageVersionForCurrentOS();
-       cur_version++) {
+  for (uint32_t cur_version = minAssociatedESVersion;
+       cur_version <= MaxSupportedESMessageVersionForCurrentOS(); cur_version++) {
     if (cur_version == 3) {
       // Note: Version 3 was only in a macOS beta.
       continue;
@@ -805,7 +806,7 @@ void SerializeAndCheckNonESEvents(
 - (void)testSerializeFileAccess {
   __block es_file_t openFile = MakeESFile("open_file", MakeStat(300));
   SerializeAndCheckNonESEvents(
-    ES_EVENT_TYPE_AUTH_OPEN, @"file_access.json",
+    6, ES_EVENT_TYPE_AUTH_OPEN, @"file_access.json",
     ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
       esMsg->event.open.file = &openFile;
     },
@@ -819,7 +820,7 @@ void SerializeAndCheckNonESEvents(
 - (void)testSerializeAllowlist {
   __block es_file_t closeFile = MakeESFile("close_file", MakeStat(300));
   SerializeAndCheckNonESEvents(
-    ES_EVENT_TYPE_NOTIFY_CLOSE, @"allowlist.json",
+    1, ES_EVENT_TYPE_NOTIFY_CLOSE, @"allowlist.json",
     ^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi, es_message_t *esMsg) {
       esMsg->event.close.target = &closeFile;
     },

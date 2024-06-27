@@ -125,7 +125,7 @@ class PrefixTree {
             return false;
           }
 
-          cur_byte = (uint8_t) * ++p;
+          cur_byte = (uint8_t)*++p;
         } while (*p);
 
         node->node_type_ = node_type;
