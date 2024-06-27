@@ -32,13 +32,6 @@ using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa::santad::logs::endpoint_security::serializers::Utilities {
 
-static inline void SetThreadIDs(uid_t uid, gid_t gid) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated"
-  pthread_setugid_np(uid, gid);
-#pragma clang diagnostic pop
-}
-
 NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
   // Cache vnodes that have been determined to not be translocated
   static SantaCache<SantaVnode, bool> isNotTranslocatedCache(1024);
@@ -59,20 +52,7 @@ NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
   bool isTranslocated = false;
 
   if (SecTranslocateIsTranslocatedURL(cfExecURL, &isTranslocated, NULL) && isTranslocated) {
-    bool dropPrivs = true;
-    if (@available(macOS 12.0, *)) {
-      dropPrivs = false;
-    }
-
-    if (dropPrivs) {
-      SetThreadIDs(RealUser(es_proc->audit_token), RealGroup(es_proc->audit_token));
-    }
-
     origURL = CFBridgingRelease(SecTranslocateCreateOriginalPathForURL(cfExecURL, NULL));
-
-    if (dropPrivs) {
-      SetThreadIDs(KAUTH_UID_NONE, KAUTH_GID_NONE);
-    }
   } else {
     isNotTranslocatedCache.set(SantaVnode::VnodeForFile(es_proc->executable), true);
   }

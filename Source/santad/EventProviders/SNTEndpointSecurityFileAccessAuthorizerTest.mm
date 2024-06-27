@@ -729,16 +729,11 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
 
 - (void)testEnable {
   std::set<es_event_type_t> expectedEventSubs = {
-    ES_EVENT_TYPE_AUTH_CLONE,    ES_EVENT_TYPE_AUTH_CREATE, ES_EVENT_TYPE_AUTH_EXCHANGEDATA,
-    ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,   ES_EVENT_TYPE_AUTH_RENAME,
-    ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK, ES_EVENT_TYPE_NOTIFY_EXIT,
+    ES_EVENT_TYPE_AUTH_CLONE,        ES_EVENT_TYPE_AUTH_COPYFILE, ES_EVENT_TYPE_AUTH_CREATE,
+    ES_EVENT_TYPE_AUTH_EXCHANGEDATA, ES_EVENT_TYPE_AUTH_LINK,     ES_EVENT_TYPE_AUTH_OPEN,
+    ES_EVENT_TYPE_AUTH_RENAME,       ES_EVENT_TYPE_AUTH_TRUNCATE, ES_EVENT_TYPE_AUTH_UNLINK,
+    ES_EVENT_TYPE_NOTIFY_EXIT,
   };
-
-#if HAVE_MACOS_12
-  if (@available(macOS 12.0, *)) {
-    expectedEventSubs.insert(ES_EVENT_TYPE_AUTH_COPYFILE);
-  }
-#endif
 
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
   EXPECT_CALL(*mockESApi, ClearCache)
@@ -944,42 +939,40 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
     XCTAssertFalse(targets[0].devnoIno.has_value());
   }
 
-  if (@available(macOS 12.0, *)) {
+  {
+    esMsg.event_type = ES_EVENT_TYPE_AUTH_COPYFILE;
+    esMsg.event.copyfile.source = &testFile1;
+    esMsg.event.copyfile.target_dir = &testDir;
+    esMsg.event.copyfile.target_name = testTok;
+
     {
-      esMsg.event_type = ES_EVENT_TYPE_AUTH_COPYFILE;
-      esMsg.event.copyfile.source = &testFile1;
-      esMsg.event.copyfile.target_dir = &testDir;
-      esMsg.event.copyfile.target_name = testTok;
+      esMsg.event.copyfile.target_file = nullptr;
 
-      {
-        esMsg.event.copyfile.target_file = nullptr;
+      std::vector<PathTarget> targets;
+      PopulatePathTargets(msg, targets);
 
-        std::vector<PathTarget> targets;
-        PopulatePathTargets(msg, targets);
+      XCTAssertEqual(targets.size(), 2);
+      XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+      XCTAssertTrue(targets[0].isReadable);
+      XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
+      XCTAssertCppStringEqual(targets[1].path, dirTok);
+      XCTAssertFalse(targets[1].isReadable);
+      XCTAssertFalse(targets[1].devnoIno.has_value());
+    }
 
-        XCTAssertEqual(targets.size(), 2);
-        XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
-        XCTAssertTrue(targets[0].isReadable);
-        XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
-        XCTAssertCppStringEqual(targets[1].path, dirTok);
-        XCTAssertFalse(targets[1].isReadable);
-        XCTAssertFalse(targets[1].devnoIno.has_value());
-      }
+    {
+      esMsg.event.copyfile.target_file = &testFile2;
 
-      {
-        esMsg.event.copyfile.target_file = &testFile2;
+      std::vector<PathTarget> targets;
+      PopulatePathTargets(msg, targets);
 
-        std::vector<PathTarget> targets;
-        PopulatePathTargets(msg, targets);
-
-        XCTAssertEqual(targets.size(), 2);
-        XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
-        XCTAssertTrue(targets[0].isReadable);
-        XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
-        XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
-        XCTAssertFalse(targets[1].isReadable);
-        XCTAssertFalse(targets[1].devnoIno.has_value());
-      }
+      XCTAssertEqual(targets.size(), 2);
+      XCTAssertCStringEqual(targets[0].path.c_str(), testFile1.path.data);
+      XCTAssertTrue(targets[0].isReadable);
+      XCTAssertEqual(targets[0].devnoIno.value(), FileID(testFile1));
+      XCTAssertCStringEqual(targets[1].path.c_str(), testFile2.path.data);
+      XCTAssertFalse(targets[1].isReadable);
+      XCTAssertFalse(targets[1].devnoIno.has_value());
     }
   }
 }

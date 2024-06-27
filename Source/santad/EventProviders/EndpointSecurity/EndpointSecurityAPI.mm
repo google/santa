@@ -156,19 +156,11 @@ es_string_token_t EndpointSecurityAPI::ExecEnv(const es_event_exec_t *event, uin
 }
 
 uint32_t EndpointSecurityAPI::ExecFDCount(const es_event_exec_t *event) {
-  if (@available(macOS 11.0, *)) {
-    return es_exec_fd_count(event);
-  } else {
-    return 0;
-  }
+  return es_exec_fd_count(event);
 }
 
 const es_fd_t *EndpointSecurityAPI::ExecFD(const es_event_exec_t *event, uint32_t index) {
-  if (@available(macOS 11.0, *)) {
-    return es_exec_fd(event, index);
-  } else {
-    return NULL;
-  }
+  return es_exec_fd(event, index);
 }
 
 }  // namespace santa::santad::event_providers::endpoint_security
