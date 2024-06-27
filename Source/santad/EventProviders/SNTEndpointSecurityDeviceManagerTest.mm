@@ -384,6 +384,8 @@ class MockAuthResultCache : public AuthResultCache {
                                                     on:@"v2"
                                                  flags:@(MNT_RDONLY | MNT_NOEXEC | MNT_JOURNALED)]];
 
+  // Disabling clang format due to local/remote version differences.
+  // clang-format off
   // Create mock disks with desired args
   MockDADisk * (^CreateMockDisk)(NSString *, NSString *) =
     ^MockDADisk *(NSString *mountOn, NSString *mountFrom) {
@@ -396,6 +398,7 @@ class MockAuthResultCache : public AuthResultCache {
 
       return mockDisk;
     };
+  // clang-format on
 
   // Reset the Mock DA property, setup disks and remount args, then trigger the test
   void (^PerformStartupTest)(NSArray<MockDADisk *> *, NSArray<NSString *> *,

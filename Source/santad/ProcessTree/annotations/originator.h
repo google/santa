@@ -24,12 +24,15 @@ namespace santa::santad::process_tree {
 
 class OriginatorAnnotator : public Annotator {
  public:
+  // Disabling clang format due to local/remote version differences.
+  // clang-format off
   OriginatorAnnotator()
       : originator_(::santa::pb::v1::process_tree::Annotations::Originator::
                         Annotations_Originator_UNSPECIFIED) {};
   explicit OriginatorAnnotator(
       ::santa::pb::v1::process_tree::Annotations::Originator originator)
       : originator_(originator) {};
+  // clang-format on
 
   void AnnotateFork(ProcessTree &tree, const Process &parent,
                     const Process &child) override;

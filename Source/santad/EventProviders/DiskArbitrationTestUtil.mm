@@ -152,13 +152,17 @@ void DARegisterDiskAppearedCallback(DASessionRef session, CFDictionaryRef __null
 
 void DARegisterDiskDisappearedCallback(DASessionRef session, CFDictionaryRef __nullable match,
                                        DADiskDisappearedCallback callback,
-                                       void *__nullable context) {};
+                                       void *__nullable context) {
+  // no-op
+};
 
 void DARegisterDiskDescriptionChangedCallback(DASessionRef session,
                                               CFDictionaryRef __nullable match,
                                               CFArrayRef __nullable watch,
                                               DADiskDescriptionChangedCallback callback,
-                                              void *__nullable context) {};
+                                              void *__nullable context) {
+  // no-op
+};
 
 void DASessionSetDispatchQueue(DASessionRef session, dispatch_queue_t __nullable queue) {
   MockDiskArbitration *mockDA = [MockDiskArbitration mockDiskArbitration];
