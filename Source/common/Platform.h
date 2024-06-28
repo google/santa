@@ -31,4 +31,11 @@
 #define HAVE_MACOS_14 0
 #endif
 
+#if defined(MAC_OS_VERSION_15_0) && \
+    MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_15_0
+#define HAVE_MACOS_15 1
+#else
+#define HAVE_MACOS_15 0
+#endif
+
 #endif
