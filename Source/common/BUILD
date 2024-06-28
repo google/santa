@@ -155,11 +155,10 @@ objc_library(
     srcs = ["SigningIDHelpers.m"],
     hdrs = ["SigningIDHelpers.h"],
     deps = [
+        ":SNTLogging",
         "@MOLCodesignChecker",
-	":SNTLogging",
     ],
 )
-
 
 objc_library(
     name = "SNTBlockMessage",
@@ -488,6 +487,9 @@ santa_unit_test(
 santa_unit_test(
     name = "SNTBlockMessageTest",
     srcs = ["SNTBlockMessageTest.m"],
+    sdk_frameworks = [
+        "AppKit",
+    ],
     deps = [
         ":SNTBlockMessage_SantaGUI",
         ":SNTConfigurator",
@@ -495,9 +497,6 @@ santa_unit_test(
         ":SNTStoredEvent",
         ":SNTSystemInfo",
         "@OCMock",
-    ],
-    sdk_frameworks = [
-        "AppKit",
     ],
 )
 

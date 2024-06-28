@@ -125,7 +125,10 @@ class PrefixTree {
             return false;
           }
 
-          cur_byte = (uint8_t) * ++p;
+          // Disabling clang format due to local/remote version differences.
+          // clang-format off
+          cur_byte = (uint8_t)*++p;
+          // clang-format on
         } while (*p);
 
         node->node_type_ = node_type;
