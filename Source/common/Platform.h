@@ -17,13 +17,6 @@
 
 #include <Availability.h>
 
-#if defined(MAC_OS_VERSION_12_0) && \
-    MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_12_0
-#define HAVE_MACOS_12 1
-#else
-#define HAVE_MACOS_12 0
-#endif
-
 #if defined(MAC_OS_VERSION_13_0) && \
     MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_13_0
 #define HAVE_MACOS_13 1
@@ -36,6 +29,13 @@
 #define HAVE_MACOS_14 1
 #else
 #define HAVE_MACOS_14 0
+#endif
+
+#if defined(MAC_OS_VERSION_15_0) && \
+    MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_VERSION_15_0
+#define HAVE_MACOS_15 1
+#else
+#define HAVE_MACOS_15 0
 #endif
 
 #endif

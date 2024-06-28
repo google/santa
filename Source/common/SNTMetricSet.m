@@ -639,20 +639,9 @@ NSString *SNTMetricStringFromMetricFormatType(SNTMetricFormatType format) {
 NSDictionary *SNTMetricConvertDatesToISO8601Strings(NSDictionary *metrics) {
   NSMutableDictionary *mutableMetrics = [metrics mutableCopy];
 
-  id formatter;
-
-  if (@available(macOS 10.13, *)) {
-    NSISO8601DateFormatter *isoFormatter = [[NSISO8601DateFormatter alloc] init];
-
-    isoFormatter.formatOptions =
-      NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
-    formatter = isoFormatter;
-  } else {
-    NSDateFormatter *localFormatter = [[NSDateFormatter alloc] init];
-    [localFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"];
-    [localFormatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
-    formatter = localFormatter;
-  }
+  NSISO8601DateFormatter *formatter = [[NSISO8601DateFormatter alloc] init];
+  formatter.formatOptions =
+    NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
 
   for (NSString *metricName in mutableMetrics[@"metrics"]) {
     NSMutableDictionary *metric = mutableMetrics[@"metrics"][metricName];

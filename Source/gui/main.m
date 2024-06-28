@@ -28,24 +28,22 @@
 
 - (OSSystemExtensionReplacementAction)request:(OSSystemExtensionRequest *)request
                   actionForReplacingExtension:(OSSystemExtensionProperties *)old
-                                withExtension:
-                                  (OSSystemExtensionProperties *)new API_AVAILABLE(macos(10.15)) {
+                                withExtension:(OSSystemExtensionProperties *)new {
   NSLog(@"SystemExtension \"%@\" request for replacement", request.identifier);
   return OSSystemExtensionReplacementActionReplace;
 }
 
-- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request API_AVAILABLE(macos(10.15)) {
+- (void)requestNeedsUserApproval:(OSSystemExtensionRequest *)request {
   NSLog(@"SystemExtension \"%@\" request needs user approval", request.identifier);
 }
 
-- (void)request:(OSSystemExtensionRequest *)request
-  didFailWithError:(NSError *)error API_AVAILABLE(macos(10.15)) {
+- (void)request:(OSSystemExtensionRequest *)request didFailWithError:(NSError *)error {
   NSLog(@"SystemExtension \"%@\" request did fail: %@", request.identifier, error);
   exit((int)error.code);
 }
 
 - (void)request:(OSSystemExtensionRequest *)request
-  didFinishWithResult:(OSSystemExtensionRequestResult)result API_AVAILABLE(macos(10.15)) {
+  didFinishWithResult:(OSSystemExtensionRequestResult)result {
   NSLog(@"SystemExtension \"%@\" request did finish: %ld", request.identifier, (long)result);
   exit(0);
 }
