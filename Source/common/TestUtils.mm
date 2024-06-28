@@ -117,21 +117,27 @@ void SleepMS(long ms) {
 }
 
 uint32_t MaxSupportedESMessageVersionForCurrentOS() {
-  // Notes:
-  //   1. ES message v3 was only in betas.
-  //   2. Message v7 appeared in macOS 13.3, v8 in macOS 15, but features from
-  //      those versions are not currently used. Leaving off support here so as
-  //      to not require adding unnecessary test JSON files.
+  // Note 1: This function only returns a subset of versions. This is due to the
+  // minimum supported OS build version as well as features in latest versions
+  // not currently being used. Capping the max means unnecessary duuplicate test
+  // JSON files are not needed.
+  //
+  // Note 2: The following table maps ES message versions to lmin macOS version:
+  //   ES Version | macOS Version
+  //            1 | 10.15.0
+  //            2 | 10.15.4
+  //            3 | Only in a beta
+  //            4 | 11.0
+  //            5 | 12.3
+  //            6 | 13.0
+  //            7 | 14.0
+  //            8 | 15.0
   if (@available(macOS 13.0, *)) {
     return 6;
   } else if (@available(macOS 12.3, *)) {
     return 5;
-  } else if (@available(macOS 11.0, *)) {
-    return 4;
-  } else if (@available(macOS 10.15.4, *)) {
-    return 2;
   } else {
-    return 1;
+    return 4;
   }
 }
 
@@ -250,7 +256,6 @@ uint32_t MinSupportedESMessageVersion(es_event_type_t event_type) {
     case ES_EVENT_TYPE_NOTIFY_GET_TASK_READ:
     case ES_EVENT_TYPE_NOTIFY_GET_TASK_INSPECT: return 4;
 
-#if HAVE_MACOS_12
     // The following events are available beginning in macOS 12.0
     case ES_EVENT_TYPE_NOTIFY_SETUID:
     case ES_EVENT_TYPE_NOTIFY_SETGID:
@@ -260,7 +265,6 @@ uint32_t MinSupportedESMessageVersion(es_event_type_t event_type) {
     case ES_EVENT_TYPE_NOTIFY_SETREGID:
     case ES_EVENT_TYPE_AUTH_COPYFILE:
     case ES_EVENT_TYPE_NOTIFY_COPYFILE: return 4;
-#endif
 
 #if HAVE_MACOS_13
     // The following events are available beginning in macOS 13.0
@@ -303,6 +307,10 @@ uint32_t MinSupportedESMessageVersion(es_event_type_t event_type) {
     case ES_EVENT_TYPE_NOTIFY_OD_DELETE_USER:
     case ES_EVENT_TYPE_NOTIFY_OD_DELETE_GROUP:
     case ES_EVENT_TYPE_NOTIFY_XPC_CONNECT: return 7;
+#endif
+
+#if HAVE_MACOS_15
+    case ES_EVENT_TYPE_NOTIFY_GATEKEEPER_USER_OVERRIDE: return 8;
 #endif
 
     default: return UINT32_MAX;

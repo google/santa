@@ -14,7 +14,7 @@ santa_unit_test(
     data = [
         "//Source/santad/testdata:binaryrules_testdata",
     ],
-    minimum_os_version = "11.0",
+    minimum_os_version = "12.0",
     deps = [],
 )
 

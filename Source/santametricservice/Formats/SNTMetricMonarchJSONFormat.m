@@ -46,11 +46,8 @@ const NSString *kKey = @"key";
   self = [super init];
   if (self) {
     _dateFormatter = [[NSISO8601DateFormatter alloc] init];
-    _dateFormatter.formatOptions = NSISO8601DateFormatWithInternetDateTime;
-
-    if (@available(macOS 10.13, *)) {
-      _dateFormatter.formatOptions |= NSISO8601DateFormatWithFractionalSeconds;
-    }
+    _dateFormatter.formatOptions =
+      NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
   }
   return self;
 }
