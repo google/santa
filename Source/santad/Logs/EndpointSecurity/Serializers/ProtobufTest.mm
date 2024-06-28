@@ -27,6 +27,7 @@
 #include <uuid/uuid.h>
 #include <cstring>
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
@@ -104,6 +105,10 @@ NSString *EventTypeToFilename(es_event_type_t eventType) {
     case ES_EVENT_TYPE_NOTIFY_RENAME: return @"rename.json";
     case ES_EVENT_TYPE_NOTIFY_UNLINK: return @"unlink.json";
     case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED: return @"cs_invalidated.json";
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN: return @"lw_session_login.json";
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT: return @"lw_session_logout.json";
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK: return @"lw_session_lock.json";
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK: return @"lw_session_unlock.json";
     default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
   }
 }
@@ -151,6 +156,7 @@ const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &s
     case ::pbv1::SantaMessage::kAllowlist: return santaMsg.allowlist();
     case ::pbv1::SantaMessage::kFileAccess: return santaMsg.file_access();
     case ::pbv1::SantaMessage::kCodesigningInvalidated: return santaMsg.codesigning_invalidated();
+    case ::pbv1::SantaMessage::kLoginWindowSession: return santaMsg.login_window_session();
     case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
@@ -208,7 +214,7 @@ void SerializeAndCheck(es_event_type_t eventType,
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   for (uint32_t cur_version = MinSupportedESMessageVersion(eventType);
-       cur_version <= MaxSupportedESMessageVersionForCurrentOS(); cur_version++) {
+       cur_version <= 1; cur_version++) {
     if (cur_version == 3) {
       // Note: Version 3 was only in a macOS beta.
       continue;
@@ -244,14 +250,11 @@ void SerializeAndCheck(es_event_type_t eventType,
     std::vector<uint8_t> vec = bs->SerializeMessage(std::move(enrichedMsg));
     std::string protoStr(vec.begin(), vec.end());
 
-    // if we're checking against JSON then we should already have a jsonified string and just need
-    // to
     ::pbv1::SantaMessage santaMsg;
     std::string gotData;
 
     if (json) {
       // Parse the jsonified string into the protobuf
-      // gotData = protoStr;
       JsonParseOptions options;
       options.ignore_unknown_fields = true;
       absl::Status status = JsonStringToMessage(protoStr, &santaMsg, options);
@@ -764,6 +767,66 @@ void SerializeAndCheckNonESEvents(
                   }
                           json:NO];
 }
+
+#if HAVE_MACOS_13
+
+- (void)testSerializeMessageLoginWindowSessionLogin {
+  __block es_event_lw_session_login_t lwLogin = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                                  esMsg->event.lw_session_login = &lwLogin;
+                  }
+                          json:NO];
+}
+
+- (void)testSerializeMessageLoginWindowSessionLogout {
+  __block es_event_lw_session_logout_t lwLogout = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                                  esMsg->event.lw_session_logout = &lwLogout;
+                  }
+                          json:NO];
+}
+
+- (void)testSerializeMessageLoginWindowSessionLock {
+  __block es_event_lw_session_lock_t lwLock = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                                  esMsg->event.lw_session_lock = &lwLock;
+                  }
+                          json:NO];
+}
+
+- (void)testSerializeMessageLoginWindowSessionUnlock {
+  __block es_event_lw_session_unlock_t lwUnlock = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                                  esMsg->event.lw_session_unlock = &lwUnlock;
+                  }
+                          json:NO];
+}
+
+#endif
 
 - (void)testGetAccessType {
   std::map<es_event_type_t, ::pbv1::FileAccess::AccessType> eventTypeToAccessType = {

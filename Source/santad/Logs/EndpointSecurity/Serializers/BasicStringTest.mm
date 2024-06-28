@@ -272,12 +272,12 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN, &proc);
-  es_event_lw_session_login_t lw_login = {
+  es_event_lw_session_login_t lwLogin = {
     .username = MakeESStringToken("daemon"),
     .graphical_session_id = 123,
   };
 
-  esMsg.event.lw_session_login = &lw_login;
+  esMsg.event.lw_session_login = &lwLogin;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=LOGIN_WINDOW_SESSION_LOGIN|pid=12|ppid=56|process=foo|processpath=foo|"
@@ -291,12 +291,12 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT, &proc);
-  es_event_lw_session_logout_t lw_logout = {
+  es_event_lw_session_logout_t lwLogout = {
     .username = MakeESStringToken("daemon"),
     .graphical_session_id = 123,
   };
 
-  esMsg.event.lw_session_logout = &lw_logout;
+  esMsg.event.lw_session_logout = &lwLogout;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=LOGIN_WINDOW_SESSION_LOGOUT|pid=12|ppid=56|process=foo|processpath="
@@ -310,12 +310,12 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK, &proc);
-  es_event_lw_session_lock_t lw_lock = {
+  es_event_lw_session_lock_t lwLock = {
     .username = MakeESStringToken("daemon"),
     .graphical_session_id = 123,
   };
 
-  esMsg.event.lw_session_lock = &lw_lock;
+  esMsg.event.lw_session_lock = &lwLock;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=LOGIN_WINDOW_SESSION_LOCK|pid=12|ppid=56|process=foo|processpath=foo|"
@@ -329,12 +329,12 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_file_t procFile = MakeESFile("foo");
   es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
   es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK, &proc);
-  es_event_lw_session_unlock_t lw_unlock = {
+  es_event_lw_session_unlock_t lwUnlock = {
     .username = MakeESStringToken("daemon"),
     .graphical_session_id = 123,
   };
 
-  esMsg.event.lw_session_unlock = &lw_unlock;
+  esMsg.event.lw_session_unlock = &lwUnlock;
 
   std::string got = BasicStringSerializeMessage(&esMsg);
   std::string want = "action=LOGIN_WINDOW_SESSION_UNLOCK|pid=12|ppid=56|process=foo|processpath="
@@ -351,8 +351,8 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   es_event_login_login_t login = {
     .success = false,
     .failure_message = MakeESStringToken("my|failure"),
-    .has_uid = false,
     .username = MakeESStringToken("asdf"),
+    .has_uid = false,
   };
   esMsg.event.login_login = &login;
 

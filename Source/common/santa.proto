@@ -547,9 +547,10 @@ message SocketAddress {
 
   enum Type {
     TYPE_UNKNOWN = 0;
-    TYPE_IPV4 = 1;
-    TYPE_IPV6 = 2;
-    TYPE_NAMED_SOCKET = 3;
+    TYPE_NONE = 1;
+    TYPE_IPV4 = 2;
+    TYPE_IPV6 = 3;
+    TYPE_NAMED_SOCKET = 4;
   }
 
   optional Type type = 2;

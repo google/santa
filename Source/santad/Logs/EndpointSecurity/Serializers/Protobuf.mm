@@ -44,6 +44,7 @@ using JsonPrintOptions = google::protobuf::json::PrintOptions;
 using google::protobuf::json::MessageToJsonString;
 
 using santa::common::NSStringToUTF8StringView;
+using santa::common::StringTokenToStringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
@@ -138,6 +139,16 @@ static inline void EncodeUserInfo(::pbv1::UserInfo *pb_user_info, uid_t uid,
   }
 }
 
+static inline void EncodeUserInfo(::pbv1::UserInfo *pb_user_info, std::optional<uid_t> uid,
+                                  const es_string_token_t &name) {
+  if (uid.has_value()) {
+    pb_user_info->set_uid(uid.value());
+  }
+  if (name.length > 0) {
+    pb_user_info->set_name(StringTokenToStringView(name));
+  }
+}
+
 static inline void EncodeGroupInfo(::pbv1::GroupInfo *pb_group_info, gid_t gid,
                                    const std::optional<std::shared_ptr<std::string>> &name) {
   pb_group_info->set_gid(gid);
@@ -225,6 +236,11 @@ static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info
   EncodeFileInfoLight(pb_proc_info->mutable_executable(), es_proc->executable);
 
   EncodeAnnotations([pb_proc_info] { return pb_proc_info->mutable_annotations(); }, enriched_proc);
+}
+
+static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info,
+                                          const EnrichedEventType &msg) {
+  return EncodeProcessInfoLight(pb_proc_info, msg->version, msg->process, msg.instigator());
 }
 
 static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t message_version,
@@ -386,6 +402,16 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
     case FileAccessPolicyDecision::kAllowedAuditOnly:
       return ::pbv1::FileAccess::POLICY_DECISION_ALLOWED_AUDIT_ONLY;
     default: return ::pbv1::FileAccess::POLICY_DECISION_UNKNOWN;
+  }
+}
+
+::pbv1::SocketAddress::Type GetSocketAddressType(es_address_type_t type) {
+  switch (type) {
+    case ES_ADDRESS_TYPE_NONE: return ::pbv1::SocketAddress::TYPE_NONE;
+    case ES_ADDRESS_TYPE_IPV4: return ::pbv1::SocketAddress::TYPE_IPV4;
+    case ES_ADDRESS_TYPE_IPV6: return ::pbv1::SocketAddress::TYPE_IPV6;
+    case ES_ADDRESS_TYPE_NAMED_SOCKET: return ::pbv1::SocketAddress::TYPE_NAMED_SOCKET;
+    default: return ::pbv1::SocketAddress::TYPE_UNKNOWN;
   }
 }
 
@@ -759,24 +785,102 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg
   return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogin &) {
-  return {};
+#if HAVE_MACOS_13
+
+static inline void EncodeSocketAddress(::pbv1::SocketAddress *pb_socket_addr, std::string_view addr,
+                                         es_address_type_t type) {
+  EncodeString([pb_socket_addr]{ return pb_socket_addr->mutable_address(); }, addr);
+  pb_socket_addr->set_type(GetSocketAddressType(type));
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogout &) {
-  return {};
+
+static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f, const es_string_token_t &name) {
+  if (name.length > 0) {
+    lazy_f()->set_name(StringTokenToStringView(name));
+  }
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLock &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogin &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::LoginWindowSessionLogin *pb_lw_login =
+    santa_msg->mutable_login_window_session()->mutable_login();
+
+  EncodeProcessInfoLight(pb_lw_login->mutable_instigator(), msg);
+  EncodeUserInfo(pb_lw_login->mutable_user(), msg.UID(), msg->event.lw_session_login->username);
+
+  pb_lw_login->mutable_graphical_session()->set_id(
+    msg->event.lw_session_login->graphical_session_id);
+
+  return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionUnlock &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogout &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::LoginWindowSessionLogout *pb_lw_logout =
+    santa_msg->mutable_login_window_session()->mutable_logout();
+
+  EncodeProcessInfoLight(pb_lw_logout->mutable_instigator(), msg);
+  EncodeUserInfo(pb_lw_logout->mutable_user(), msg.UID(), msg->event.lw_session_logout->username);
+
+  pb_lw_logout->mutable_graphical_session()->set_id(
+    msg->event.lw_session_logout->graphical_session_id);
+
+  return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingAttach &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLock &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::LoginWindowSessionLock *pb_lw_lock =
+    santa_msg->mutable_login_window_session()->mutable_lock();
+
+  EncodeProcessInfoLight(pb_lw_lock->mutable_instigator(), msg);
+  EncodeUserInfo(pb_lw_lock->mutable_user(), msg.UID(), msg->event.lw_session_lock->username);
+
+  pb_lw_lock->mutable_graphical_session()->set_id(
+    msg->event.lw_session_lock->graphical_session_id);
+
+  return FinalizeProto(santa_msg);
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionUnlock &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::LoginWindowSessionUnlock *pb_lw_unlock =
+    santa_msg->mutable_login_window_session()->mutable_unlock();
+
+  EncodeProcessInfoLight(pb_lw_unlock->mutable_instigator(), msg);
+  EncodeUserInfo(pb_lw_unlock->mutable_user(), msg.UID(), msg->event.lw_session_unlock->username);
+
+  pb_lw_unlock->mutable_graphical_session()->set_id(
+    msg->event.lw_session_unlock->graphical_session_id);
+
+  return FinalizeProto(santa_msg);
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingAttach &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::ScreenSharingAttach *pb_attach =
+    santa_msg->mutable_screen_sharing()->mutable_attach();
+
+  EncodeProcessInfoLight(pb_attach->mutable_instigator(), msg);
+
+  pb_attach->set_success(msg->event.screensharing_attach->success);
+
+  EncodeSocketAddress(pb_attach->mutable_source(),  StringTokenToStringView(msg->event.screensharing_attach->source_address), msg->event.screensharing_attach->source_address_type);
+
+  EncodeString([pb_attach]{ return pb_attach->mutable_viewer(); }, StringTokenToStringView(msg->event.screensharing_attach->viewer_appleid));
+  EncodeString([pb_attach]{ return pb_attach->mutable_authentication_type(); }, StringTokenToStringView(msg->event.screensharing_attach->authentication_type));
+  EncodeUserInfo([pb_attach]{ return pb_attach->mutable_authentication_user(); }, StringTokenToStringView(msg->event.screensharing_attach->authentication_username));
+  // EncodeUserInfo([pb_attach]{ return pb_attach->mutable_authentication_user(); }, StringTokenToStringView(msg->event.screensharing_attach->authentication_username));
+
+  pb_attach->mutable_graphical_session()->set_id(
+    msg->event.screensharing_attach->graphical_session_id);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingDetach &) {
@@ -798,6 +902,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &) {
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogout &) {
   return {};
 }
+
+#endif
 
 std::vector<uint8_t> Protobuf::SerializeFileAccess(const std::string &policy_version,
                                                    const std::string &policy_name,
