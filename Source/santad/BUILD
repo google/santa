@@ -727,6 +727,7 @@ objc_library(
     deps = [
         ":EndpointSecurityMessage",
         ":SNTApplicationCoreMetrics",
+        "//Source/common:Platform",
         "//Source/common:SNTCommonEnums",
         "//Source/common:SNTLogging",
         "//Source/common:SNTMetricSet",

@@ -229,8 +229,8 @@ void SerializeAndCheck(es_event_type_t eventType,
                        SNTDecisionCache *decisionCache, bool json, NSString *variant) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  for (uint32_t cur_version = MinSupportedESMessageVersion(eventType); cur_version <= MaxSupportedESMessageVersionForCurrentOS();
-       cur_version++) {
+  for (uint32_t cur_version = MinSupportedESMessageVersion(eventType);
+       cur_version <= MaxSupportedESMessageVersionForCurrentOS(); cur_version++) {
     if (cur_version == 3) {
       // Note: Version 3 was only in a macOS beta.
       continue;
@@ -401,7 +401,7 @@ void SerializeAndCheckNonESEvents(
 - (void)serializeAndCheckEvent:(es_event_type_t)eventType
                   messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
                                          es_message_t *))messageSetup
-                          variant:(NSString*)variant {
+                       variant:(NSString *)variant {
   SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, false, variant);
 }
 
@@ -850,7 +850,7 @@ void SerializeAndCheckNonESEvents(
 }
 
 - (void)testSerializeMessageScreensharingAttach {
-  __block  es_event_screensharing_attach_t attach = {
+  __block es_event_screensharing_attach_t attach = {
     .success = true,
     .source_address_type = ES_ADDRESS_TYPE_IPV6,
     .source_address = MakeESStringToken("::1"),
@@ -881,11 +881,11 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.screensharing_attach = &attach;
                   }
-                          variant:@"unset_fields"];
+                       variant:@"unset_fields"];
 }
 
 - (void)testSerializeMessageScreensharingDetach {
-  __block  es_event_screensharing_detach_t detach = {
+  __block es_event_screensharing_detach_t detach = {
     .source_address_type = ES_ADDRESS_TYPE_IPV4,
     .source_address = MakeESStringToken("1.2.3.4"),
     .viewer_appleid = MakeESStringToken("foo@example.com"),
