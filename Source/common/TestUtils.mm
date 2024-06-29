@@ -19,6 +19,8 @@
 #include <mach/mach_time.h>
 #include <time.h>
 #include <uuid/uuid.h>
+
+#include "Source/common/Platform.h"
 #include "Source/common/SystemResources.h"
 
 NSString *RepeatedString(NSString *str, NSUInteger len) {

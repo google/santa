@@ -405,16 +405,6 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
   }
 }
 
-::pbv1::SocketAddress::Type GetSocketAddressType(es_address_type_t type) {
-  switch (type) {
-    case ES_ADDRESS_TYPE_NONE: return ::pbv1::SocketAddress::TYPE_NONE;
-    case ES_ADDRESS_TYPE_IPV4: return ::pbv1::SocketAddress::TYPE_IPV4;
-    case ES_ADDRESS_TYPE_IPV6: return ::pbv1::SocketAddress::TYPE_IPV6;
-    case ES_ADDRESS_TYPE_NAMED_SOCKET: return ::pbv1::SocketAddress::TYPE_NAMED_SOCKET;
-    default: return ::pbv1::SocketAddress::TYPE_UNKNOWN;
-  }
-}
-
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, struct timespec event_time,
                                                    struct timespec processed_time) {
   ::pbv1::SantaMessage *santa_msg = Arena::Create<::pbv1::SantaMessage>(arena);
@@ -787,14 +777,24 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg
 
 #if HAVE_MACOS_13
 
+::pbv1::SocketAddress::Type GetSocketAddressType(es_address_type_t type) {
+  switch (type) {
+    case ES_ADDRESS_TYPE_NONE: return ::pbv1::SocketAddress::TYPE_NONE;
+    case ES_ADDRESS_TYPE_IPV4: return ::pbv1::SocketAddress::TYPE_IPV4;
+    case ES_ADDRESS_TYPE_IPV6: return ::pbv1::SocketAddress::TYPE_IPV6;
+    case ES_ADDRESS_TYPE_NAMED_SOCKET: return ::pbv1::SocketAddress::TYPE_NAMED_SOCKET;
+    default: return ::pbv1::SocketAddress::TYPE_UNKNOWN;
+  }
+}
+
 static inline void EncodeSocketAddress(::pbv1::SocketAddress *pb_socket_addr, std::string_view addr,
-                                         es_address_type_t type) {
-  EncodeString([pb_socket_addr]{ return pb_socket_addr->mutable_address(); }, addr);
+                                       es_address_type_t type) {
+  EncodeString([pb_socket_addr] { return pb_socket_addr->mutable_address(); }, addr);
   pb_socket_addr->set_type(GetSocketAddressType(type));
 }
 
-
-static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f, const es_string_token_t &name) {
+static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f,
+                                  const es_string_token_t &name) {
   if (name.length > 0) {
     lazy_f()->set_name(StringTokenToStringView(name));
   }
@@ -839,8 +839,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSession
   EncodeProcessInfoLight(pb_lw_lock->mutable_instigator(), msg);
   EncodeUserInfo(pb_lw_lock->mutable_user(), msg.UID(), msg->event.lw_session_lock->username);
 
-  pb_lw_lock->mutable_graphical_session()->set_id(
-    msg->event.lw_session_lock->graphical_session_id);
+  pb_lw_lock->mutable_graphical_session()->set_id(msg->event.lw_session_lock->graphical_session_id);
 
   return FinalizeProto(santa_msg);
 }
@@ -863,28 +862,47 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSession
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingAttach &msg) {
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::ScreenSharingAttach *pb_attach =
-    santa_msg->mutable_screen_sharing()->mutable_attach();
+  ::pbv1::ScreenSharingAttach *pb_attach = santa_msg->mutable_screen_sharing()->mutable_attach();
 
   EncodeProcessInfoLight(pb_attach->mutable_instigator(), msg);
 
   pb_attach->set_success(msg->event.screensharing_attach->success);
 
-  EncodeSocketAddress(pb_attach->mutable_source(),  StringTokenToStringView(msg->event.screensharing_attach->source_address), msg->event.screensharing_attach->source_address_type);
+  EncodeSocketAddress(pb_attach->mutable_source(),
+                      StringTokenToStringView(msg->event.screensharing_attach->source_address),
+                      msg->event.screensharing_attach->source_address_type);
+  EncodeString([pb_attach] { return pb_attach->mutable_viewer(); },
+               StringTokenToStringView(msg->event.screensharing_attach->viewer_appleid));
+  EncodeString([pb_attach] { return pb_attach->mutable_authentication_type(); },
+               StringTokenToStringView(msg->event.screensharing_attach->authentication_type));
+  EncodeUserInfo([pb_attach] { return pb_attach->mutable_authentication_user(); },
+                 msg->event.screensharing_attach->authentication_username);
+  EncodeUserInfo([pb_attach] { return pb_attach->mutable_session_user(); },
+                 msg->event.screensharing_attach->session_username);
 
-  EncodeString([pb_attach]{ return pb_attach->mutable_viewer(); }, StringTokenToStringView(msg->event.screensharing_attach->viewer_appleid));
-  EncodeString([pb_attach]{ return pb_attach->mutable_authentication_type(); }, StringTokenToStringView(msg->event.screensharing_attach->authentication_type));
-  EncodeUserInfo([pb_attach]{ return pb_attach->mutable_authentication_user(); }, StringTokenToStringView(msg->event.screensharing_attach->authentication_username));
-  // EncodeUserInfo([pb_attach]{ return pb_attach->mutable_authentication_user(); }, StringTokenToStringView(msg->event.screensharing_attach->authentication_username));
-
+  pb_attach->set_existing_session(msg->event.screensharing_attach->existing_session);
   pb_attach->mutable_graphical_session()->set_id(
     msg->event.screensharing_attach->graphical_session_id);
 
   return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingDetach &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingDetach &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::ScreenSharingDetach *pb_detach = santa_msg->mutable_screen_sharing()->mutable_detach();
+
+  EncodeProcessInfoLight(pb_detach->mutable_instigator(), msg);
+  EncodeSocketAddress(pb_detach->mutable_source(),
+                      StringTokenToStringView(msg->event.screensharing_detach->source_address),
+                      msg->event.screensharing_detach->source_address_type);
+  EncodeString([pb_detach] { return pb_detach->mutable_viewer(); },
+               StringTokenToStringView(msg->event.screensharing_detach->viewer_appleid));
+
+  pb_detach->mutable_graphical_session()->set_id(
+    msg->event.screensharing_detach->graphical_session_id);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogin &) {

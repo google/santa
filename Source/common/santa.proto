@@ -621,9 +621,10 @@ message ScreenSharingAttach {
 }
 
 message ScreenSharingDetach {
-  optional SocketAddress source = 1;
-  optional bytes viewer = 2;
-  optional GraphicalSession graphical_session = 3;
+  optional ProcessInfoLight instigator = 1;
+  optional SocketAddress source = 2;
+  optional bytes viewer = 3;
+  optional GraphicalSession graphical_session = 4;
 }
 
 message ScreenSharing {
