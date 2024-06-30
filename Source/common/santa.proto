@@ -636,30 +636,30 @@ message ScreenSharing {
 
 message OpenSSHLogin {
   optional ProcessInfoLight instigator = 1;
-  bool success = 2;
 
-  enum ResultType {
-    RESULT_TYPE_UNKNOWN = 0;
-    RESULT_TYPE_LOGIN_EXCEED_MAXTRIES = 1;
-    RESULT_TYPE_LOGIN_ROOT_DENIED = 2;
-    RESULT_TYPE_AUTH_SUCCESS = 3;
-    RESULT_TYPE_AUTH_FAIL_NONE = 4;
-    RESULT_TYPE_AUTH_FAIL_PASSWD = 5;
-    RESULT_TYPE_AUTH_FAIL_KBDINT = 6;
-    RESULT_TYPE_AUTH_FAIL_PUBKEY = 7;
-    RESULT_TYPE_AUTH_FAIL_HOSTBASED = 8;
-    RESULT_TYPE_AUTH_FAIL_GSSAPI = 9;
-    RESULT_TYPE_INVALID_USER = 10;
+  enum Result {
+    RESULT_UNKNOWN = 0;
+    RESULT_LOGIN_EXCEED_MAXTRIES = 1;
+    RESULT_LOGIN_ROOT_DENIED = 2;
+    RESULT_AUTH_SUCCESS = 3;
+    RESULT_AUTH_FAIL_NONE = 4;
+    RESULT_AUTH_FAIL_PASSWD = 5;
+    RESULT_AUTH_FAIL_KBDINT = 6;
+    RESULT_AUTH_FAIL_PUBKEY = 7;
+    RESULT_AUTH_FAIL_HOSTBASED = 8;
+    RESULT_AUTH_FAIL_GSSAPI = 9;
+    RESULT_INVALID_USER = 10;
   }
 
-  optional ResultType result_type = 3;
-  optional SocketAddress source = 4;
-  optional UserInfo user = 5;
+  optional Result result = 2;
+  optional SocketAddress source = 3;
+  optional UserInfo user = 4;
 }
 
 message OpenSSHLogout {
-  optional SocketAddress source = 1;
-  optional UserInfo user = 2;
+  optional ProcessInfoLight instigator = 1;
+  optional SocketAddress source = 2;
+  optional UserInfo user = 3;
 }
 
 message OpenSSH {

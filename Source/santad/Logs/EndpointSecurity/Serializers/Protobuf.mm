@@ -139,13 +139,13 @@ static inline void EncodeUserInfo(::pbv1::UserInfo *pb_user_info, uid_t uid,
   }
 }
 
-static inline void EncodeUserInfo(::pbv1::UserInfo *pb_user_info, std::optional<uid_t> uid,
-                                  const es_string_token_t &name) {
+static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f,
+                                  std::optional<uid_t> uid, const es_string_token_t &name) {
   if (uid.has_value()) {
-    pb_user_info->set_uid(uid.value());
+    lazy_f()->set_uid(uid.value());
   }
   if (name.length > 0) {
-    pb_user_info->set_name(StringTokenToStringView(name));
+    lazy_f()->set_name(StringTokenToStringView(name));
   }
 }
 
@@ -787,6 +787,23 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg
   }
 }
 
+::pbv1::OpenSSHLogin::Result GetOpenSSHLoginResultType(es_openssh_login_result_type_t type) {
+  switch (type) {
+    case ES_OPENSSH_LOGIN_EXCEED_MAXTRIES:
+      return ::pbv1::OpenSSHLogin::RESULT_LOGIN_EXCEED_MAXTRIES;
+    case ES_OPENSSH_LOGIN_ROOT_DENIED: return ::pbv1::OpenSSHLogin::RESULT_LOGIN_ROOT_DENIED;
+    case ES_OPENSSH_AUTH_SUCCESS: return ::pbv1::OpenSSHLogin::RESULT_AUTH_SUCCESS;
+    case ES_OPENSSH_AUTH_FAIL_NONE: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_NONE;
+    case ES_OPENSSH_AUTH_FAIL_PASSWD: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PASSWD;
+    case ES_OPENSSH_AUTH_FAIL_KBDINT: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_KBDINT;
+    case ES_OPENSSH_AUTH_FAIL_PUBKEY: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PUBKEY;
+    case ES_OPENSSH_AUTH_FAIL_HOSTBASED: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_HOSTBASED;
+    case ES_OPENSSH_AUTH_FAIL_GSSAPI: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_GSSAPI;
+    case ES_OPENSSH_INVALID_USER: return ::pbv1::OpenSSHLogin::RESULT_INVALID_USER;
+    default: return ::pbv1::OpenSSHLogin::RESULT_UNKNOWN;
+  }
+}
+
 static inline void EncodeSocketAddress(::pbv1::SocketAddress *pb_socket_addr, std::string_view addr,
                                        es_address_type_t type) {
   EncodeString([pb_socket_addr] { return pb_socket_addr->mutable_address(); }, addr);
@@ -807,7 +824,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSession
     santa_msg->mutable_login_window_session()->mutable_login();
 
   EncodeProcessInfoLight(pb_lw_login->mutable_instigator(), msg);
-  EncodeUserInfo(pb_lw_login->mutable_user(), msg.UID(), msg->event.lw_session_login->username);
+  EncodeUserInfo([pb_lw_login] { return pb_lw_login->mutable_user(); }, msg.UID(),
+                 msg->event.lw_session_login->username);
 
   pb_lw_login->mutable_graphical_session()->set_id(
     msg->event.lw_session_login->graphical_session_id);
@@ -822,7 +840,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSession
     santa_msg->mutable_login_window_session()->mutable_logout();
 
   EncodeProcessInfoLight(pb_lw_logout->mutable_instigator(), msg);
-  EncodeUserInfo(pb_lw_logout->mutable_user(), msg.UID(), msg->event.lw_session_logout->username);
+  EncodeUserInfo([pb_lw_logout] { return pb_lw_logout->mutable_user(); }, msg.UID(),
+                 msg->event.lw_session_logout->username);
 
   pb_lw_logout->mutable_graphical_session()->set_id(
     msg->event.lw_session_logout->graphical_session_id);
@@ -837,7 +856,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSession
     santa_msg->mutable_login_window_session()->mutable_lock();
 
   EncodeProcessInfoLight(pb_lw_lock->mutable_instigator(), msg);
-  EncodeUserInfo(pb_lw_lock->mutable_user(), msg.UID(), msg->event.lw_session_lock->username);
+  EncodeUserInfo([pb_lw_lock] { return pb_lw_lock->mutable_user(); }, msg.UID(),
+                 msg->event.lw_session_lock->username);
 
   pb_lw_lock->mutable_graphical_session()->set_id(msg->event.lw_session_lock->graphical_session_id);
 
@@ -851,7 +871,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSession
     santa_msg->mutable_login_window_session()->mutable_unlock();
 
   EncodeProcessInfoLight(pb_lw_unlock->mutable_instigator(), msg);
-  EncodeUserInfo(pb_lw_unlock->mutable_user(), msg.UID(), msg->event.lw_session_unlock->username);
+  EncodeUserInfo([pb_lw_unlock] { return pb_lw_unlock->mutable_user(); }, msg.UID(),
+                 msg->event.lw_session_unlock->username);
 
   pb_lw_unlock->mutable_graphical_session()->set_id(
     msg->event.lw_session_unlock->graphical_session_id);
@@ -905,12 +926,41 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingDetac
   return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogin &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogin &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::OpenSSHLogin *pb_ssh_login = santa_msg->mutable_open_ssh()->mutable_login();
+
+  EncodeProcessInfoLight(pb_ssh_login->mutable_instigator(), msg);
+
+  pb_ssh_login->set_result(GetOpenSSHLoginResultType(msg->event.openssh_login->result_type));
+
+  EncodeSocketAddress(pb_ssh_login->mutable_source(),
+                      StringTokenToStringView(msg->event.openssh_login->source_address),
+                      msg->event.openssh_login->source_address_type);
+  EncodeUserInfo([pb_ssh_login] { return pb_ssh_login->mutable_user(); },
+                 msg->event.openssh_login->has_uid
+                   ? std::make_optional<uid_t>(msg->event.openssh_login->uid.uid)
+                   : std::nullopt,
+                 msg->event.openssh_login->username);
+
+  return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogout &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogout &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::OpenSSHLogout *pb_ssh_logout = santa_msg->mutable_open_ssh()->mutable_logout();
+
+  EncodeProcessInfoLight(pb_ssh_logout->mutable_instigator(), msg);
+
+  EncodeSocketAddress(pb_ssh_logout->mutable_source(),
+                      StringTokenToStringView(msg->event.openssh_logout->source_address),
+                      msg->event.openssh_logout->source_address_type);
+  EncodeUserInfo([pb_ssh_logout] { return pb_ssh_logout->mutable_user(); },
+                 msg->event.openssh_logout->uid, msg->event.openssh_logout->username);
+
+  return FinalizeProto(santa_msg);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &) {

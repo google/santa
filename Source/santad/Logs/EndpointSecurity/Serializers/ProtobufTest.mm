@@ -70,6 +70,7 @@ extern ::pbv1::FileAccess::AccessType GetAccessType(es_event_type_t event_type);
 extern ::pbv1::FileAccess::PolicyDecision GetPolicyDecision(FileAccessPolicyDecision decision);
 #if HAVE_MACOS_13
 extern ::pbv1::SocketAddress::Type GetSocketAddressType(es_address_type_t type);
+extern ::pbv1::OpenSSHLogin::Result GetOpenSSHLoginResultType(es_openssh_login_result_type_t type);
 #endif
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
@@ -82,6 +83,7 @@ using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
 using santa::santad::logs::endpoint_security::serializers::GetPolicyDecision;
 using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
 #if HAVE_MACOS_13
+using santa::santad::logs::endpoint_security::serializers::GetOpenSSHLoginResultType;
 using santa::santad::logs::endpoint_security::serializers::GetSocketAddressType;
 #endif
 
@@ -118,6 +120,8 @@ NSString *ConstructFilename(es_event_type_t eventType, NSString *variant = nil) 
     case ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK: name = @"lw_session_unlock"; break;
     case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH: name = @"screensharing_attach"; break;
     case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH: name = @"screensharing_detach"; break;
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN: name = @"openssh_login"; break;
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT: name = @"openssh_logout"; break;
     default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
   }
 
@@ -173,6 +177,7 @@ const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &s
     case ::pbv1::SantaMessage::kCodesigningInvalidated: return santaMsg.codesigning_invalidated();
     case ::pbv1::SantaMessage::kLoginWindowSession: return santaMsg.login_window_session();
     case ::pbv1::SantaMessage::kScreenSharing: return santaMsg.screen_sharing();
+    case ::pbv1::SantaMessage::kOpenSsh: return santaMsg.open_ssh();
     case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
@@ -396,6 +401,12 @@ void SerializeAndCheckNonESEvents(
                                          es_message_t *))messageSetup
                           json:(BOOL)json {
   SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, (bool)json, nil);
+}
+
+- (void)serializeAndCheckEvent:(es_event_type_t)eventType
+                  messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
+                                         es_message_t *))messageSetup {
+  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, false, nil);
 }
 
 - (void)serializeAndCheckEvent:(es_event_type_t)eventType
@@ -803,8 +814,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.lw_session_login = &lwLogin;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageLoginWindowSessionLogout {
@@ -817,8 +827,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.lw_session_logout = &lwLogout;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageLoginWindowSessionLock {
@@ -831,8 +840,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.lw_session_lock = &lwLock;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageLoginWindowSessionUnlock {
@@ -845,8 +853,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.lw_session_unlock = &lwUnlock;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageScreensharingAttach {
@@ -866,8 +873,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.screensharing_attach = &attach;
-                  }
-                          json:NO];
+                  }];
 
   attach.source_address_type = (es_address_type_t)1234;
   attach.source_address = MakeESStringToken(NULL);
@@ -896,8 +902,54 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.screensharing_detach = &detach;
+                  }];
+}
+
+- (void)testSerializeMessageOpenSSHLogin {
+  __block es_event_openssh_login_t sshLogin = {.success = true,
+                                               .result_type = ES_OPENSSH_AUTH_SUCCESS,
+                                               .source_address_type = ES_ADDRESS_TYPE_IPV4,
+                                               .source_address = MakeESStringToken("1.2.3.4"),
+                                               .username = MakeESStringToken("foo_user"),
+                                               .has_uid = true,
+                                               .uid = {
+                                                 .uid = 12345,
+                                               }};
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.openssh_login = &sshLogin;
+                  }];
+
+  sshLogin.success = false;
+  sshLogin.result_type = ES_OPENSSH_AUTH_FAIL_HOSTBASED;
+  sshLogin.source_address_type = ES_ADDRESS_TYPE_IPV6;
+  sshLogin.source_address = MakeESStringToken("::1");
+  sshLogin.has_uid = false;
+  sshLogin.username = MakeESStringToken(NULL);
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.openssh_login = &sshLogin;
                   }
-                          json:NO];
+                       variant:@"failed_attempt"];
+}
+
+- (void)testSerializeMessageOpenSSHLogout {
+  __block es_event_openssh_logout_t sshLogout = {
+    .source_address_type = ES_ADDRESS_TYPE_IPV4,
+    .source_address = MakeESStringToken("1.2.3.4"),
+    .username = MakeESStringToken("foo_user"),
+    .uid = 12345,
+  };
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.openssh_logout = &sshLogout;
+                  }];
 }
 
 - (void)testGetSocketAddressType {
@@ -911,6 +963,26 @@ void SerializeAndCheckNonESEvents(
 
   for (const auto &kv : esToSantaAddrType) {
     XCTAssertEqual(GetSocketAddressType(kv.first), kv.second);
+  }
+}
+
+- (void)testGetOpenSSHLoginResultType {
+  std::map<es_openssh_login_result_type_t, ::pbv1::OpenSSHLogin::Result> esToSantaOpenSSHResultType{
+    {ES_OPENSSH_LOGIN_EXCEED_MAXTRIES, ::pbv1::OpenSSHLogin::RESULT_LOGIN_EXCEED_MAXTRIES},
+    {ES_OPENSSH_LOGIN_ROOT_DENIED, ::pbv1::OpenSSHLogin::RESULT_LOGIN_ROOT_DENIED},
+    {ES_OPENSSH_AUTH_SUCCESS, ::pbv1::OpenSSHLogin::RESULT_AUTH_SUCCESS},
+    {ES_OPENSSH_AUTH_FAIL_NONE, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_NONE},
+    {ES_OPENSSH_AUTH_FAIL_PASSWD, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PASSWD},
+    {ES_OPENSSH_AUTH_FAIL_KBDINT, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_KBDINT},
+    {ES_OPENSSH_AUTH_FAIL_PUBKEY, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PUBKEY},
+    {ES_OPENSSH_AUTH_FAIL_HOSTBASED, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_HOSTBASED},
+    {ES_OPENSSH_AUTH_FAIL_GSSAPI, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_GSSAPI},
+    {ES_OPENSSH_INVALID_USER, ::pbv1::OpenSSHLogin::RESULT_INVALID_USER},
+    {(es_openssh_login_result_type_t)1234, ::pbv1::OpenSSHLogin::RESULT_UNKNOWN},
+  };
+
+  for (const auto &kv : esToSantaOpenSSHResultType) {
+    XCTAssertEqual(GetOpenSSHLoginResultType(kv.first), kv.second);
   }
 }
 
