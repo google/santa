@@ -538,11 +538,16 @@ message FileAccess {
   optional PolicyDecision policy_decision = 6;
 }
 
+// Session identifier for a graphical session
+// Note: Identifiers are opaque and have no meaning outside of correlating Santa
+// events with the same identifier
 message GraphicalSession {
   optional uint32 id = 1;
 }
 
+// Information about a socket address and its type
 message SocketAddress {
+  // The socket address
   optional bytes address = 1;
 
   enum Type {
@@ -553,33 +558,59 @@ message SocketAddress {
     TYPE_NAMED_SOCKET = 4;
   }
 
+  // The type of the socket address
   optional Type type = 2;
 }
 
+// Information about a user logging in via loginwindow
 message LoginWindowSessionLogin {
+  // The process that emitted the login event
   optional ProcessInfoLight instigator = 1;
+
+  // Name of the user logging in
   optional UserInfo user = 2;
+
+  // Graphical session information for this session
   optional GraphicalSession graphical_session = 3;
 }
 
+// Information about a user logging out via loginwindow
 message LoginWindowSessionLogout {
+  // The process that emitted the logout event
   optional ProcessInfoLight instigator = 1;
+
+  // Name of the user logging out
   optional UserInfo user = 2;
+
+  // Graphical session information for this session
   optional GraphicalSession graphical_session = 3;
 }
 
+// Information about a user locking their session via loginwindow
 message LoginWindowSessionLock {
+  // The process that emitted the lock event
   optional ProcessInfoLight instigator = 1;
+
+  // Name of the user locking their session
   optional UserInfo user = 2;
+
+  // Graphical session information for this session
   optional GraphicalSession graphical_session = 3;
 }
 
+// Information about a user unlocking their session via loginwindow
 message LoginWindowSessionUnlock {
+  // The process that emitted the unlock event
   optional ProcessInfoLight instigator = 1;
+
+  // Name of the user unlocking their session
   optional UserInfo user = 2;
+
+  // Graphical session information for this session
   optional GraphicalSession graphical_session = 3;
 }
 
+// Information about loginwindow events
 message LoginWindowSession {
   oneof event {
     LoginWindowSessionLogin login = 1;
@@ -589,18 +620,32 @@ message LoginWindowSession {
   }
 }
 
+// Information about a login event from the `login(1)` utility
 message Login {
+  // The process that emitted the login event
   optional ProcessInfoLight instigator = 1;
+
+  // Whether or not the login was successful
   optional bool success = 2;
+
+  // Login failure message, if applicable
   optional bytes failure_message = 3;
+
+  // Information about the user that attempted to log in
+  // Note: `uid` data may not always exist on failed attempts
   optional UserInfo user = 4;
 }
 
+// Information about a logout event from the `login(1)` utility
 message Logout {
+  // The process that emitted the logout event
   optional ProcessInfoLight instigator = 1;
+
+  // Information about the user that logged out
   optional UserInfo user = 2;
 }
 
+// Information about login and logout events from the `login(1)` utility
 message LoginLogout {
   oneof event {
     Login login = 1;
@@ -608,25 +653,52 @@ message LoginLogout {
   }
 }
 
+// Information related to Screen Sharing attaching to a graphical session
 message ScreenSharingAttach {
+  // The process that emitted the attach event
   optional ProcessInfoLight instigator = 1;
+
+  // Whether or not the attach was successful
   optional bool success = 2;
+
+  // Source address information
   optional SocketAddress source = 3;
+
+  // Apple ID of the viewer
   optional bytes viewer = 4;
+
+  // Type of authentication used
   optional bytes authentication_type = 5;
+
+  // User that attempted authentication, if applicable
   optional UserInfo authentication_user = 6;
+
+  // Username of the loginwindow session, if available
   optional UserInfo session_user = 7;
+
+  // Whether or not there was an existing session
   optional bool existing_session = 8;
+
+  // Graphical session information for this session
   optional GraphicalSession graphical_session = 9;
 }
 
+// Information related to Screen Sharing detaching from a graphical session
 message ScreenSharingDetach {
+  // The process that emitted the detach event
   optional ProcessInfoLight instigator = 1;
+
+  // Source address information
   optional SocketAddress source = 2;
+
+  // Apple ID of the viewer
   optional bytes viewer = 3;
+
+  // Graphical session information for this session
   optional GraphicalSession graphical_session = 4;
 }
 
+// Information about Screen Sharing attach and detach events
 message ScreenSharing {
   oneof event {
     ScreenSharingAttach attach = 1;
@@ -634,7 +706,9 @@ message ScreenSharing {
   }
 }
 
+// Information about SSH login events from the macOS OpenSSH implementation
 message OpenSSHLogin {
+  // The process that emitted the login event
   optional ProcessInfoLight instigator = 1;
 
   enum Result {
@@ -651,17 +725,31 @@ message OpenSSHLogin {
     RESULT_INVALID_USER = 10;
   }
 
+  // The result of the login attempt
+  // Note: Successful if type == `RESULT_AUTH_SUCCESS`
   optional Result result = 2;
+
+  // Source address of the connection
   optional SocketAddress source = 3;
+
+  // Name of the user that attempted to login
+  // Note: `uid` data may not always exist on failed attempts
   optional UserInfo user = 4;
 }
 
+// Information about SSH logout events from the macOS OpenSSH implementation
 message OpenSSHLogout {
+  // The process that emitted the logout event
   optional ProcessInfoLight instigator = 1;
+
+  // Source address of the connection
   optional SocketAddress source = 2;
+
+  // Information about the user that logged out
   optional UserInfo user = 3;
 }
 
+// Information about login/logout events from the macOS OpenSSH implementation
 message OpenSSH {
   oneof event {
     OpenSSHLogin login = 1;
