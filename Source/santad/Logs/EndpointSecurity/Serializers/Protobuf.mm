@@ -145,7 +145,7 @@ static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f,
     lazy_f()->set_uid(uid.value());
   }
   if (name.length > 0) {
-    lazy_f()->set_name(StringTokenToStringView(name));
+    lazy_f()->set_name(name.data, name.length);
   }
 }
 
@@ -812,9 +812,7 @@ static inline void EncodeSocketAddress(::pbv1::SocketAddress *pb_socket_addr, st
 
 static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f,
                                   const es_string_token_t &name) {
-  if (name.length > 0) {
-    lazy_f()->set_name(StringTokenToStringView(name));
-  }
+  EncodeUserInfo(lazy_f, std::nullopt, name);
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogin &msg) {
