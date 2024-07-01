@@ -963,12 +963,35 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogout &msg
   return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::Login *pb_login = santa_msg->mutable_login_logout()->mutable_login();
+
+  EncodeProcessInfoLight(pb_login->mutable_instigator(), msg);
+  pb_login->set_success(msg->event.login_login->success);
+
+  EncodeString([pb_login] { return pb_login->mutable_failure_message(); },
+               StringTokenToStringView(msg->event.login_login->failure_message));
+  EncodeUserInfo([pb_login] { return pb_login->mutable_user(); },
+                 msg->event.login_login->has_uid
+                   ? std::make_optional<uid_t>(msg->event.login_login->uid.uid)
+                   : std::nullopt,
+                 msg->event.login_login->username);
+
+  return FinalizeProto(santa_msg);
 }
 
-std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogout &) {
-  return {};
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogout &msg) {
+  Arena arena;
+  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
+  ::pbv1::Logout *pb_logout = santa_msg->mutable_login_logout()->mutable_logout();
+
+  EncodeProcessInfoLight(pb_logout->mutable_instigator(), msg);
+  EncodeUserInfo([pb_logout] { return pb_logout->mutable_user(); }, msg->event.login_logout->uid,
+                 msg->event.login_logout->username);
+
+  return FinalizeProto(santa_msg);
 }
 
 #endif

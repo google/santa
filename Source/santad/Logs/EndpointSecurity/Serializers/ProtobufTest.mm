@@ -122,6 +122,7 @@ NSString *ConstructFilename(es_event_type_t eventType, NSString *variant = nil) 
     case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH: name = @"screensharing_detach"; break;
     case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN: name = @"openssh_login"; break;
     case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT: name = @"openssh_logout"; break;
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN: name = @"login_login"; break;
     default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
   }
 
@@ -178,6 +179,7 @@ const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &s
     case ::pbv1::SantaMessage::kLoginWindowSession: return santaMsg.login_window_session();
     case ::pbv1::SantaMessage::kScreenSharing: return santaMsg.screen_sharing();
     case ::pbv1::SantaMessage::kOpenSsh: return santaMsg.open_ssh();
+    case ::pbv1::SantaMessage::kLoginLogout: return santaMsg.login_logout();
     case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
@@ -950,6 +952,33 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.openssh_logout = &sshLogout;
                   }];
+}
+
+- (void)testSerializeMessageLoginLogin {
+  __block es_event_login_login_t login = {.success = true,
+                                          .failure_message = MakeESStringToken(NULL),
+                                          .username = MakeESStringToken("asdf"),
+                                          .has_uid = true,
+                                          .uid = {
+                                            .uid = 321,
+                                          }};
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.login_login = &login;
+                  }];
+
+  login.success = false;
+  login.failure_message = MakeESStringToken("my|failure");
+  login.has_uid = false;
+
+  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN
+                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
+                                 es_message_t *esMsg) {
+                    esMsg->event.login_login = &login;
+                  }
+                       variant:@"failed_attempt"];
 }
 
 - (void)testGetSocketAddressType {
