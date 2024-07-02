@@ -68,10 +68,6 @@ extern ::pbv1::Execution::Mode GetModeEnum(SNTClientMode mode);
 extern ::pbv1::FileDescriptor::FDType GetFileDescriptorType(uint32_t fdtype);
 extern ::pbv1::FileAccess::AccessType GetAccessType(es_event_type_t event_type);
 extern ::pbv1::FileAccess::PolicyDecision GetPolicyDecision(FileAccessPolicyDecision decision);
-#if HAVE_MACOS_13
-extern ::pbv1::SocketAddress::Type GetSocketAddressType(es_address_type_t type);
-extern ::pbv1::OpenSSHLogin::Result GetOpenSSHLoginResultType(es_openssh_login_result_type_t type);
-#endif
 }  // namespace santa::santad::logs::endpoint_security::serializers
 
 using santa::santad::logs::endpoint_security::serializers::EncodeEntitlements;
@@ -82,10 +78,6 @@ using santa::santad::logs::endpoint_security::serializers::GetFileDescriptorType
 using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
 using santa::santad::logs::endpoint_security::serializers::GetPolicyDecision;
 using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
-#if HAVE_MACOS_13
-using santa::santad::logs::endpoint_security::serializers::GetOpenSSHLoginResultType;
-using santa::santad::logs::endpoint_security::serializers::GetSocketAddressType;
-#endif
 
 @interface ProtobufTest : XCTestCase
 @property id mockConfigurator;
@@ -305,9 +297,10 @@ void SerializeAndCheck(es_event_type_t eventType,
                    error:&jsonError];
     XCTAssertNil(jsonError, @"failed to parse got data as JSON");
 
-    XCTAssertNil(FindDelta(wantJSONDict, gotJSONDict));
+    // XCTAssertNil(FindDelta(wantJSONDict, gotJSONDict));
+    (void)wantJSONDict; (void)gotJSONDict;
     // Note: Uncomment this line to help create testfile JSON when the assert above fails
-    // XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
+    XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -426,8 +419,7 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.close.modified = true;
                     esMsg->event.close.target = &file;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageExchange {
@@ -439,8 +431,7 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.exchangedata.file1 = &file1;
                     esMsg->event.exchangedata.file2 = &file2;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testGetDecisionEnum {
@@ -579,8 +570,7 @@ void SerializeAndCheckNonESEvents(
                         .WillOnce(testing::Return(&fd2))
                         .WillOnce(testing::Return(&fd3));
                     }
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageExecJSON {
@@ -704,8 +694,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.exit.stat = W_EXITCODE(1, 0);
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testEncodeExitStatus {
@@ -742,8 +731,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.fork.child = &procChild;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageLink {
@@ -757,8 +745,7 @@ void SerializeAndCheckNonESEvents(
                     esMsg->event.link.source = &fileSource;
                     esMsg->event.link.target_dir = &fileTargetDir;
                     esMsg->event.link.target_filename = targetTok;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageRename {
@@ -779,8 +766,7 @@ void SerializeAndCheckNonESEvents(
                       esMsg->event.rename.destination.new_path.filename = targetTok;
                       esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
                     }
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageUnlink {
@@ -792,230 +778,15 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.unlink.target = &fileTarget;
                     esMsg->event.unlink.parent_dir = &fileTargetParent;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageCodesigningInvalidated {
   [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
-                  }
-                          json:NO];
-}
-
-#if HAVE_MACOS_13
-
-- (void)testSerializeMessageLoginWindowSessionLogin {
-  __block es_event_lw_session_login_t lwLogin = {
-    .username = MakeESStringToken("daemon"),
-    .graphical_session_id = 123,
-  };
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.lw_session_login = &lwLogin;
                   }];
 }
-
-- (void)testSerializeMessageLoginWindowSessionLogout {
-  __block es_event_lw_session_logout_t lwLogout = {
-    .username = MakeESStringToken("daemon"),
-    .graphical_session_id = 123,
-  };
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.lw_session_logout = &lwLogout;
-                  }];
-}
-
-- (void)testSerializeMessageLoginWindowSessionLock {
-  __block es_event_lw_session_lock_t lwLock = {
-    .username = MakeESStringToken("daemon"),
-    .graphical_session_id = 123,
-  };
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.lw_session_lock = &lwLock;
-                  }];
-}
-
-- (void)testSerializeMessageLoginWindowSessionUnlock {
-  __block es_event_lw_session_unlock_t lwUnlock = {
-    .username = MakeESStringToken("daemon"),
-    .graphical_session_id = 123,
-  };
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.lw_session_unlock = &lwUnlock;
-                  }];
-}
-
-- (void)testSerializeMessageScreensharingAttach {
-  __block es_event_screensharing_attach_t attach = {
-    .success = true,
-    .source_address_type = ES_ADDRESS_TYPE_IPV6,
-    .source_address = MakeESStringToken("::1"),
-    .viewer_appleid = MakeESStringToken("foo@example.com"),
-    .authentication_type = MakeESStringToken("idk"),
-    .authentication_username = MakeESStringToken("my_auth_user"),
-    .session_username = MakeESStringToken("my_session_user"),
-    .existing_session = true,
-    .graphical_session_id = 123,
-  };
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.screensharing_attach = &attach;
-                  }];
-
-  attach.source_address_type = (es_address_type_t)1234;
-  attach.source_address = MakeESStringToken(NULL);
-  attach.viewer_appleid = MakeESStringToken(NULL);
-  attach.authentication_type = MakeESStringToken(NULL);
-  attach.authentication_username = MakeESStringToken(NULL);
-  attach.session_username = MakeESStringToken(NULL);
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.screensharing_attach = &attach;
-                  }
-                       variant:@"unset_fields"];
-}
-
-- (void)testSerializeMessageScreensharingDetach {
-  __block es_event_screensharing_detach_t detach = {
-    .source_address_type = ES_ADDRESS_TYPE_IPV4,
-    .source_address = MakeESStringToken("1.2.3.4"),
-    .viewer_appleid = MakeESStringToken("foo@example.com"),
-    .graphical_session_id = 123,
-  };
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.screensharing_detach = &detach;
-                  }];
-}
-
-- (void)testSerializeMessageOpenSSHLogin {
-  __block es_event_openssh_login_t sshLogin = {.success = true,
-                                               .result_type = ES_OPENSSH_AUTH_SUCCESS,
-                                               .source_address_type = ES_ADDRESS_TYPE_IPV4,
-                                               .source_address = MakeESStringToken("1.2.3.4"),
-                                               .username = MakeESStringToken("foo_user"),
-                                               .has_uid = true,
-                                               .uid = {
-                                                 .uid = 12345,
-                                               }};
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.openssh_login = &sshLogin;
-                  }];
-
-  sshLogin.success = false;
-  sshLogin.result_type = ES_OPENSSH_AUTH_FAIL_HOSTBASED;
-  sshLogin.source_address_type = ES_ADDRESS_TYPE_IPV6;
-  sshLogin.source_address = MakeESStringToken("::1");
-  sshLogin.has_uid = false;
-  sshLogin.username = MakeESStringToken(NULL);
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.openssh_login = &sshLogin;
-                  }
-                       variant:@"failed_attempt"];
-}
-
-- (void)testSerializeMessageOpenSSHLogout {
-  __block es_event_openssh_logout_t sshLogout = {
-    .source_address_type = ES_ADDRESS_TYPE_IPV4,
-    .source_address = MakeESStringToken("1.2.3.4"),
-    .username = MakeESStringToken("foo_user"),
-    .uid = 12345,
-  };
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.openssh_logout = &sshLogout;
-                  }];
-}
-
-- (void)testSerializeMessageLoginLogin {
-  __block es_event_login_login_t login = {.success = true,
-                                          .failure_message = MakeESStringToken(NULL),
-                                          .username = MakeESStringToken("asdf"),
-                                          .has_uid = true,
-                                          .uid = {
-                                            .uid = 321,
-                                          }};
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.login_login = &login;
-                  }];
-
-  login.success = false;
-  login.failure_message = MakeESStringToken("my|failure");
-  login.has_uid = false;
-
-  [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN
-                  messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
-                                 es_message_t *esMsg) {
-                    esMsg->event.login_login = &login;
-                  }
-                       variant:@"failed_attempt"];
-}
-
-- (void)testGetSocketAddressType {
-  std::map<es_address_type_t, ::pbv1::SocketAddress::Type> esToSantaAddrType = {
-    {ES_ADDRESS_TYPE_NONE, ::pbv1::SocketAddress::TYPE_NONE},
-    {ES_ADDRESS_TYPE_IPV4, ::pbv1::SocketAddress::TYPE_IPV4},
-    {ES_ADDRESS_TYPE_IPV6, ::pbv1::SocketAddress::TYPE_IPV6},
-    {ES_ADDRESS_TYPE_NAMED_SOCKET, ::pbv1::SocketAddress::TYPE_NAMED_SOCKET},
-    {(es_address_type_t)1234, ::pbv1::SocketAddress::TYPE_UNKNOWN},
-  };
-
-  for (const auto &kv : esToSantaAddrType) {
-    XCTAssertEqual(GetSocketAddressType(kv.first), kv.second);
-  }
-}
-
-- (void)testGetOpenSSHLoginResultType {
-  std::map<es_openssh_login_result_type_t, ::pbv1::OpenSSHLogin::Result> esToSantaOpenSSHResultType{
-    {ES_OPENSSH_LOGIN_EXCEED_MAXTRIES, ::pbv1::OpenSSHLogin::RESULT_LOGIN_EXCEED_MAXTRIES},
-    {ES_OPENSSH_LOGIN_ROOT_DENIED, ::pbv1::OpenSSHLogin::RESULT_LOGIN_ROOT_DENIED},
-    {ES_OPENSSH_AUTH_SUCCESS, ::pbv1::OpenSSHLogin::RESULT_AUTH_SUCCESS},
-    {ES_OPENSSH_AUTH_FAIL_NONE, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_NONE},
-    {ES_OPENSSH_AUTH_FAIL_PASSWD, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PASSWD},
-    {ES_OPENSSH_AUTH_FAIL_KBDINT, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_KBDINT},
-    {ES_OPENSSH_AUTH_FAIL_PUBKEY, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PUBKEY},
-    {ES_OPENSSH_AUTH_FAIL_HOSTBASED, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_HOSTBASED},
-    {ES_OPENSSH_AUTH_FAIL_GSSAPI, ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_GSSAPI},
-    {ES_OPENSSH_INVALID_USER, ::pbv1::OpenSSHLogin::RESULT_INVALID_USER},
-    {(es_openssh_login_result_type_t)1234, ::pbv1::OpenSSHLogin::RESULT_UNKNOWN},
-  };
-
-  for (const auto &kv : esToSantaOpenSSHResultType) {
-    XCTAssertEqual(GetOpenSSHLoginResultType(kv.first), kv.second);
-  }
-}
-
-#endif
 
 - (void)testGetAccessType {
   std::map<es_event_type_t, ::pbv1::FileAccess::AccessType> eventTypeToAccessType = {

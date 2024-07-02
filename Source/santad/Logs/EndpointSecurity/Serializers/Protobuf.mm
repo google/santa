@@ -139,16 +139,6 @@ static inline void EncodeUserInfo(::pbv1::UserInfo *pb_user_info, uid_t uid,
   }
 }
 
-static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f,
-                                  std::optional<uid_t> uid, const es_string_token_t &name) {
-  if (uid.has_value()) {
-    lazy_f()->set_uid(uid.value());
-  }
-  if (name.length > 0) {
-    lazy_f()->set_name(name.data, name.length);
-  }
-}
-
 static inline void EncodeGroupInfo(::pbv1::GroupInfo *pb_group_info, gid_t gid,
                                    const std::optional<std::shared_ptr<std::string>> &name) {
   pb_group_info->set_gid(gid);
@@ -215,7 +205,7 @@ static inline void EncodeAnnotations(std::function<::pbv1::process_tree::Annotat
 }
 
 static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info,
-                                          uint32_t message_version, const es_process_t *es_proc,
+                                          const es_process_t *es_proc,
                                           const EnrichedProcess &enriched_proc) {
   EncodeProcessID(pb_proc_info->mutable_id(), es_proc->audit_token);
   EncodeProcessID(pb_proc_info->mutable_parent_id(), es_proc->parent_audit_token);
@@ -240,7 +230,7 @@ static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info
 
 static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info,
                                           const EnrichedEventType &msg) {
-  return EncodeProcessInfoLight(pb_proc_info, msg->version, msg->process, msg.instigator());
+  return EncodeProcessInfoLight(pb_proc_info, msg->process, msg.instigator());
 }
 
 static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t message_version,
@@ -468,8 +458,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedClose &msg) {
 
   ::pbv1::Close *pb_close = santa_msg->mutable_close();
 
-  EncodeProcessInfoLight(pb_close->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_close->mutable_instigator(), msg);
   EncodeFileInfo(pb_close->mutable_target(), msg.es_msg().event.close.target, msg.target());
   pb_close->set_modified(msg.es_msg().event.close.modified);
 
@@ -482,8 +471,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
 
   ::pbv1::Exchangedata *pb_exchangedata = santa_msg->mutable_exchangedata();
 
-  EncodeProcessInfoLight(pb_exchangedata->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_exchangedata->mutable_instigator(), msg);
   EncodeFileInfo(pb_exchangedata->mutable_file1(), msg.es_msg().event.exchangedata.file1,
                  msg.file1());
   EncodeFileInfo(pb_exchangedata->mutable_file2(), msg.es_msg().event.exchangedata.file2,
@@ -618,8 +606,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
 
   ::pbv1::Execution *pb_exec = santa_msg->mutable_execution();
 
-  EncodeProcessInfoLight(pb_exec->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_exec->mutable_instigator(), msg);
   EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().version, msg.es_msg().event.exec.target,
                     msg.target(), cd);
 
@@ -697,8 +684,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExit &msg) {
 
   ::pbv1::Exit *pb_exit = santa_msg->mutable_exit();
 
-  EncodeProcessInfoLight(pb_exit->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_exit->mutable_instigator(), msg);
   EncodeExitStatus(pb_exit, msg.es_msg().event.exit.stat);
 
   return FinalizeProto(santa_msg);
@@ -710,10 +696,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedFork &msg) {
 
   ::pbv1::Fork *pb_fork = santa_msg->mutable_fork();
 
-  EncodeProcessInfoLight(pb_fork->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
-  EncodeProcessInfoLight(pb_fork->mutable_child(), msg.es_msg().version,
-                         msg.es_msg().event.fork.child, msg.child());
+  EncodeProcessInfoLight(pb_fork->mutable_instigator(), msg);
+  EncodeProcessInfoLight(pb_fork->mutable_child(), msg->event.fork.child, msg.child());
 
   return FinalizeProto(santa_msg);
 }
@@ -723,8 +707,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLink &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Link *pb_link = santa_msg->mutable_link();
-  EncodeProcessInfoLight(pb_link->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_link->mutable_instigator(), msg);
   EncodeFileInfo(pb_link->mutable_source(), msg.es_msg().event.link.source, msg.source());
   EncodePath(pb_link->mutable_target(), msg.es_msg().event.link.target_dir,
              msg.es_msg().event.link.target_filename);
@@ -737,8 +720,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedRename &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Rename *pb_rename = santa_msg->mutable_rename();
-  EncodeProcessInfoLight(pb_rename->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_rename->mutable_instigator(), msg);
   EncodeFileInfo(pb_rename->mutable_source(), msg.es_msg().event.rename.source, msg.source());
   if (msg.es_msg().event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
     EncodePath(pb_rename->mutable_target(), msg.es_msg().event.rename.destination.existing_file);
@@ -757,8 +739,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Unlink *pb_unlink = santa_msg->mutable_unlink();
-  EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg);
   EncodeFileInfo(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
 
   return FinalizeProto(santa_msg);
@@ -769,227 +750,51 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::CodesigningInvalidated *pb_cs_invalidated = santa_msg->mutable_codesigning_invalidated();
-  EncodeProcessInfoLight(pb_cs_invalidated->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_cs_invalidated->mutable_instigator(), msg);
 
   return FinalizeProto(santa_msg);
 }
 
 #if HAVE_MACOS_13
 
-::pbv1::SocketAddress::Type GetSocketAddressType(es_address_type_t type) {
-  switch (type) {
-    case ES_ADDRESS_TYPE_NONE: return ::pbv1::SocketAddress::TYPE_NONE;
-    case ES_ADDRESS_TYPE_IPV4: return ::pbv1::SocketAddress::TYPE_IPV4;
-    case ES_ADDRESS_TYPE_IPV6: return ::pbv1::SocketAddress::TYPE_IPV6;
-    case ES_ADDRESS_TYPE_NAMED_SOCKET: return ::pbv1::SocketAddress::TYPE_NAMED_SOCKET;
-    default: return ::pbv1::SocketAddress::TYPE_UNKNOWN;
-  }
-}
-
-::pbv1::OpenSSHLogin::Result GetOpenSSHLoginResultType(es_openssh_login_result_type_t type) {
-  switch (type) {
-    case ES_OPENSSH_LOGIN_EXCEED_MAXTRIES:
-      return ::pbv1::OpenSSHLogin::RESULT_LOGIN_EXCEED_MAXTRIES;
-    case ES_OPENSSH_LOGIN_ROOT_DENIED: return ::pbv1::OpenSSHLogin::RESULT_LOGIN_ROOT_DENIED;
-    case ES_OPENSSH_AUTH_SUCCESS: return ::pbv1::OpenSSHLogin::RESULT_AUTH_SUCCESS;
-    case ES_OPENSSH_AUTH_FAIL_NONE: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_NONE;
-    case ES_OPENSSH_AUTH_FAIL_PASSWD: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PASSWD;
-    case ES_OPENSSH_AUTH_FAIL_KBDINT: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_KBDINT;
-    case ES_OPENSSH_AUTH_FAIL_PUBKEY: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_PUBKEY;
-    case ES_OPENSSH_AUTH_FAIL_HOSTBASED: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_HOSTBASED;
-    case ES_OPENSSH_AUTH_FAIL_GSSAPI: return ::pbv1::OpenSSHLogin::RESULT_AUTH_FAIL_GSSAPI;
-    case ES_OPENSSH_INVALID_USER: return ::pbv1::OpenSSHLogin::RESULT_INVALID_USER;
-    default: return ::pbv1::OpenSSHLogin::RESULT_UNKNOWN;
-  }
-}
-
-static inline void EncodeSocketAddress(::pbv1::SocketAddress *pb_socket_addr, std::string_view addr,
-                                       es_address_type_t type) {
-  EncodeString([pb_socket_addr] { return pb_socket_addr->mutable_address(); }, addr);
-  pb_socket_addr->set_type(GetSocketAddressType(type));
-}
-
-static inline void EncodeUserInfo(std::function<::pbv1::UserInfo *()> lazy_f,
-                                  const es_string_token_t &name) {
-  EncodeUserInfo(lazy_f, std::nullopt, name);
-}
-
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogin &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::LoginWindowSessionLogin *pb_lw_login =
-    santa_msg->mutable_login_window_session()->mutable_login();
-
-  EncodeProcessInfoLight(pb_lw_login->mutable_instigator(), msg);
-  EncodeUserInfo([pb_lw_login] { return pb_lw_login->mutable_user(); }, msg.UID(),
-                 msg->event.lw_session_login->username);
-
-  pb_lw_login->mutable_graphical_session()->set_id(
-    msg->event.lw_session_login->graphical_session_id);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogout &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::LoginWindowSessionLogout *pb_lw_logout =
-    santa_msg->mutable_login_window_session()->mutable_logout();
-
-  EncodeProcessInfoLight(pb_lw_logout->mutable_instigator(), msg);
-  EncodeUserInfo([pb_lw_logout] { return pb_lw_logout->mutable_user(); }, msg.UID(),
-                 msg->event.lw_session_logout->username);
-
-  pb_lw_logout->mutable_graphical_session()->set_id(
-    msg->event.lw_session_logout->graphical_session_id);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLock &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::LoginWindowSessionLock *pb_lw_lock =
-    santa_msg->mutable_login_window_session()->mutable_lock();
-
-  EncodeProcessInfoLight(pb_lw_lock->mutable_instigator(), msg);
-  EncodeUserInfo([pb_lw_lock] { return pb_lw_lock->mutable_user(); }, msg.UID(),
-                 msg->event.lw_session_lock->username);
-
-  pb_lw_lock->mutable_graphical_session()->set_id(msg->event.lw_session_lock->graphical_session_id);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionUnlock &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::LoginWindowSessionUnlock *pb_lw_unlock =
-    santa_msg->mutable_login_window_session()->mutable_unlock();
-
-  EncodeProcessInfoLight(pb_lw_unlock->mutable_instigator(), msg);
-  EncodeUserInfo([pb_lw_unlock] { return pb_lw_unlock->mutable_user(); }, msg.UID(),
-                 msg->event.lw_session_unlock->username);
-
-  pb_lw_unlock->mutable_graphical_session()->set_id(
-    msg->event.lw_session_unlock->graphical_session_id);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingAttach &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::ScreenSharingAttach *pb_attach = santa_msg->mutable_screen_sharing()->mutable_attach();
-
-  EncodeProcessInfoLight(pb_attach->mutable_instigator(), msg);
-
-  pb_attach->set_success(msg->event.screensharing_attach->success);
-
-  EncodeSocketAddress(pb_attach->mutable_source(),
-                      StringTokenToStringView(msg->event.screensharing_attach->source_address),
-                      msg->event.screensharing_attach->source_address_type);
-  EncodeString([pb_attach] { return pb_attach->mutable_viewer(); },
-               StringTokenToStringView(msg->event.screensharing_attach->viewer_appleid));
-  EncodeString([pb_attach] { return pb_attach->mutable_authentication_type(); },
-               StringTokenToStringView(msg->event.screensharing_attach->authentication_type));
-  EncodeUserInfo([pb_attach] { return pb_attach->mutable_authentication_user(); },
-                 msg->event.screensharing_attach->authentication_username);
-  EncodeUserInfo([pb_attach] { return pb_attach->mutable_session_user(); },
-                 msg->event.screensharing_attach->session_username);
-
-  pb_attach->set_existing_session(msg->event.screensharing_attach->existing_session);
-  pb_attach->mutable_graphical_session()->set_id(
-    msg->event.screensharing_attach->graphical_session_id);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingDetach &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::ScreenSharingDetach *pb_detach = santa_msg->mutable_screen_sharing()->mutable_detach();
-
-  EncodeProcessInfoLight(pb_detach->mutable_instigator(), msg);
-  EncodeSocketAddress(pb_detach->mutable_source(),
-                      StringTokenToStringView(msg->event.screensharing_detach->source_address),
-                      msg->event.screensharing_detach->source_address_type);
-  EncodeString([pb_detach] { return pb_detach->mutable_viewer(); },
-               StringTokenToStringView(msg->event.screensharing_detach->viewer_appleid));
-
-  pb_detach->mutable_graphical_session()->set_id(
-    msg->event.screensharing_detach->graphical_session_id);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogin &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::OpenSSHLogin *pb_ssh_login = santa_msg->mutable_open_ssh()->mutable_login();
-
-  EncodeProcessInfoLight(pb_ssh_login->mutable_instigator(), msg);
-
-  pb_ssh_login->set_result(GetOpenSSHLoginResultType(msg->event.openssh_login->result_type));
-
-  EncodeSocketAddress(pb_ssh_login->mutable_source(),
-                      StringTokenToStringView(msg->event.openssh_login->source_address),
-                      msg->event.openssh_login->source_address_type);
-  EncodeUserInfo([pb_ssh_login] { return pb_ssh_login->mutable_user(); },
-                 msg->event.openssh_login->has_uid
-                   ? std::make_optional<uid_t>(msg->event.openssh_login->uid.uid)
-                   : std::nullopt,
-                 msg->event.openssh_login->username);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogout &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::OpenSSHLogout *pb_ssh_logout = santa_msg->mutable_open_ssh()->mutable_logout();
-
-  EncodeProcessInfoLight(pb_ssh_logout->mutable_instigator(), msg);
-
-  EncodeSocketAddress(pb_ssh_logout->mutable_source(),
-                      StringTokenToStringView(msg->event.openssh_logout->source_address),
-                      msg->event.openssh_logout->source_address_type);
-  EncodeUserInfo([pb_ssh_logout] { return pb_ssh_logout->mutable_user(); },
-                 msg->event.openssh_logout->uid, msg->event.openssh_logout->username);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::Login *pb_login = santa_msg->mutable_login_logout()->mutable_login();
-
-  EncodeProcessInfoLight(pb_login->mutable_instigator(), msg);
-  pb_login->set_success(msg->event.login_login->success);
-
-  EncodeString([pb_login] { return pb_login->mutable_failure_message(); },
-               StringTokenToStringView(msg->event.login_login->failure_message));
-  EncodeUserInfo([pb_login] { return pb_login->mutable_user(); },
-                 msg->event.login_login->has_uid
-                   ? std::make_optional<uid_t>(msg->event.login_login->uid.uid)
-                   : std::nullopt,
-                 msg->event.login_login->username);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogout &msg) {
-  Arena arena;
-  ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
-  ::pbv1::Logout *pb_logout = santa_msg->mutable_login_logout()->mutable_logout();
-
-  EncodeProcessInfoLight(pb_logout->mutable_instigator(), msg);
-  EncodeUserInfo([pb_logout] { return pb_logout->mutable_user(); }, msg->event.login_logout->uid,
-                 msg->event.login_logout->username);
-
-  return FinalizeProto(santa_msg);
+  return {};
 }
 
 #endif
@@ -1027,8 +832,7 @@ std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std:
   EnrichedProcess enriched_process;
 
   ::pbv1::Allowlist *pb_allowlist = santa_msg->mutable_allowlist();
-  EncodeProcessInfoLight(pb_allowlist->mutable_instigator(), msg->version, msg->process,
-                         enriched_process);
+  EncodeProcessInfoLight(pb_allowlist->mutable_instigator(), msg->process, enriched_process);
 
   EncodeFileInfo(pb_allowlist->mutable_target(), es_file, enriched_file,
                  [NSString stringWithFormat:@"%s", hash.data()]);
