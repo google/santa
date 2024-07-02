@@ -49,6 +49,32 @@ class Empty : public Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
   std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated &) override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin &)
+    override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout &)
+    override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock &)
+    override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock &)
+    override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach &)
+    override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach &)
+    override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin &) override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout &) override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginLogin &) override;
+  std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginLogout &) override;
 
   std::vector<uint8_t> SerializeFileAccess(
     const std::string &policy_version, const std::string &policy_name,

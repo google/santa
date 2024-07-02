@@ -39,12 +39,6 @@ std::string_view Serializer::MachineID() {
   return std::string_view(machine_id_);
 };
 
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedClose &msg) {
-  return SerializeMessage(msg);
-}
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExchange &msg) {
-  return SerializeMessage(msg);
-}
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec &msg) {
   SNTCachedDecision *cd;
   const es_message_t &es_msg = msg.es_msg();
@@ -58,24 +52,6 @@ std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec
   }
 
   return SerializeMessage(msg, cd);
-}
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExit &msg) {
-  return SerializeMessage(msg);
-}
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedFork &msg) {
-  return SerializeMessage(msg);
-}
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedLink &msg) {
-  return SerializeMessage(msg);
-}
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedRename &msg) {
-  return SerializeMessage(msg);
-}
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedUnlink &msg) {
-  return SerializeMessage(msg);
-}
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedCSInvalidated &msg) {
-  return SerializeMessage(msg);
 }
 
 };  // namespace santa::santad::logs::endpoint_security::serializers

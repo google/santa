@@ -151,6 +151,8 @@ class EnrichedEventType {
 
   virtual ~EnrichedEventType() = default;
 
+  const es_message_t *operator->() const { return es_msg_.operator->(); }
+
   const es_message_t &es_msg() const { return *es_msg_; }
   const EnrichedProcess &instigator() const { return instigator_; }
   struct timespec enrichment_time() const {
@@ -340,10 +342,108 @@ class EnrichedCSInvalidated : public EnrichedEventType {
   EnrichedCSInvalidated(const EnrichedCSInvalidated &other) = delete;
 };
 
-using EnrichedType =
-    std::variant<EnrichedClose, EnrichedExchange, EnrichedExec, EnrichedExit,
-                 EnrichedFork, EnrichedLink, EnrichedRename, EnrichedUnlink,
-                 EnrichedCSInvalidated>;
+// Note: All EnrichedLoginWindowSession* classes currently have the same
+// data and implementation. To improve maintainability but still provide
+// individual types, an internal EnrichedLoginWindowSession base class is
+// defined that is derived by each desired types.
+// EnrichedLoginWindowSession is wrapped in an `internal` namespace as it
+// shouldn't be directly used outside of this file.
+namespace internal {
+
+class EnrichedLoginWindowSession : public EnrichedEventType {
+ public:
+  EnrichedLoginWindowSession(Message &&es_msg, EnrichedProcess instigator,
+                             std::optional<uid_t> uid)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)),
+        uid_(std::move(uid)) {}
+
+  EnrichedLoginWindowSession(EnrichedLoginWindowSession &&) = default;
+
+  virtual ~EnrichedLoginWindowSession() = default;
+  inline std::optional<uid_t> UID() const { return uid_; }
+
+ private:
+  std::optional<uid_t> uid_;
+};
+
+}  // namespace internal
+
+class EnrichedLoginWindowSessionLogin
+    : public internal::EnrichedLoginWindowSession {
+  using EnrichedLoginWindowSession::EnrichedLoginWindowSession;
+};
+
+class EnrichedLoginWindowSessionLogout
+    : public internal::EnrichedLoginWindowSession {
+  using EnrichedLoginWindowSession::EnrichedLoginWindowSession;
+};
+
+class EnrichedLoginWindowSessionLock
+    : public internal::EnrichedLoginWindowSession {
+  using EnrichedLoginWindowSession::EnrichedLoginWindowSession;
+};
+
+class EnrichedLoginWindowSessionUnlock
+    : public internal::EnrichedLoginWindowSession {
+  using EnrichedLoginWindowSession::EnrichedLoginWindowSession;
+};
+
+class EnrichedScreenSharingAttach : public EnrichedEventType {
+ public:
+  EnrichedScreenSharingAttach(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedScreenSharingAttach(EnrichedScreenSharingAttach &&) = default;
+};
+
+class EnrichedScreenSharingDetach : public EnrichedEventType {
+ public:
+  EnrichedScreenSharingDetach(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedScreenSharingDetach(EnrichedScreenSharingDetach &&) = default;
+};
+
+class EnrichedOpenSSHLogin : public EnrichedEventType {
+ public:
+  EnrichedOpenSSHLogin(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedOpenSSHLogin(EnrichedOpenSSHLogin &&) = default;
+};
+
+class EnrichedOpenSSHLogout : public EnrichedEventType {
+ public:
+  EnrichedOpenSSHLogout(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedOpenSSHLogout(EnrichedOpenSSHLogout &&) = default;
+};
+
+class EnrichedLoginLogin : public EnrichedEventType {
+ public:
+  EnrichedLoginLogin(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginLogin(EnrichedLoginLogin &&) = default;
+};
+
+class EnrichedLoginLogout : public EnrichedEventType {
+ public:
+  EnrichedLoginLogout(Message &&es_msg, EnrichedProcess instigator)
+      : EnrichedEventType(std::move(es_msg), std::move(instigator)) {}
+
+  EnrichedLoginLogout(EnrichedLoginLogout &&) = default;
+};
+
+using EnrichedType = std::variant<
+    EnrichedClose, EnrichedExchange, EnrichedExec, EnrichedExit, EnrichedFork,
+    EnrichedLink, EnrichedRename, EnrichedUnlink, EnrichedCSInvalidated,
+    EnrichedLoginWindowSessionLogin, EnrichedLoginWindowSessionLogout,
+    EnrichedLoginWindowSessionLock, EnrichedLoginWindowSessionUnlock,
+    EnrichedScreenSharingAttach, EnrichedScreenSharingDetach,
+    EnrichedOpenSSHLogin, EnrichedOpenSSHLogout, EnrichedLoginLogin,
+    EnrichedLoginLogout>;
 
 class EnrichedMessage {
  public:

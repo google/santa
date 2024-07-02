@@ -23,6 +23,7 @@
 #include <memory>
 #include <set>
 
+#include "Source/common/Platform.h"
 #include "Source/common/PrefixTree.h"
 #import "Source/common/SNTConfigurator.h"
 #include "Source/common/TestUtils.h"
@@ -90,6 +91,24 @@ class MockLogger : public Logger {
     ES_EVENT_TYPE_NOTIFY_FORK,   ES_EVENT_TYPE_NOTIFY_EXIT,         ES_EVENT_TYPE_NOTIFY_LINK,
     ES_EVENT_TYPE_NOTIFY_RENAME, ES_EVENT_TYPE_NOTIFY_UNLINK,
   };
+
+#if HAVE_MACOS_13
+  if (@available(macOS 13.0, *)) {
+    expectedEventSubs.insert({
+      ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN,
+      ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT,
+      ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK,
+      ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK,
+      ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH,
+      ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH,
+      ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN,
+      ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT,
+      ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN,
+      ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT,
+    });
+  }
+#endif
+
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   id recorderClient = [[SNTEndpointSecurityRecorder alloc] initWithESAPI:mockESApi
@@ -176,7 +195,7 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
   [mockCC stopMocking];
 }
 
-- (void)testHandleMessageWithCloseMappedWriteable {
+- (void)testHandleEventCloseMappedWritableMatchesRegex {
 #if HAVE_MACOS_13
   if (@available(macOS 13.0, *)) {
     // CLOSE not modified, but was_mapped_writable, should remove from cache,
@@ -203,12 +222,12 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
         XCTAssertSemaTrue(*sema, 5, "Log wasn't called within expected time window");
       };
 
-    [self handleMessageWithMatchCalls:YES withMissCalls:NO withBlock:testBlock];
+    [self handleMessageShouldLog:YES shouldRemoveFromCache:YES withBlock:testBlock];
   }
 #endif
 }
 
-- (void)testHandleEventCloseNotModifiedWithWasMappedWritable {
+- (void)testHandleEventCloseMappedWritableMissesRegex {
 #if HAVE_MACOS_13
   if (@available(macOS 13.0, *)) {
     // CLOSE not modified, but was_mapped_writable, remove from cache, and does not match
@@ -224,13 +243,15 @@ es_file_t targetFileMissesRegex = MakeESFile("/foo/misses");
         esMsg->event.close.target = &targetFileMissesRegex;
         Message msg(mockESApi, esMsg);
 
+        OCMExpect([mockCC handleEvent:msg withLogger:nullptr]).ignoringNonObjectArgs();
+
         XCTAssertNoThrow([recorderClient handleMessage:Message(mockESApi, esMsg)
                                     recordEventMetrics:^(EventDisposition d) {
                                       XCTFail("Metrics record callback should not be called here");
                                     }]);
       };
 
-    [self handleMessageWithMatchCalls:NO withMissCalls:YES withBlock:testBlock];
+    [self handleMessageShouldLog:NO shouldRemoveFromCache:YES withBlock:testBlock];
   }
 #endif
 }

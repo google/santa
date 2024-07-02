@@ -21,8 +21,18 @@ using santa::santad::event_providers::endpoint_security::EnrichedExec;
 using santa::santad::event_providers::endpoint_security::EnrichedExit;
 using santa::santad::event_providers::endpoint_security::EnrichedFork;
 using santa::santad::event_providers::endpoint_security::EnrichedLink;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginLogout;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock;
+using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
+using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
+using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 
@@ -67,6 +77,46 @@ std::vector<uint8_t> Empty::SerializeMessage(const EnrichedUnlink &msg) {
 }
 
 std::vector<uint8_t> Empty::SerializeMessage(const EnrichedCSInvalidated &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginWindowSessionLogin &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginWindowSessionLogout &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginWindowSessionLock &) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginWindowSessionUnlock &) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedScreenSharingAttach &) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedScreenSharingDetach &) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedOpenSSHLogin &) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedOpenSSHLogout &) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginLogin &) {
+  return {};
+}
+
+std::vector<uint8_t> Empty::SerializeMessage(const EnrichedLoginLogout &) {
   return {};
 }
 

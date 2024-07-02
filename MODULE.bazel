@@ -10,6 +10,7 @@ bazel_dep(name = "rules_fuzzing", version = "0.5.2")
 bazel_dep(name = "protobuf", version = "27.2", repo_name = "com_google_protobuf")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
 
+# MOLCertificate
 bazel_dep(name = "molcertificate", version = "2.1", repo_name = "MOLCertificate")
 git_override(
     module_name = "molcertificate",
@@ -17,6 +18,7 @@ git_override(
     remote = "https://github.com/google/macops-molcertificate.git",
 )
 
+# MOLAuthenticatingURLSession
 bazel_dep(name = "molauthenticatingurlsession", version = "3.0", repo_name = "MOLAuthenticatingURLSession")
 git_override(
     module_name = "molauthenticatingurlsession",
@@ -24,6 +26,7 @@ git_override(
     remote = "https://github.com/google/macops-molauthenticatingurlsession.git",
 )
 
+# MOLCodesignChecker
 bazel_dep(name = "molcodesignchecker", version = "3.0", repo_name = "MOLCodesignChecker")
 git_override(
     module_name = "molcodesignchecker",
@@ -31,6 +34,7 @@ git_override(
     remote = "https://github.com/google/macops-molcodesignchecker.git",
 )
 
+# MOLXPCConnection
 bazel_dep(name = "molxpcconnection", version = "2.1", repo_name = "MOLXPCConnection")
 git_override(
     module_name = "molxpcconnection",
@@ -38,10 +42,12 @@ git_override(
     remote = "https://github.com/russellhancox/macops-molxpcconnection.git",
 )
 
+# FMDB
 non_module_deps = use_extension("//:non_module_deps.bzl", "non_module_deps")
 use_repo(non_module_deps, "FMDB")
 use_repo(non_module_deps, "OCMock")
 
+# Hedron's Compile Commands Extractor
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",

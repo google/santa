@@ -537,6 +537,7 @@ objc_library(
         "bsm",
     ],
     deps = [
+        ":Platform",
         ":SystemResources",
         "@OCMock",
         "@com_google_googletest//:gtest",

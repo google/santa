@@ -63,6 +63,28 @@ class Serializer {
     const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) = 0;
   virtual std::vector<uint8_t> SerializeMessage(
     const santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout
+      &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock
+      &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginLogin &) = 0;
+  virtual std::vector<uint8_t> SerializeMessage(
+    const santa::santad::event_providers::endpoint_security::EnrichedLoginLogout &) = 0;
 
   virtual std::vector<uint8_t> SerializeFileAccess(
     const std::string &policy_version, const std::string &policy_name,
@@ -79,26 +101,17 @@ class Serializer {
   virtual std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) = 0;
 
  private:
-  // Template methods used to ensure a place to implement any desired
+  // Template pattern methods used to ensure a place to implement any desired
   // functionality that shouldn't be overridden by derived classes.
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedClose &);
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedExchange &);
+  // The default implementation acts as a pass-through.
+  // Define type-specific specializations when requried.
   std::vector<uint8_t> SerializeMessageTemplate(
     const santa::santad::event_providers::endpoint_security::EnrichedExec &);
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedExit &);
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedFork &);
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedLink &);
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedRename &);
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedUnlink &);
-  std::vector<uint8_t> SerializeMessageTemplate(
-    const santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated &);
+
+  template <typename T>
+  std::vector<uint8_t> SerializeMessageTemplate(const T &msg) {
+    return SerializeMessage(msg);
+  }
 
   bool enabled_machine_id_ = false;
   std::string machine_id_;

@@ -44,6 +44,7 @@ using JsonPrintOptions = google::protobuf::json::PrintOptions;
 using google::protobuf::json::MessageToJsonString;
 
 using santa::common::NSStringToUTF8StringView;
+using santa::common::StringTokenToStringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
@@ -54,8 +55,18 @@ using santa::santad::event_providers::endpoint_security::EnrichedExit;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
 using santa::santad::event_providers::endpoint_security::EnrichedFork;
 using santa::santad::event_providers::endpoint_security::EnrichedLink;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginLogout;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout;
+using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock;
+using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin;
+using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::EnrichedRename;
+using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
+using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
@@ -194,7 +205,7 @@ static inline void EncodeAnnotations(std::function<::pbv1::process_tree::Annotat
 }
 
 static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info,
-                                          uint32_t message_version, const es_process_t *es_proc,
+                                          const es_process_t *es_proc,
                                           const EnrichedProcess &enriched_proc) {
   EncodeProcessID(pb_proc_info->mutable_id(), es_proc->audit_token);
   EncodeProcessID(pb_proc_info->mutable_parent_id(), es_proc->parent_audit_token);
@@ -215,6 +226,11 @@ static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info
   EncodeFileInfoLight(pb_proc_info->mutable_executable(), es_proc->executable);
 
   EncodeAnnotations([pb_proc_info] { return pb_proc_info->mutable_annotations(); }, enriched_proc);
+}
+
+static inline void EncodeProcessInfoLight(::pbv1::ProcessInfoLight *pb_proc_info,
+                                          const EnrichedEventType &msg) {
+  return EncodeProcessInfoLight(pb_proc_info, msg->process, msg.instigator());
 }
 
 static inline void EncodeProcessInfo(::pbv1::ProcessInfo *pb_proc_info, uint32_t message_version,
@@ -442,8 +458,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedClose &msg) {
 
   ::pbv1::Close *pb_close = santa_msg->mutable_close();
 
-  EncodeProcessInfoLight(pb_close->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_close->mutable_instigator(), msg);
   EncodeFileInfo(pb_close->mutable_target(), msg.es_msg().event.close.target, msg.target());
   pb_close->set_modified(msg.es_msg().event.close.modified);
 
@@ -456,8 +471,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
 
   ::pbv1::Exchangedata *pb_exchangedata = santa_msg->mutable_exchangedata();
 
-  EncodeProcessInfoLight(pb_exchangedata->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_exchangedata->mutable_instigator(), msg);
   EncodeFileInfo(pb_exchangedata->mutable_file1(), msg.es_msg().event.exchangedata.file1,
                  msg.file1());
   EncodeFileInfo(pb_exchangedata->mutable_file2(), msg.es_msg().event.exchangedata.file2,
@@ -592,8 +606,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
 
   ::pbv1::Execution *pb_exec = santa_msg->mutable_execution();
 
-  EncodeProcessInfoLight(pb_exec->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_exec->mutable_instigator(), msg);
   EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().version, msg.es_msg().event.exec.target,
                     msg.target(), cd);
 
@@ -671,8 +684,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExit &msg) {
 
   ::pbv1::Exit *pb_exit = santa_msg->mutable_exit();
 
-  EncodeProcessInfoLight(pb_exit->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_exit->mutable_instigator(), msg);
   EncodeExitStatus(pb_exit, msg.es_msg().event.exit.stat);
 
   return FinalizeProto(santa_msg);
@@ -684,10 +696,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedFork &msg) {
 
   ::pbv1::Fork *pb_fork = santa_msg->mutable_fork();
 
-  EncodeProcessInfoLight(pb_fork->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
-  EncodeProcessInfoLight(pb_fork->mutable_child(), msg.es_msg().version,
-                         msg.es_msg().event.fork.child, msg.child());
+  EncodeProcessInfoLight(pb_fork->mutable_instigator(), msg);
+  EncodeProcessInfoLight(pb_fork->mutable_child(), msg->event.fork.child, msg.child());
 
   return FinalizeProto(santa_msg);
 }
@@ -697,8 +707,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLink &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Link *pb_link = santa_msg->mutable_link();
-  EncodeProcessInfoLight(pb_link->mutable_instigator(), msg.es_msg().version, msg.es_msg().process,
-                         msg.instigator());
+  EncodeProcessInfoLight(pb_link->mutable_instigator(), msg);
   EncodeFileInfo(pb_link->mutable_source(), msg.es_msg().event.link.source, msg.source());
   EncodePath(pb_link->mutable_target(), msg.es_msg().event.link.target_dir,
              msg.es_msg().event.link.target_filename);
@@ -711,8 +720,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedRename &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Rename *pb_rename = santa_msg->mutable_rename();
-  EncodeProcessInfoLight(pb_rename->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_rename->mutable_instigator(), msg);
   EncodeFileInfo(pb_rename->mutable_source(), msg.es_msg().event.rename.source, msg.source());
   if (msg.es_msg().event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
     EncodePath(pb_rename->mutable_target(), msg.es_msg().event.rename.destination.existing_file);
@@ -731,8 +739,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::Unlink *pb_unlink = santa_msg->mutable_unlink();
-  EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg);
   EncodeFileInfo(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
 
   return FinalizeProto(santa_msg);
@@ -743,11 +750,54 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedCSInvalidated &msg
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena, msg);
 
   ::pbv1::CodesigningInvalidated *pb_cs_invalidated = santa_msg->mutable_codesigning_invalidated();
-  EncodeProcessInfoLight(pb_cs_invalidated->mutable_instigator(), msg.es_msg().version,
-                         msg.es_msg().process, msg.instigator());
+  EncodeProcessInfoLight(pb_cs_invalidated->mutable_instigator(), msg);
 
   return FinalizeProto(santa_msg);
 }
+
+#if HAVE_MACOS_13
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogin &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLogout &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionLock &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginWindowSessionUnlock &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingAttach &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedScreenSharingDetach &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogin &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedOpenSSHLogout &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogin &msg) {
+  return {};
+}
+
+std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLoginLogout &msg) {
+  return {};
+}
+
+#endif
 
 std::vector<uint8_t> Protobuf::SerializeFileAccess(const std::string &policy_version,
                                                    const std::string &policy_name,
@@ -782,8 +832,7 @@ std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std:
   EnrichedProcess enriched_process;
 
   ::pbv1::Allowlist *pb_allowlist = santa_msg->mutable_allowlist();
-  EncodeProcessInfoLight(pb_allowlist->mutable_instigator(), msg->version, msg->process,
-                         enriched_process);
+  EncodeProcessInfoLight(pb_allowlist->mutable_instigator(), msg->process, enriched_process);
 
   EncodeFileInfo(pb_allowlist->mutable_target(), es_file, enriched_file,
                  [NSString stringWithFormat:@"%s", hash.data()]);
