@@ -266,6 +266,248 @@ std::string BasicStringSerializeMessage(es_message_t *esMsg) {
   XCTAssertCppStringEqual(got, want);
 }
 
+#if HAVE_MACOS_13
+
+- (void)testSerializeMessageLoginWindowSessionLogin {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN, &proc);
+  es_event_lw_session_login_t lwLogin = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  esMsg.event.lw_session_login = &lwLogin;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=LOGIN_WINDOW_SESSION_LOGIN|pid=12|ppid=56|process=foo|processpath=foo|"
+                     "uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageLoginWindowSessionLogout {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT, &proc);
+  es_event_lw_session_logout_t lwLogout = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  esMsg.event.lw_session_logout = &lwLogout;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=LOGIN_WINDOW_SESSION_LOGOUT|pid=12|ppid=56|process=foo|processpath="
+                     "foo|uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageLoginWindowSessionLock {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK, &proc);
+  es_event_lw_session_lock_t lwLock = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  esMsg.event.lw_session_lock = &lwLock;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=LOGIN_WINDOW_SESSION_LOCK|pid=12|ppid=56|process=foo|processpath=foo|"
+                     "uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageLoginWindowSessionUnlock {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK, &proc);
+  es_event_lw_session_unlock_t lwUnlock = {
+    .username = MakeESStringToken("daemon"),
+    .graphical_session_id = 123,
+  };
+
+  esMsg.event.lw_session_unlock = &lwUnlock;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=LOGIN_WINDOW_SESSION_UNLOCK|pid=12|ppid=56|process=foo|processpath="
+                     "foo|uid=-2|user=nobody|gid=-1|group=nogroup|event_user=daemon|event_uid=1|"
+                     "graphical_session_id=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageLoginLogin {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN, &proc);
+  es_event_login_login_t login = {
+    .success = false,
+    .failure_message = MakeESStringToken("my|failure"),
+    .username = MakeESStringToken("asdf"),
+    .has_uid = false,
+  };
+  esMsg.event.login_login = &login;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want =
+    "action=LOGIN|success=false|failure=my<pipe>failure|pid=12|ppid=56|process=foo|processpath=foo|"
+    "uid=-2|user=nobody|gid=-1|group=nogroup|event_user=asdf|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+
+  login.success = true;
+  login.has_uid = true;
+  login.uid.uid = 123;
+
+  got = BasicStringSerializeMessage(&esMsg);
+  want = "action=LOGIN|success=true|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|"
+         "gid=-1|group=nogroup|event_user=asdf|event_uid=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageLoginLogout {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT, &proc);
+  es_event_login_logout_t logout{
+    .username = MakeESStringToken("asdf"),
+    .uid = 123,
+  };
+  esMsg.event.login_logout = &logout;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=LOGOUT|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|"
+                     "gid=-1|group=nogroup|event_user=asdf|event_uid=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageScreenSharingAttach {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH, &proc);
+  es_event_screensharing_attach_t attach{
+    .success = true,
+    .source_address_type = ES_ADDRESS_TYPE_IPV6,
+    .source_address = MakeESStringToken("::1"),
+    .viewer_appleid = MakeESStringToken("foo@example.com"),
+    .authentication_type = MakeESStringToken("idk"),
+    .authentication_username = MakeESStringToken("my_auth_user"),
+    .session_username = MakeESStringToken("my_session_user"),
+    .existing_session = true,
+    .graphical_session_id = 123,
+  };
+  esMsg.event.screensharing_attach = &attach;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want =
+    "action=SCREEN_SHARING_ATTACH|success=true|address_type=ipv6|address=::1|viewer=foo@example."
+    "com|auth_type=idk|auth_user=my_auth_user|session_user=my_session_user|existing_session=true|"
+    "pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|graphical_"
+    "session_id=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+
+  attach.source_address_type = (es_address_type_t)1234;  // Intentionally bad
+  attach.source_address = MakeESStringToken(NULL);
+  attach.viewer_appleid = MakeESStringToken(NULL);
+  attach.authentication_type = MakeESStringToken(NULL);
+  attach.authentication_username = MakeESStringToken(NULL);
+  attach.session_username = MakeESStringToken(NULL);
+
+  got = BasicStringSerializeMessage(&esMsg);
+  want = "action=SCREEN_SHARING_ATTACH|success=true|address_type=unknown|existing_session=true|pid="
+         "12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|graphical_"
+         "session_id=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageScreenSharingDetach {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH, &proc);
+  es_event_screensharing_detach_t detach{
+    .source_address_type = ES_ADDRESS_TYPE_IPV4,
+    .source_address = MakeESStringToken("1.2.3.4"),
+    .viewer_appleid = MakeESStringToken("foo@example.com"),
+    .graphical_session_id = 123,
+  };
+  esMsg.event.screensharing_detach = &detach;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=SCREEN_SHARING_DETACH|address_type=ipv4|address=1.2.3.4|viewer=foo@"
+                     "example.com|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|"
+                     "gid=-1|group=nogroup|graphical_session_id=123|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageOpenSSHLogin {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN, &proc);
+  es_event_openssh_login_t login{
+    .success = false,
+    .result_type = ES_OPENSSH_AUTH_FAIL_PASSWD,
+    .source_address_type = ES_ADDRESS_TYPE_NAMED_SOCKET,
+    .source_address = MakeESStringToken("foo"),
+    .username = MakeESStringToken("my_user"),
+    .has_uid = false,
+  };
+  esMsg.event.openssh_login = &login;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=OPENSSH_LOGIN|success=false|result_type=AUTH_FAIL_PASSWD|address_type="
+                     "named_socket|address=foo|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|"
+                     "user=nobody|gid=-1|group=nogroup|event_user=my_user|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+
+  login.success = true;
+  login.result_type = ES_OPENSSH_AUTH_SUCCESS;
+  login.has_uid = true;
+  login.uid.uid = 456;
+
+  got = BasicStringSerializeMessage(&esMsg);
+  want = "action=OPENSSH_LOGIN|success=true|result_type=AUTH_SUCCESS|address_type=named_socket|"
+         "address=foo|pid=12|ppid=56|process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group="
+         "nogroup|event_user=my_user|event_uid=456|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+- (void)testSerializeMessageOpenSSHLogout {
+  es_file_t procFile = MakeESFile("foo");
+  es_process_t proc = MakeESProcess(&procFile, MakeAuditToken(12, 34), MakeAuditToken(56, 78));
+  es_message_t esMsg = MakeESMessage(ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT, &proc);
+  es_event_openssh_logout_t logout{
+    .source_address_type = ES_ADDRESS_TYPE_IPV4,
+    .source_address = MakeESStringToken("5.6.7.8"),
+    .username = MakeESStringToken("my_user"),
+    .uid = 321,
+  };
+  esMsg.event.openssh_logout = &logout;
+
+  std::string got = BasicStringSerializeMessage(&esMsg);
+  std::string want = "action=OPENSSH_LOGOUT|address_type=ipv4|address=5.6.7.8|pid=12|ppid=56|"
+                     "process=foo|processpath=foo|uid=-2|user=nobody|gid=-1|group=nogroup|event_"
+                     "user=my_user|event_uid=321|machineid=my_id\n";
+
+  XCTAssertCppStringEqual(got, want);
+}
+
+#endif  // HAVE_MACOS_13
+
 - (void)testGetAccessTypeString {
   std::map<es_event_type_t, std::string> accessTypeToString = {
     {ES_EVENT_TYPE_AUTH_OPEN, "OPEN"},         {ES_EVENT_TYPE_AUTH_LINK, "LINK"},

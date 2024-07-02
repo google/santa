@@ -185,6 +185,62 @@ static inline void AppendInstigator(std::string &str, const EnrichedEventType &e
                   event.instigator().real_group());
 }
 
+#if HAVE_MACOS_13
+
+static inline void AppendEventUser(std::string &str, const es_string_token_t &user,
+                                   std::optional<uid_t> uid) {
+  if (user.length > 0) {
+    str.append("|event_user=");
+    str.append(user.data);
+  }
+
+  if (uid.has_value()) {
+    str.append("|event_uid=");
+    str.append(std::to_string(uid.value()));
+  }
+}
+
+static inline void AppendGraphicalSession(std::string &str, es_graphical_session_id_t session_id) {
+  str.append("|graphical_session_id=");
+  str.append(std::to_string(session_id));
+}
+
+static inline void AppendSocketAddress(std::string &str, es_address_type_t type,
+                                       es_string_token_t addr) {
+  str.append("|address_type=");
+  switch (type) {
+    case ES_ADDRESS_TYPE_NONE: str.append("none"); break;
+    case ES_ADDRESS_TYPE_IPV4: str.append("ipv4"); break;
+    case ES_ADDRESS_TYPE_IPV6: str.append("ipv6"); break;
+    case ES_ADDRESS_TYPE_NAMED_SOCKET: str.append("named_socket"); break;
+    default: str.append("unknown"); break;
+  }
+
+  if (addr.length > 0) {
+    str.append("|address=");
+    str.append(SanitizableString(addr).Sanitized());
+  }
+}
+
+static inline std::string GetOpenSSHLoginResult(std::string &str,
+                                                es_openssh_login_result_type_t result) {
+  switch (result) {
+    case ES_OPENSSH_LOGIN_EXCEED_MAXTRIES: return "LOGIN_EXCEED_MAXTRIES";
+    case ES_OPENSSH_LOGIN_ROOT_DENIED: return "LOGIN_ROOT_DENIED";
+    case ES_OPENSSH_AUTH_SUCCESS: return "AUTH_SUCCESS";
+    case ES_OPENSSH_AUTH_FAIL_NONE: return "AUTH_FAIL_NONE";
+    case ES_OPENSSH_AUTH_FAIL_PASSWD: return "AUTH_FAIL_PASSWD";
+    case ES_OPENSSH_AUTH_FAIL_KBDINT: return "AUTH_FAIL_KBDINT";
+    case ES_OPENSSH_AUTH_FAIL_PUBKEY: return "AUTH_FAIL_PUBKEY";
+    case ES_OPENSSH_AUTH_FAIL_HOSTBASED: return "AUTH_FAIL_HOSTBASED";
+    case ES_OPENSSH_AUTH_FAIL_GSSAPI: return "AUTH_FAIL_GSSAPI";
+    case ES_OPENSSH_INVALID_USER: return "INVALID_USER";
+    default: return "UNKNOWN";
+  }
+}
+
+#endif  // HAVE_MACOS_13
+
 static char *FormattedDateString(char *buf, size_t len) {
   struct timeval tv;
   struct tm tm;
@@ -434,46 +490,174 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedCSInvalidated &
 }
 
 #if HAVE_MACOS_13
+
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSessionLogin &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=LOGIN_WINDOW_SESSION_LOGIN");
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_login->username, msg.UID());
+  AppendGraphicalSession(str, msg->event.lw_session_login->graphical_session_id);
+
+  return FinalizeString(str);
 };
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSessionLogout &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=LOGIN_WINDOW_SESSION_LOGOUT");
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_logout->username, msg.UID());
+  AppendGraphicalSession(str, msg->event.lw_session_logout->graphical_session_id);
+
+  return FinalizeString(str);
 };
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSessionLock &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=LOGIN_WINDOW_SESSION_LOCK");
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_lock->username, msg.UID());
+  AppendGraphicalSession(str, msg->event.lw_session_lock->graphical_session_id);
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginWindowSessionUnlock &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=LOGIN_WINDOW_SESSION_UNLOCK");
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.lw_session_unlock->username, msg.UID());
+  AppendGraphicalSession(str, msg->event.lw_session_unlock->graphical_session_id);
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedScreenSharingAttach &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=SCREEN_SHARING_ATTACH|success=");
+  str.append(msg->event.screensharing_attach->success ? "true" : "false");
+
+  AppendSocketAddress(str, msg->event.screensharing_attach->source_address_type,
+                      msg->event.screensharing_attach->source_address);
+
+  if (msg->event.screensharing_attach->viewer_appleid.length > 0) {
+    str.append("|viewer=");
+    str.append(SanitizableString(msg->event.screensharing_attach->viewer_appleid).Sanitized());
+  }
+
+  if (msg->event.screensharing_attach->authentication_type.length > 0) {
+    str.append("|auth_type=");
+    str.append(SanitizableString(msg->event.screensharing_attach->authentication_type).Sanitized());
+  }
+
+  if (msg->event.screensharing_attach->authentication_username.length > 0) {
+    str.append("|auth_user=");
+    str.append(
+      SanitizableString(msg->event.screensharing_attach->authentication_username).Sanitized());
+  }
+
+  if (msg->event.screensharing_attach->session_username.length > 0) {
+    str.append("|session_user=");
+    str.append(SanitizableString(msg->event.screensharing_attach->session_username).Sanitized());
+  }
+
+  str.append("|existing_session=");
+  str.append(msg->event.screensharing_attach->existing_session ? "true" : "false");
+
+  AppendInstigator(str, msg);
+  AppendGraphicalSession(str, msg->event.screensharing_attach->graphical_session_id);
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedScreenSharingDetach &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=SCREEN_SHARING_DETACH");
+
+  AppendSocketAddress(str, msg->event.screensharing_detach->source_address_type,
+                      msg->event.screensharing_detach->source_address);
+
+  if (msg->event.screensharing_detach->viewer_appleid.length > 0) {
+    str.append("|viewer=");
+    str.append(SanitizableString(msg->event.screensharing_detach->viewer_appleid).Sanitized());
+  }
+
+  AppendInstigator(str, msg);
+  AppendGraphicalSession(str, msg->event.screensharing_detach->graphical_session_id);
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedOpenSSHLogin &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=OPENSSH_LOGIN|success=");
+  str.append(msg->event.openssh_login->success ? "true" : "false");
+  str.append("|result_type=");
+  str.append(GetOpenSSHLoginResult(str, msg->event.openssh_login->result_type));
+
+  AppendSocketAddress(str, msg->event.openssh_login->source_address_type,
+                      msg->event.openssh_login->source_address);
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.openssh_login->username,
+                  msg->event.openssh_login->has_uid
+                    ? std::make_optional<uid_t>(msg->event.openssh_login->uid.uid)
+                    : std::nullopt);
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedOpenSSHLogout &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=OPENSSH_LOGOUT");
+
+  AppendSocketAddress(str, msg->event.openssh_logout->source_address_type,
+                      msg->event.openssh_logout->source_address);
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.openssh_logout->username,
+                  std::make_optional<uid_t>(msg->event.openssh_logout->uid));
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginLogin &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=LOGIN|success=");
+  str.append(msg->event.login_login->success ? "true" : "false");
+  if (!msg->event.login_login->success) {
+    str.append("|failure=");
+    str.append(SanitizableString(msg->event.login_login->failure_message).Sanitized());
+  }
+
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.login_login->username,
+                  msg->event.login_login->has_uid
+                    ? std::make_optional<uid_t>(msg->event.login_login->uid.uid)
+                    : std::nullopt);
+
+  return FinalizeString(str);
 }
 
 std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedLoginLogout &msg) {
-  return {};
+  std::string str = CreateDefaultString();
+
+  str.append("action=LOGOUT");
+
+  AppendInstigator(str, msg);
+  AppendEventUser(str, msg->event.login_logout->username,
+                  std::make_optional<uid_t>(msg->event.login_logout->uid));
+
+  return FinalizeString(str);
 }
-#endif
+
+#endif  // HAVE_MACOS_13
 
 std::vector<uint8_t> BasicString::SerializeFileAccess(const std::string &policy_version,
                                                       const std::string &policy_name,
