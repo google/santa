@@ -9,7 +9,6 @@ bazel_dep(name = "rules_swift", version = "2.0.0-rc1", repo_name = "build_bazel_
 bazel_dep(name = "rules_fuzzing", version = "0.5.2")
 bazel_dep(name = "protobuf", version = "27.2", repo_name = "com_google_protobuf")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
-
 bazel_dep(name = "molcertificate", version = "2.1", repo_name = "MOLCertificate")
 git_override(
     module_name = "molcertificate",

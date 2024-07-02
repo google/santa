@@ -19,6 +19,8 @@
 #include <mach/mach_time.h>
 #include <time.h>
 #include <uuid/uuid.h>
+
+#include "Source/common/Platform.h"
 #include "Source/common/SystemResources.h"
 
 NSString *RepeatedString(NSString *str, NSUInteger len) {
@@ -64,7 +66,7 @@ struct stat MakeStat(int offset) {
 
 es_string_token_t MakeESStringToken(const char *s) {
   return es_string_token_t{
-    .length = strlen(s),
+    .length = s ? strlen(s) : 0,
     .data = s,
   };
 }

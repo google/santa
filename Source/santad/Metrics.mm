@@ -18,6 +18,7 @@
 
 #include <memory>
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTXPCMetricServiceInterface.h"
 #import "Source/santad/SNTApplicationCoreMetrics.h"
@@ -52,6 +53,18 @@ static NSString *const kEventTypeNotifyRename = @"NotifyRename";
 static NSString *const kEventTypeNotifyUnlink = @"NotifyUnlink";
 static NSString *const kEventTypeNotifyUnmount = @"NotifyUnmount";
 static NSString *const kPseudoEventTypeGlobal = @"Global";
+#if HAVE_MACOS_13
+static NSString *const kEventTypeNotifyLoginLogin = @"NotifyLoginLogin";
+static NSString *const kEventTypeNotifyLoginLogout = @"NotifyLoginLogout";
+static NSString *const kEventTypeNotifyLWSessionLogin = @"NotifyLWSessionLogin";
+static NSString *const kEventTypeNotifyLWSessionLogout = @"NotifyLWSessionLogout";
+static NSString *const kEventTypeNotifyLWSessionLock = @"NotifyLWSessionLock";
+static NSString *const kEventTypeNotifyLWSessionUnlock = @"NotifyLWSessionUnlock";
+static NSString *const kEventTypeNotifyScreensharingAttach = @"NotifyScreensharingAttach";
+static NSString *const kEventTypeNotifyScreensharingDetach = @"NotifyScreensharingDetach";
+static NSString *const kEventTypeNotifyOpenSSHLogin = @"NotifyOpenSSHLogin";
+static NSString *const kEventTypeNotifyOpenSSHLogout = @"NotifyOpenSSHLogout";
+#endif
 
 static NSString *const kEventDispositionDropped = @"Dropped";
 static NSString *const kEventDispositionProcessed = @"Processed";
@@ -115,6 +128,18 @@ NSString *const EventTypeToString(es_event_type_t eventType) {
     case ES_EVENT_TYPE_NOTIFY_RENAME: return kEventTypeNotifyRename;
     case ES_EVENT_TYPE_NOTIFY_UNLINK: return kEventTypeNotifyUnlink;
     case ES_EVENT_TYPE_NOTIFY_UNMOUNT: return kEventTypeNotifyUnmount;
+#if HAVE_MACOS_13
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN: return kEventTypeNotifyLoginLogin;
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT: return kEventTypeNotifyLoginLogout;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN: return kEventTypeNotifyLWSessionLogin;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT: return kEventTypeNotifyLWSessionLogout;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK: return kEventTypeNotifyLWSessionLock;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK: return kEventTypeNotifyLWSessionUnlock;
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH: return kEventTypeNotifyScreensharingAttach;
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH: return kEventTypeNotifyScreensharingDetach;
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN: return kEventTypeNotifyOpenSSHLogin;
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT: return kEventTypeNotifyOpenSSHLogout;
+#endif
     case ES_EVENT_TYPE_LAST: return kPseudoEventTypeGlobal;
     default:
       [NSException raise:@"Invalid event type" format:@"Invalid event type: %d", eventType];

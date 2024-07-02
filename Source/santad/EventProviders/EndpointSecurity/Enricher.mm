@@ -23,11 +23,15 @@
 #include <memory>
 #include <optional>
 
+#include "Source/common/Platform.h"
 #include "Source/common/SNTLogging.h"
+#include "Source/common/String.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/ProcessTree/SNTEndpointSecurityAdapter.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree_macos.h"
+
+using santa::common::StringTokenToStringView;
 
 namespace santa::santad::event_providers::endpoint_security {
 
@@ -81,6 +85,42 @@ std::unique_ptr<EnrichedMessage> Enricher::Enrich(Message &&es_msg) {
     case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED:
       return std::make_unique<EnrichedMessage>(
         EnrichedCSInvalidated(std::move(es_msg), Enrich(*es_msg->process)));
+#if HAVE_MACOS_13
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN:
+      return std::make_unique<EnrichedMessage>(EnrichedLoginWindowSessionLogin(
+        std::move(es_msg), Enrich(*es_msg->process),
+        UIDForUsername(StringTokenToStringView(es_msg->event.lw_session_login->username))));
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT:
+      return std::make_unique<EnrichedMessage>(EnrichedLoginWindowSessionLogout(
+        std::move(es_msg), Enrich(*es_msg->process),
+        UIDForUsername(StringTokenToStringView(es_msg->event.lw_session_logout->username))));
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK:
+      return std::make_unique<EnrichedMessage>(EnrichedLoginWindowSessionLock(
+        std::move(es_msg), Enrich(*es_msg->process),
+        UIDForUsername(StringTokenToStringView(es_msg->event.lw_session_lock->username))));
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK:
+      return std::make_unique<EnrichedMessage>(EnrichedLoginWindowSessionUnlock(
+        std::move(es_msg), Enrich(*es_msg->process),
+        UIDForUsername(StringTokenToStringView(es_msg->event.lw_session_unlock->username))));
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedScreenSharingAttach(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedScreenSharingDetach(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedOpenSSHLogin(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedOpenSSHLogout(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginLogin(std::move(es_msg), Enrich(*es_msg->process)));
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGOUT:
+      return std::make_unique<EnrichedMessage>(
+        EnrichedLoginLogout(std::move(es_msg), Enrich(*es_msg->process)));
+#endif
     default:
       // This is a programming error
       LOGE(@"Attempting to enrich an unhandled event type: %d", es_msg->event_type);
@@ -150,6 +190,16 @@ std::optional<std::shared_ptr<std::string>> Enricher::UsernameForGID(gid_t gid,
 
     return groupname;
   }
+}
+
+std::optional<uid_t> Enricher::UIDForUsername(std::string_view username, EnrichOptions options) {
+  if (options == EnrichOptions::kLocalOnly) {
+    // If `kLocalOnly` option is set, do not attempt a lookup
+    return std::nullopt;
+  }
+
+  struct passwd *pw = getpwnam(username.data());
+  return pw ? std::make_optional(pw->pw_uid) : std::nullopt;
 }
 
 }  // namespace santa::santad::event_providers::endpoint_security

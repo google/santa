@@ -23,6 +23,7 @@
 #include <map>
 #include <string>
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"

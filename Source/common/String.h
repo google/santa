@@ -15,6 +15,7 @@
 #ifndef SANTA__COMMON__STRING_H
 #define SANTA__COMMON__STRING_H
 
+#include <EndpointSecurity/ESTypes.h>
 #include <Foundation/Foundation.h>
 
 #include <optional>
@@ -46,6 +47,10 @@ static inline NSString *OptionalStringToNSString(const std::optional<std::string
   } else {
     return StringToNSString(str);
   }
+}
+
+static inline std::string_view StringTokenToStringView(es_string_token_t es_str) {
+  return std::string_view(es_str.data, es_str.length);
 }
 
 }  // namespace santa::common

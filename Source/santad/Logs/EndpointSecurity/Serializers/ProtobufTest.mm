@@ -27,6 +27,7 @@
 #include <uuid/uuid.h>
 #include <cstring>
 
+#include "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
@@ -93,18 +94,34 @@ JsonPrintOptions DefaultJsonPrintOptions() {
   return options;
 }
 
-NSString *EventTypeToFilename(es_event_type_t eventType) {
+NSString *ConstructFilename(es_event_type_t eventType, NSString *variant = nil) {
+  NSString *name;
   switch (eventType) {
-    case ES_EVENT_TYPE_NOTIFY_CLOSE: return @"close.json";
-    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: return @"exchangedata.json";
-    case ES_EVENT_TYPE_NOTIFY_EXEC: return @"exec.json";
-    case ES_EVENT_TYPE_NOTIFY_EXIT: return @"exit.json";
-    case ES_EVENT_TYPE_NOTIFY_FORK: return @"fork.json";
-    case ES_EVENT_TYPE_NOTIFY_LINK: return @"link.json";
-    case ES_EVENT_TYPE_NOTIFY_RENAME: return @"rename.json";
-    case ES_EVENT_TYPE_NOTIFY_UNLINK: return @"unlink.json";
-    case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED: return @"cs_invalidated.json";
+    case ES_EVENT_TYPE_NOTIFY_CLOSE: name = @"close"; break;
+    case ES_EVENT_TYPE_NOTIFY_EXCHANGEDATA: name = @"exchangedata"; break;
+    case ES_EVENT_TYPE_NOTIFY_EXEC: name = @"exec"; break;
+    case ES_EVENT_TYPE_NOTIFY_EXIT: name = @"exit"; break;
+    case ES_EVENT_TYPE_NOTIFY_FORK: name = @"fork"; break;
+    case ES_EVENT_TYPE_NOTIFY_LINK: name = @"link"; break;
+    case ES_EVENT_TYPE_NOTIFY_RENAME: name = @"rename"; break;
+    case ES_EVENT_TYPE_NOTIFY_UNLINK: name = @"unlink"; break;
+    case ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED: name = @"cs_invalidated"; break;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGIN: name = @"lw_session_login"; break;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOGOUT: name = @"lw_session_logout"; break;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_LOCK: name = @"lw_session_lock"; break;
+    case ES_EVENT_TYPE_NOTIFY_LW_SESSION_UNLOCK: name = @"lw_session_unlock"; break;
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_ATTACH: name = @"screensharing_attach"; break;
+    case ES_EVENT_TYPE_NOTIFY_SCREENSHARING_DETACH: name = @"screensharing_detach"; break;
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGIN: name = @"openssh_login"; break;
+    case ES_EVENT_TYPE_NOTIFY_OPENSSH_LOGOUT: name = @"openssh_logout"; break;
+    case ES_EVENT_TYPE_NOTIFY_LOGIN_LOGIN: name = @"login_login"; break;
     default: XCTFail(@"Unhandled event type: %d", eventType); return nil;
+  }
+
+  if (variant) {
+    return [NSString stringWithFormat:@"%@_%@.json", name, variant];
+  } else {
+    return [NSString stringWithFormat:@"%@.json", name];
   }
 }
 
@@ -151,6 +168,10 @@ const google::protobuf::Message &SantaMessageEvent(const ::pbv1::SantaMessage &s
     case ::pbv1::SantaMessage::kAllowlist: return santaMsg.allowlist();
     case ::pbv1::SantaMessage::kFileAccess: return santaMsg.file_access();
     case ::pbv1::SantaMessage::kCodesigningInvalidated: return santaMsg.codesigning_invalidated();
+    case ::pbv1::SantaMessage::kLoginWindowSession: return santaMsg.login_window_session();
+    case ::pbv1::SantaMessage::kScreenSharing: return santaMsg.screen_sharing();
+    case ::pbv1::SantaMessage::kOpenSsh: return santaMsg.open_ssh();
+    case ::pbv1::SantaMessage::kLoginLogout: return santaMsg.login_logout();
     case ::pbv1::SantaMessage::EVENT_NOT_SET:
       XCTFail(@"Protobuf message SantaMessage did not set an 'event' field");
       OS_FALLTHROUGH;
@@ -204,7 +225,7 @@ NSDictionary *FindDelta(NSDictionary *want, NSDictionary *got) {
 void SerializeAndCheck(es_event_type_t eventType,
                        void (^messageSetup)(std::shared_ptr<MockEndpointSecurityAPI>,
                                             es_message_t *),
-                       SNTDecisionCache *decisionCache, bool json = false) {
+                       SNTDecisionCache *decisionCache, bool json, NSString *variant) {
   std::shared_ptr<MockEndpointSecurityAPI> mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
   for (uint32_t cur_version = MinSupportedESMessageVersion(eventType);
@@ -232,26 +253,23 @@ void SerializeAndCheck(es_event_type_t eventType,
     struct timespec enrichmentTime;
     struct timespec msgTime;
     NSString *wantData = std::visit(
-      [&msgTime, &enrichmentTime](const EnrichedEventType &enrichedEvent) {
-        msgTime = enrichedEvent.es_msg().time;
+      [&msgTime, &enrichmentTime, variant](const EnrichedEventType &enrichedEvent) {
+        msgTime = enrichedEvent->time;
         enrichmentTime = enrichedEvent.enrichment_time();
 
-        return LoadTestJson(EventTypeToFilename(enrichedEvent.es_msg().event_type),
-                            enrichedEvent.es_msg().version);
+        return LoadTestJson(ConstructFilename(enrichedEvent->event_type, variant),
+                            enrichedEvent->version);
       },
       enrichedMsg->GetEnrichedMessage());
 
     std::vector<uint8_t> vec = bs->SerializeMessage(std::move(enrichedMsg));
     std::string protoStr(vec.begin(), vec.end());
 
-    // if we're checking against JSON then we should already have a jsonified string and just need
-    // to
     ::pbv1::SantaMessage santaMsg;
     std::string gotData;
 
     if (json) {
       // Parse the jsonified string into the protobuf
-      // gotData = protoStr;
       JsonParseOptions options;
       options.ignore_unknown_fields = true;
       absl::Status status = JsonStringToMessage(protoStr, &santaMsg, options);
@@ -376,7 +394,20 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
                                          es_message_t *))messageSetup
                           json:(BOOL)json {
-  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, (bool)json);
+  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, (bool)json, nil);
+}
+
+- (void)serializeAndCheckEvent:(es_event_type_t)eventType
+                  messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
+                                         es_message_t *))messageSetup {
+  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, false, nil);
+}
+
+- (void)serializeAndCheckEvent:(es_event_type_t)eventType
+                  messageSetup:(void (^)(std::shared_ptr<MockEndpointSecurityAPI>,
+                                         es_message_t *))messageSetup
+                       variant:(NSString *)variant {
+  SerializeAndCheck(eventType, messageSetup, self.mockDecisionCache, false, variant);
 }
 
 - (void)testSerializeMessageClose {
@@ -387,8 +418,7 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.close.modified = true;
                     esMsg->event.close.target = &file;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageExchange {
@@ -400,8 +430,7 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.exchangedata.file1 = &file1;
                     esMsg->event.exchangedata.file2 = &file2;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testGetDecisionEnum {
@@ -540,8 +569,7 @@ void SerializeAndCheckNonESEvents(
                         .WillOnce(testing::Return(&fd2))
                         .WillOnce(testing::Return(&fd3));
                     }
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageExecJSON {
@@ -665,8 +693,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.exit.stat = W_EXITCODE(1, 0);
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testEncodeExitStatus {
@@ -703,8 +730,7 @@ void SerializeAndCheckNonESEvents(
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
                     esMsg->event.fork.child = &procChild;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageLink {
@@ -718,8 +744,7 @@ void SerializeAndCheckNonESEvents(
                     esMsg->event.link.source = &fileSource;
                     esMsg->event.link.target_dir = &fileTargetDir;
                     esMsg->event.link.target_filename = targetTok;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageRename {
@@ -740,8 +765,7 @@ void SerializeAndCheckNonESEvents(
                       esMsg->event.rename.destination.new_path.filename = targetTok;
                       esMsg->event.rename.destination_type = ES_DESTINATION_TYPE_NEW_PATH;
                     }
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageUnlink {
@@ -753,8 +777,7 @@ void SerializeAndCheckNonESEvents(
                                  es_message_t *esMsg) {
                     esMsg->event.unlink.target = &fileTarget;
                     esMsg->event.unlink.parent_dir = &fileTargetParent;
-                  }
-                          json:NO];
+                  }];
 }
 
 - (void)testSerializeMessageCodesigningInvalidated {
