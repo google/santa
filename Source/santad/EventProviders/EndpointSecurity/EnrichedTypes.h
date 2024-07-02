@@ -342,7 +342,7 @@ class EnrichedCSInvalidated : public EnrichedEventType {
   EnrichedCSInvalidated(const EnrichedCSInvalidated &other) = delete;
 };
 
-// Note: All EnrichedLoginWindowSession* classes currently all have the same
+// Note: All EnrichedLoginWindowSession* classes currently have the same
 // data and implementation. To improve maintainability but still provide
 // individual types, an internal EnrichedLoginWindowSession base class is
 // defined that is derived by each desired types.
