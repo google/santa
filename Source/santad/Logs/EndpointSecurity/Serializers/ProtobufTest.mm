@@ -297,10 +297,9 @@ void SerializeAndCheck(es_event_type_t eventType,
                    error:&jsonError];
     XCTAssertNil(jsonError, @"failed to parse got data as JSON");
 
-    // XCTAssertNil(FindDelta(wantJSONDict, gotJSONDict));
-    (void)wantJSONDict; (void)gotJSONDict;
+    XCTAssertNil(FindDelta(wantJSONDict, gotJSONDict));
     // Note: Uncomment this line to help create testfile JSON when the assert above fails
-    XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
+    // XCTAssertEqualObjects([NSString stringWithUTF8String:gotData.c_str()], wantData);
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());
@@ -785,7 +784,8 @@ void SerializeAndCheckNonESEvents(
   [self serializeAndCheckEvent:ES_EVENT_TYPE_NOTIFY_CS_INVALIDATED
                   messageSetup:^(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                  es_message_t *esMsg) {
-                  }];
+                  }
+                          json:NO];
 }
 
 - (void)testGetAccessType {
