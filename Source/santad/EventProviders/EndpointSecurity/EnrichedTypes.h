@@ -151,9 +151,8 @@ class EnrichedEventType {
 
   virtual ~EnrichedEventType() = default;
 
-  const es_message_t *operator->() const { return es_msg_.operator->(); }
+  inline const es_message_t *operator->() const { return es_msg_.operator->(); }
 
-  const es_message_t &es_msg() const { return *es_msg_; }
   const EnrichedProcess &instigator() const { return instigator_; }
   struct timespec enrichment_time() const {
     // No reason to return a reference

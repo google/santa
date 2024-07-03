@@ -41,14 +41,12 @@ std::string_view Serializer::MachineID() {
 
 std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec &msg) {
   SNTCachedDecision *cd;
-  const es_message_t &es_msg = msg.es_msg();
-  if (es_msg.action_type == ES_ACTION_TYPE_NOTIFY &&
-      es_msg.action.notify.result.auth == ES_AUTH_RESULT_ALLOW) {
+  if (msg->action_type == ES_ACTION_TYPE_NOTIFY &&
+      msg->action.notify.result.auth == ES_AUTH_RESULT_ALLOW) {
     // For allowed execs, cached decision timestamps must be updated
-    cd = [decision_cache_
-      resetTimestampForCachedDecision:msg.es_msg().event.exec.target->executable->stat];
+    cd = [decision_cache_ resetTimestampForCachedDecision:msg->event.exec.target->executable->stat];
   } else {
-    cd = [decision_cache_ cachedDecisionForFile:msg.es_msg().event.exec.target->executable->stat];
+    cd = [decision_cache_ cachedDecisionForFile:msg->event.exec.target->executable->stat];
   }
 
   return SerializeMessage(msg, cd);

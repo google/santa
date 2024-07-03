@@ -44,8 +44,8 @@ class Message {
   void SetProcessToken(process_tree::ProcessToken tok);
 
   // Operators to access underlying es_message_t
-  const es_message_t* operator->() const { return es_msg_; }
-  const es_message_t& operator*() const { return *es_msg_; }
+  inline const es_message_t* operator->() const { return es_msg_; }
+  inline const es_message_t& operator*() const { return *es_msg_; }
 
   // Helper to get the API associated with this message.
   // Used for things like es_exec_arg_count.

@@ -419,7 +419,7 @@ static inline void EncodeCertificateInfo(::pbv1::CertificateInfo *pb_cert_info, 
 }
 
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const EnrichedEventType &msg) {
-  return CreateDefaultProto(arena, msg.es_msg().time, msg.enrichment_time());
+  return CreateDefaultProto(arena, msg->time, msg.enrichment_time());
 }
 
 ::pbv1::SantaMessage *Protobuf::CreateDefaultProto(Arena *arena, const Message &msg) {
@@ -469,8 +469,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedClose &msg) {
   ::pbv1::Close *pb_close = santa_msg->mutable_close();
 
   EncodeProcessInfoLight(pb_close->mutable_instigator(), msg);
-  EncodeFileInfo(pb_close->mutable_target(), msg.es_msg().event.close.target, msg.target());
-  pb_close->set_modified(msg.es_msg().event.close.modified);
+  EncodeFileInfo(pb_close->mutable_target(), msg->event.close.target, msg.target());
+  pb_close->set_modified(msg->event.close.modified);
 
   return FinalizeProto(santa_msg);
 }
@@ -482,10 +482,8 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExchange &msg) {
   ::pbv1::Exchangedata *pb_exchangedata = santa_msg->mutable_exchangedata();
 
   EncodeProcessInfoLight(pb_exchangedata->mutable_instigator(), msg);
-  EncodeFileInfo(pb_exchangedata->mutable_file1(), msg.es_msg().event.exchangedata.file1,
-                 msg.file1());
-  EncodeFileInfo(pb_exchangedata->mutable_file2(), msg.es_msg().event.exchangedata.file2,
-                 msg.file2());
+  EncodeFileInfo(pb_exchangedata->mutable_file1(), msg->event.exchangedata.file1, msg.file1());
+  EncodeFileInfo(pb_exchangedata->mutable_file2(), msg->event.exchangedata.file2, msg.file2());
 
   return FinalizeProto(santa_msg);
 }
@@ -617,43 +615,43 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
   ::pbv1::Execution *pb_exec = santa_msg->mutable_execution();
 
   EncodeProcessInfoLight(pb_exec->mutable_instigator(), msg);
-  EncodeProcessInfo(pb_exec->mutable_target(), msg.es_msg().version, msg.es_msg().event.exec.target,
-                    msg.target(), cd);
+  EncodeProcessInfo(pb_exec->mutable_target(), msg->version, msg->event.exec.target, msg.target(),
+                    cd);
 
-  if (msg.es_msg().version >= 2 && msg.script().has_value()) {
-    EncodeFileInfo(pb_exec->mutable_script(), msg.es_msg().event.exec.script, msg.script().value());
+  if (msg->version >= 2 && msg.script().has_value()) {
+    EncodeFileInfo(pb_exec->mutable_script(), msg->event.exec.script, msg.script().value());
   }
 
-  if (msg.es_msg().version >= 3 && msg.working_dir().has_value()) {
-    EncodeFileInfo(pb_exec->mutable_working_directory(), msg.es_msg().event.exec.cwd,
+  if (msg->version >= 3 && msg.working_dir().has_value()) {
+    EncodeFileInfo(pb_exec->mutable_working_directory(), msg->event.exec.cwd,
                    msg.working_dir().value());
   }
 
-  uint32_t arg_count = esapi_->ExecArgCount(&msg.es_msg().event.exec);
+  uint32_t arg_count = esapi_->ExecArgCount(&msg->event.exec);
   if (arg_count > 0) {
     pb_exec->mutable_args()->Reserve(arg_count);
     for (uint32_t i = 0; i < arg_count; i++) {
-      es_string_token_t tok = esapi_->ExecArg(&msg.es_msg().event.exec, i);
+      es_string_token_t tok = esapi_->ExecArg(&msg->event.exec, i);
       pb_exec->add_args(tok.data, tok.length);
     }
   }
 
-  uint32_t env_count = esapi_->ExecEnvCount(&msg.es_msg().event.exec);
+  uint32_t env_count = esapi_->ExecEnvCount(&msg->event.exec);
   if (env_count > 0) {
     pb_exec->mutable_envs()->Reserve(env_count);
     for (uint32_t i = 0; i < env_count; i++) {
-      es_string_token_t tok = esapi_->ExecEnv(&msg.es_msg().event.exec, i);
+      es_string_token_t tok = esapi_->ExecEnv(&msg->event.exec, i);
       pb_exec->add_envs(tok.data, tok.length);
     }
   }
 
-  if (msg.es_msg().version >= 4) {
+  if (msg->version >= 4) {
     int32_t max_fd = -1;
-    uint32_t fd_count = esapi_->ExecFDCount(&msg.es_msg().event.exec);
+    uint32_t fd_count = esapi_->ExecFDCount(&msg->event.exec);
     if (fd_count > 0) {
       pb_exec->mutable_fds()->Reserve(fd_count);
       for (uint32_t i = 0; i < fd_count; i++) {
-        const es_fd_t *fd = esapi_->ExecFD(&msg.es_msg().event.exec, i);
+        const es_fd_t *fd = esapi_->ExecFD(&msg->event.exec, i);
         max_fd = std::max(max_fd, fd->fd);
         ::pbv1::FileDescriptor *pb_fd = pb_exec->add_fds();
         pb_fd->set_fd(fd->fd);
@@ -666,7 +664,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
 
     // If the `max_fd` seen is less than `last_fd`, we know that ES truncated
     // the set of returned file descriptors
-    pb_exec->set_fd_list_truncated(max_fd < msg.es_msg().event.exec.last_fd);
+    pb_exec->set_fd_list_truncated(max_fd < msg->event.exec.last_fd);
   }
 
   pb_exec->set_decision(GetDecisionEnum(cd.decision));
@@ -680,7 +678,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
   EncodeString([pb_exec] { return pb_exec->mutable_explain(); }, cd.decisionExtra);
   EncodeString([pb_exec] { return pb_exec->mutable_quarantine_url(); }, cd.quarantineURL);
 
-  NSString *orig_path = Utilities::OriginalPathForTranslocation(msg.es_msg().event.exec.target);
+  NSString *orig_path = Utilities::OriginalPathForTranslocation(msg->event.exec.target);
   EncodeString([pb_exec] { return pb_exec->mutable_original_path(); }, orig_path);
 
   EncodeEntitlements(pb_exec, cd);
@@ -695,7 +693,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExit &msg) {
   ::pbv1::Exit *pb_exit = santa_msg->mutable_exit();
 
   EncodeProcessInfoLight(pb_exit->mutable_instigator(), msg);
-  EncodeExitStatus(pb_exit, msg.es_msg().event.exit.stat);
+  EncodeExitStatus(pb_exit, msg->event.exit.stat);
 
   return FinalizeProto(santa_msg);
 }
@@ -718,9 +716,9 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedLink &msg) {
 
   ::pbv1::Link *pb_link = santa_msg->mutable_link();
   EncodeProcessInfoLight(pb_link->mutable_instigator(), msg);
-  EncodeFileInfo(pb_link->mutable_source(), msg.es_msg().event.link.source, msg.source());
-  EncodePath(pb_link->mutable_target(), msg.es_msg().event.link.target_dir,
-             msg.es_msg().event.link.target_filename);
+  EncodeFileInfo(pb_link->mutable_source(), msg->event.link.source, msg.source());
+  EncodePath(pb_link->mutable_target(), msg->event.link.target_dir,
+             msg->event.link.target_filename);
 
   return FinalizeProto(santa_msg);
 }
@@ -731,13 +729,13 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedRename &msg) {
 
   ::pbv1::Rename *pb_rename = santa_msg->mutable_rename();
   EncodeProcessInfoLight(pb_rename->mutable_instigator(), msg);
-  EncodeFileInfo(pb_rename->mutable_source(), msg.es_msg().event.rename.source, msg.source());
-  if (msg.es_msg().event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
-    EncodePath(pb_rename->mutable_target(), msg.es_msg().event.rename.destination.existing_file);
+  EncodeFileInfo(pb_rename->mutable_source(), msg->event.rename.source, msg.source());
+  if (msg->event.rename.destination_type == ES_DESTINATION_TYPE_EXISTING_FILE) {
+    EncodePath(pb_rename->mutable_target(), msg->event.rename.destination.existing_file);
     pb_rename->set_target_existed(true);
   } else {
-    EncodePath(pb_rename->mutable_target(), msg.es_msg().event.rename.destination.new_path.dir,
-               msg.es_msg().event.rename.destination.new_path.filename);
+    EncodePath(pb_rename->mutable_target(), msg->event.rename.destination.new_path.dir,
+               msg->event.rename.destination.new_path.filename);
     pb_rename->set_target_existed(false);
   }
 
@@ -750,7 +748,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedUnlink &msg) {
 
   ::pbv1::Unlink *pb_unlink = santa_msg->mutable_unlink();
   EncodeProcessInfoLight(pb_unlink->mutable_instigator(), msg);
-  EncodeFileInfo(pb_unlink->mutable_target(), msg.es_msg().event.unlink.target, msg.target());
+  EncodeFileInfo(pb_unlink->mutable_target(), msg->event.unlink.target, msg.target());
 
   return FinalizeProto(santa_msg);
 }
