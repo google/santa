@@ -600,6 +600,31 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   NSOperationQueue *operationQueue = [[NSOperationQueue alloc] init];
   operationQueue.qualityOfService = NSQualityOfServiceUserInitiated;
 
+  // Limit the number of concurrent operations to 2. By default it is unlimited. Querying for the
+  // `Rule` results in an XPC message to the santa daemon. On an M1 Max we are
+  // seeing issues with dropped XPC messages when there are 64 or more in-flight messages. The
+  // number of in-flight requests to the santa daemon to will be capped to
+  // `maxConcurrentOperationCount`.
+  //
+  // Why 2? We are seeing diminishing wall-time improvements for anything over 2 Qs.
+  //
+  // 1 Q
+  // bazel run //Source/santactl -- fileinfo --recursive --key Path --key Rule /usr/libexec/
+  // 1.16s user 0.92s system 35% cpu 5.775 total
+
+  // 2 Qs
+  // bazel run //Source/santactl -- fileinfo --recursive --key Path --key Rule /usr/libexec/
+  // 1.22s user 1.07s system 62% cpu 3.675 total
+
+  // 4 Qs
+  // bazel run //Source/santactl -- fileinfo --recursive --key Path --key Rule /usr/libexec/
+  // 1.22s user 1.16s system 72% cpu 3.275 total
+
+  // 8 Qs
+  // bazel run //Source/santactl -- fileinfo --recursive --key Path --key Rule /usr/libexec/
+  // 1.25s user 1.26s system 75% cpu 3.304 total
+  operationQueue.maxConcurrentOperationCount = 2;
+
   if (isDir && self.recursive) {
     NSDirectoryEnumerator *dirEnum = [fm enumeratorAtPath:path];
     NSString *file = [dirEnum nextObject];
