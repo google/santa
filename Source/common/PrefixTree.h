@@ -28,7 +28,7 @@
 #define DEBUG_LOG(format, ...)  // NOP
 #endif
 
-namespace santa::common {
+namespace santa {
 
 template <typename ValueT>
 class PrefixTree {
@@ -300,6 +300,6 @@ class PrefixTree {
   absl::Mutex lock_;
 };
 
-}  // namespace santa::common
+}  // namespace santa
 
 #endif

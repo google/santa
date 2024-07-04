@@ -16,7 +16,7 @@
 
 #include "Source/common/String.h"
 
-using santa::common::NSStringToUTF8StringView;
+using santa::NSStringToUTF8StringView;
 
 namespace santa::santad::logs::endpoint_security::serializers {
 

@@ -20,7 +20,7 @@
 #include "Source/common/ScopedIOObjectRef.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
-using santa::common::ScopedIOObjectRef;
+using santa::ScopedIOObjectRef;
 using santa::santad::logs::endpoint_security::serializers::Utilities::GetDefaultIOKitCommsPort;
 
 @interface ScopedIOObjectRefTest : XCTestCase

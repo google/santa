@@ -35,5 +35,5 @@
         notificationQueue:(SNTNotificationQueue *)notQueue
                syncdQueue:(SNTSyncdQueue *)syncdQueue
                    logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-               watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems;
+               watchItems:(std::shared_ptr<santa::WatchItems>)watchItems;
 @end

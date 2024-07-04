@@ -19,7 +19,7 @@
 
 #include "Source/common/ScopedCFTypeRef.h"
 
-using santa::common::ScopedCFTypeRef;
+using santa::ScopedCFTypeRef;
 
 @interface ScopedCFTypeRefTest : XCTestCase
 @end

@@ -31,7 +31,7 @@
 #include "Source/santad/ProcessTree/process_tree.h"
 #include "Source/santad/ProcessTree/process_tree_macos.h"
 
-using santa::common::StringTokenToStringView;
+using santa::StringTokenToStringView;
 
 namespace santa::santad::event_providers::endpoint_security {
 

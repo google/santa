@@ -39,8 +39,8 @@
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 
-using santa::common::PrefixTree;
-using santa::common::Unit;
+using santa::PrefixTree;
+using santa::Unit;
 using santa::santad::EventDisposition;
 using santa::santad::Processor;
 using santa::santad::event_providers::AuthResultCache;

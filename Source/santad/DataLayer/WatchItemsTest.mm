@@ -32,15 +32,15 @@
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 
-using santa::common::Unit;
-using santa::santad::data_layer::kWatchItemPolicyDefaultAllowReadAccess;
-using santa::santad::data_layer::kWatchItemPolicyDefaultAuditOnly;
-using santa::santad::data_layer::kWatchItemPolicyDefaultInvertProcessExceptions;
-using santa::santad::data_layer::kWatchItemPolicyDefaultPathType;
-using santa::santad::data_layer::WatchItemPathType;
-using santa::santad::data_layer::WatchItemPolicy;
-using santa::santad::data_layer::WatchItems;
-using santa::santad::data_layer::WatchItemsState;
+using santa::kWatchItemPolicyDefaultAllowReadAccess;
+using santa::kWatchItemPolicyDefaultAuditOnly;
+using santa::kWatchItemPolicyDefaultInvertProcessExceptions;
+using santa::kWatchItemPolicyDefaultPathType;
+using santa::Unit;
+using santa::WatchItemPathType;
+using santa::WatchItemPolicy;
+using santa::WatchItems;
+using santa::WatchItemsState;
 
 namespace santatest {
 using PathAndTypePair = std::pair<std::string, WatchItemPathType>;
@@ -48,7 +48,7 @@ using PathList = std::vector<PathAndTypePair>;
 using ProcessList = std::vector<WatchItemPolicy::Process>;
 }  // namespace santatest
 
-namespace santa::santad::data_layer {
+namespace santa {
 
 extern bool ParseConfig(NSDictionary *config,
                         std::vector<std::shared_ptr<WatchItemPolicy>> &policies, NSError **err);
@@ -72,14 +72,14 @@ class WatchItemsPeer : public WatchItems {
   using WatchItems::embedded_config_;
 };
 
-}  // namespace santa::santad::data_layer
+}  // namespace santa
 
-using santa::santad::data_layer::IsWatchItemNameValid;
-using santa::santad::data_layer::ParseConfig;
-using santa::santad::data_layer::ParseConfigSingleWatchItem;
-using santa::santad::data_layer::VerifyConfigWatchItemPaths;
-using santa::santad::data_layer::VerifyConfigWatchItemProcesses;
-using santa::santad::data_layer::WatchItemsPeer;
+using santa::IsWatchItemNameValid;
+using santa::ParseConfig;
+using santa::ParseConfigSingleWatchItem;
+using santa::VerifyConfigWatchItemPaths;
+using santa::VerifyConfigWatchItemProcesses;
+using santa::WatchItemsPeer;
 
 static constexpr std::string_view kBadPolicyName("__BAD_NAME__");
 static constexpr std::string_view kBadPolicyPath("__BAD_PATH__");

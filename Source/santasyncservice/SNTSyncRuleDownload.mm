@@ -29,7 +29,7 @@
 #include "Source/santasyncservice/syncv1.pb.h"
 namespace pbv1 = ::santa::sync::v1;
 
-using santa::common::StringToNSString;
+using santa::StringToNSString;
 
 SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
   switch (syncType) {

@@ -31,8 +31,8 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #import "Source/santad/Metrics.h"
 
+using santa::WatchItemPathType;
 using santa::santad::EventDisposition;
-using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::Message;
 

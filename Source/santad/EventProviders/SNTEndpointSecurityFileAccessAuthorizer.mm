@@ -51,15 +51,15 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
-using santa::common::OptionalStringToNSString;
-using santa::common::StringToNSString;
+using santa::OptionalStringToNSString;
+using santa::StringToNSString;
+using santa::WatchItemPathType;
+using santa::WatchItemPolicy;
+using santa::WatchItems;
 using santa::santad::EventDisposition;
 using santa::santad::FileAccessMetricStatus;
 using santa::santad::Metrics;
 using santa::santad::TTYWriter;
-using santa::santad::data_layer::WatchItemPathType;
-using santa::santad::data_layer::WatchItemPolicy;
-using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::RateLimiter;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;

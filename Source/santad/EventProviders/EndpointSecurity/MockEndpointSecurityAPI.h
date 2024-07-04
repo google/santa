@@ -48,11 +48,9 @@ class MockEndpointSecurityAPI
   MOCK_METHOD(bool, InvertTargetPathMuting, (const Client &client));
 
   MOCK_METHOD(bool, MuteTargetPath,
-              (const Client &client, std::string_view path,
-               santa::santad::data_layer::WatchItemPathType path_type));
+              (const Client &client, std::string_view path, santa::WatchItemPathType path_type));
   MOCK_METHOD(bool, UnmuteTargetPath,
-              (const Client &client, std::string_view path,
-               santa::santad::data_layer::WatchItemPathType path_type));
+              (const Client &client, std::string_view path, santa::WatchItemPathType path_type));
 
   MOCK_METHOD(void, RetainMessage, (const es_message_t *msg));
   MOCK_METHOD(void, ReleaseMessage, (const es_message_t *msg));

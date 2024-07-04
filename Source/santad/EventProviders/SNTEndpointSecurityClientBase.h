@@ -52,9 +52,9 @@
 - (bool)unmuteAllTargetPaths;
 - (bool)enableTargetPathWatching;
 - (bool)muteTargetPaths:
-  (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)paths;
+  (const std::vector<std::pair<std::string, santa::WatchItemPathType>> &)paths;
 - (bool)unmuteTargetPaths:
-  (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)paths;
+  (const std::vector<std::pair<std::string, santa::WatchItemPathType>> &)paths;
 
 /// Responds to the Message with the given auth result
 ///

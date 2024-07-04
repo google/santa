@@ -19,7 +19,7 @@
 
 #include "Source/common/Platform.h"
 
-using santa::santad::data_layer::WatchItemPathType;
+using santa::WatchItemPathType;
 
 namespace santa::santad::event_providers::endpoint_security {
 
