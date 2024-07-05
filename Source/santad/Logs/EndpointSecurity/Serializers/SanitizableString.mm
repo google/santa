@@ -18,7 +18,7 @@
 
 using santa::NSStringToUTF8StringView;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 SanitizableString::SanitizableString(const es_file_t *file)
     : data_(file->path.data, file->path.length) {}
@@ -108,4 +108,4 @@ std::optional<std::string> SanitizableString::SanitizeString(const char *str, si
   return std::nullopt;
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa

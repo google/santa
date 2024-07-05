@@ -39,22 +39,22 @@
 
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::serializers::BasicString;
-using santa::santad::logs::endpoint_security::serializers::Serializer;
+using santa::BasicString;
+using santa::Serializer;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 extern std::string GetDecisionString(SNTEventState event_state);
 extern std::string GetReasonString(SNTEventState event_state);
 extern std::string GetModeString(SNTClientMode mode);
 extern std::string GetAccessTypeString(es_event_type_t event_type);
 extern std::string GetFileAccessPolicyDecisionString(FileAccessPolicyDecision decision);
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
-using santa::santad::logs::endpoint_security::serializers::GetAccessTypeString;
-using santa::santad::logs::endpoint_security::serializers::GetDecisionString;
-using santa::santad::logs::endpoint_security::serializers::GetFileAccessPolicyDecisionString;
-using santa::santad::logs::endpoint_security::serializers::GetModeString;
-using santa::santad::logs::endpoint_security::serializers::GetReasonString;
+using santaGetAccessTypeString;
+using santaGetDecisionString;
+using santaGetFileAccessPolicyDecisionString;
+using santaGetModeString;
+using santaGetReasonString;
 
 std::string BasicStringSerializeMessage(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                         es_message_t *esMsg, SNTDecisionCache *decisionCache) {

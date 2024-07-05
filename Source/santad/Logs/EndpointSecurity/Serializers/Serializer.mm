@@ -22,7 +22,7 @@
 
 namespace es = santa::santad::event_providers::endpoint_security;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 Serializer::Serializer(SNTDecisionCache *decision_cache) : decision_cache_(decision_cache) {
   if ([[SNTConfigurator configurator] enableMachineIDDecoration]) {
@@ -52,4 +52,4 @@ std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec
   return SerializeMessage(msg, cd);
 }
 
-};  // namespace santa::santad::logs::endpoint_security::serializers
+};  // namespace santa

@@ -22,7 +22,7 @@
 #include <sstream>
 #include <string>
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 // Small helper class that will sanitize a given string, but will only use new
 // memory if the string required sanitization. If the string is already
@@ -56,6 +56,6 @@ class SanitizableString {
   mutable std::optional<std::string> sanitized_string_;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
 #endif

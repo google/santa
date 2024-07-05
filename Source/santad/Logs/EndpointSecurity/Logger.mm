@@ -31,9 +31,9 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::serializers::BasicString;
-using santa::santad::logs::endpoint_security::serializers::Empty;
-using santa::santad::logs::endpoint_security::serializers::Protobuf;
+using santa::BasicString;
+using santa::Empty;
+using santa::Protobuf;
 using santa::File;
 using santa::Null;
 using santa::Spool;
@@ -81,7 +81,7 @@ std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esap
   }
 }
 
-Logger::Logger(std::shared_ptr<serializers::Serializer> serializer,
+Logger::Logger(std::shared_ptr<santa::Serializer> serializer,
                std::shared_ptr<santa::Writer> writer)
     : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 

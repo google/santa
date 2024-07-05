@@ -44,7 +44,7 @@ class Logger {
     NSString *spool_log_path, size_t spool_dir_size_threshold, size_t spool_file_size_threshold,
     uint64_t spool_flush_timeout_ms);
 
-  Logger(std::shared_ptr<serializers::Serializer> serializer,
+  Logger(std::shared_ptr<santa::Serializer> serializer,
          std::shared_ptr<santa::Writer> writer);
 
   virtual ~Logger() = default;
@@ -71,7 +71,7 @@ class Logger {
   friend class santa::santad::logs::endpoint_security::LoggerPeer;
 
  private:
-  std::shared_ptr<serializers::Serializer> serializer_;
+  std::shared_ptr<santa::Serializer> serializer_;
   std::shared_ptr<santa::Writer> writer_;
 };
 

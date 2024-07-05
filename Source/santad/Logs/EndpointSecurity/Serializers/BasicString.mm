@@ -65,7 +65,7 @@ using santa::Pidversion;
 using santa::RealGroup;
 using santa::RealUser;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);
@@ -768,4 +768,4 @@ std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary *props) 
   return FinalizeString(str);
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa

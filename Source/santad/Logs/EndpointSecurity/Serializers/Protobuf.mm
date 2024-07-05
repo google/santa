@@ -80,7 +80,7 @@ using santa::RealUser;
 
 namespace pbv1 = ::santa::pb::v1;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 static constexpr NSUInteger kMaxEncodeObjectEntries = 64;
 static constexpr NSUInteger kMaxEncodeObjectLevels = 5;
@@ -1103,4 +1103,4 @@ std::vector<uint8_t> Protobuf::SerializeDiskDisappeared(NSDictionary *props) {
   return FinalizeProto(santa_msg);
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
