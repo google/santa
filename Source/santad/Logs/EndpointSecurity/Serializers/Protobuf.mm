@@ -43,8 +43,8 @@ using google::protobuf::Timestamp;
 using JsonPrintOptions = google::protobuf::json::PrintOptions;
 using google::protobuf::json::MessageToJsonString;
 
-using santa::common::NSStringToUTF8StringView;
-using santa::common::StringTokenToStringView;
+using santa::NSStringToUTF8StringView;
+using santa::StringTokenToStringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;

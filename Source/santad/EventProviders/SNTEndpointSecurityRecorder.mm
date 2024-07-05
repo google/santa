@@ -27,8 +27,8 @@
 #include "Source/santad/Metrics.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
-using santa::common::PrefixTree;
-using santa::common::Unit;
+using santa::PrefixTree;
+using santa::Unit;
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
@@ -142,7 +142,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       }
 
       // Only log file changes that match the given regex
-      NSString *targetPath = santa::common::StringToNSString(targetFile->path.data);
+      NSString *targetPath = santa::StringToNSString(targetFile->path.data);
       if (![[self.configurator fileChangesRegex]
             numberOfMatchesInString:targetPath
                             options:0

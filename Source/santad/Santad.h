@@ -38,7 +38,7 @@ void SantadMain(
         esapi,
     std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger,
     std::shared_ptr<santa::santad::Metrics> metrics,
-    std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items,
+    std::shared_ptr<santa::WatchItems> watch_items,
     std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
         enricher,
     std::shared_ptr<santa::santad::event_providers::AuthResultCache>
@@ -47,7 +47,7 @@ void SantadMain(
     SNTCompilerController* compiler_controller,
     SNTNotificationQueue* notifier_queue, SNTSyncdQueue* syncd_queue,
     SNTExecutionController* exec_controller,
-    std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree,
+    std::shared_ptr<santa::PrefixTree<santa::Unit>> prefix_tree,
     std::shared_ptr<santa::santad::TTYWriter> tty_writer,
     std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree);
 

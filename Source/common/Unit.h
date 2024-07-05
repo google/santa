@@ -15,10 +15,10 @@
 #ifndef SANTA__COMMON__UNIT_H
 #define SANTA__COMMON__UNIT_H
 
-namespace santa::common {
+namespace santa {
 
 struct Unit {};
 
-}  // namespace santa::common
+}  // namespace santa
 
 #endif

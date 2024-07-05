@@ -34,8 +34,8 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #include "Source/santad/Metrics.h"
 
+using santa::WatchItemPathType;
 using santa::santad::Processor;
-using santa::santad::data_layer::WatchItemPathType;
 using santa::santad::event_providers::endpoint_security::Client;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;

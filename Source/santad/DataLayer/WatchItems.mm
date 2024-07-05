@@ -38,12 +38,12 @@
 #import "Source/common/Unit.h"
 #include "Source/santad/DataLayer/WatchItemPolicy.h"
 
-using santa::common::NSStringToUTF8String;
-using santa::common::NSStringToUTF8StringView;
-using santa::common::PrefixTree;
-using santa::common::Unit;
-using santa::santad::data_layer::WatchItemPathType;
-using santa::santad::data_layer::WatchItemPolicy;
+using santa::NSStringToUTF8String;
+using santa::NSStringToUTF8StringView;
+using santa::PrefixTree;
+using santa::Unit;
+using santa::WatchItemPathType;
+using santa::WatchItemPolicy;
 
 NSString *const kWatchItemConfigKeyVersion = @"Version";
 NSString *const kWatchItemConfigKeyEventDetailURL = @"EventDetailURL";
@@ -96,7 +96,7 @@ static constexpr NSUInteger kWatchItemConfigEventDetailTextMaxLength = 48;
 // max is used here.
 static constexpr NSUInteger kWatchItemConfigEventDetailURLMaxLength = 6000;
 
-namespace santa::santad::data_layer {
+namespace santa {
 
 // Type aliases
 using ValidatorBlock = bool (^)(id, NSError **);
@@ -897,4 +897,4 @@ std::pair<NSString *, NSString *> WatchItems::EventDetailLinkInfo(
   return {url, text};
 }
 
-}  // namespace santa::santad::data_layer
+}  // namespace santa

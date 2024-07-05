@@ -19,7 +19,7 @@
 
 #include "Source/common/ScopedTypeRef.h"
 
-namespace santa::common {
+namespace santa {
 
 template <typename IOT>
 using ScopedIOObjectRef =
@@ -27,4 +27,4 @@ using ScopedIOObjectRef =
 
 }
 
-#endif
+#endif  // namespace santa

@@ -38,7 +38,7 @@ typedef void (^SNTFileAccessBlockCallback)(SNTFileAccessEvent *event, NSString *
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
         metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
          logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-     watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems
+     watchItems:(std::shared_ptr<santa::WatchItems>)watchItems
        enricher:
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
   decisionCache:(SNTDecisionCache *)decisionCache

@@ -33,7 +33,7 @@
 #include "Source/santasyncservice/syncv1.pb.h"
 namespace pbv1 = ::santa::sync::v1;
 
-using santa::common::NSStringToUTF8String;
+using santa::NSStringToUTF8String;
 
 @implementation SNTSyncEventUpload
 
@@ -82,7 +82,7 @@ using santa::common::NSStringToUTF8String;
         [NSMutableArray arrayWithCapacity:response.event_upload_bundle_binaries_size()];
       for (const std::string &bundle_binary : response.event_upload_bundle_binaries()) {
         [(NSMutableArray *)self.syncState.bundleBinaryRequests
-          addObject:santa::common::StringToNSString(bundle_binary)];
+          addObject:santa::StringToNSString(bundle_binary)];
       }
     }
     SLOGI(@"Uploaded %d events", uploadEvents->size());

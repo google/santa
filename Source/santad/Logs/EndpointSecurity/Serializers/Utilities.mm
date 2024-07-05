@@ -109,7 +109,7 @@ NSString *MountFromName(NSString *path) {
     return nil;
   }
 
-  NSString *mntFromName = santa::common::StringToNSString(sfs.f_mntfromname);
+  NSString *mntFromName = santa::StringToNSString(sfs.f_mntfromname);
 
   return mntFromName.length > 0 ? mntFromName : nil;
 }

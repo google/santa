@@ -52,8 +52,8 @@
 #import "Source/santad/SNTSyncdQueue.h"
 #include "absl/synchronization/mutex.h"
 
-using santa::common::PrefixTree;
-using santa::common::Unit;
+using santa::PrefixTree;
+using santa::Unit;
 using santa::santad::TTYWriter;
 using santa::santad::event_providers::endpoint_security::Message;
 
@@ -63,7 +63,7 @@ void UpdateTeamIDFilterLocked(std::set<std::string> &filterSet, NSArray<NSString
   filterSet.clear();
 
   for (NSString *prefix in filter) {
-    filterSet.insert(santa::common::NSStringToUTF8String(prefix));
+    filterSet.insert(santa::NSStringToUTF8String(prefix));
   }
 }
 

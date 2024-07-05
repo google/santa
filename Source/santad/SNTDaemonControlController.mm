@@ -36,8 +36,8 @@
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
-using santa::santad::data_layer::WatchItems;
-using santa::santad::data_layer::WatchItemsState;
+using santa::WatchItems;
+using santa::WatchItemsState;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;

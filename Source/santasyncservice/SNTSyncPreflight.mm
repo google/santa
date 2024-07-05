@@ -30,8 +30,8 @@
 #include "Source/santasyncservice/syncv1.pb.h"
 namespace pbv1 = ::santa::sync::v1;
 
-using santa::common::NSStringToUTF8String;
-using santa::common::StringToNSString;
+using santa::NSStringToUTF8String;
+using santa::StringToNSString;
 
 /*
 

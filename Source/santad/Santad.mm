@@ -39,11 +39,11 @@
 #include "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/TTYWriter.h"
 
-using santa::common::PrefixTree;
-using santa::common::Unit;
+using santa::PrefixTree;
+using santa::Unit;
+using santa::WatchItems;
 using santa::santad::Metrics;
 using santa::santad::TTYWriter;
-using santa::santad::data_layer::WatchItems;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;
@@ -74,14 +74,13 @@ static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
 }
 
 void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logger> logger,
-                std::shared_ptr<Metrics> metrics,
-                std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items,
+                std::shared_ptr<Metrics> metrics, std::shared_ptr<santa::WatchItems> watch_items,
                 std::shared_ptr<Enricher> enricher,
                 std::shared_ptr<AuthResultCache> auth_result_cache,
                 MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
                 SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
                 SNTExecutionController *exec_controller,
-                std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree,
+                std::shared_ptr<santa::PrefixTree<santa::Unit>> prefix_tree,
                 std::shared_ptr<TTYWriter> tty_writer,
                 std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree) {
   SNTConfigurator *configurator = [SNTConfigurator configurator];

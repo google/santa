@@ -43,13 +43,10 @@
 // Called when a client should no longer receive events.
 - (void)disable;
 
-- (void)
-  watchItemsCount:(size_t)count
-         newPaths:
-           (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>>
-              &)newPaths
-     removedPaths:
-       (const std::vector<std::pair<std::string, santa::santad::data_layer::WatchItemPathType>> &)
-         removedPaths;
+- (void)watchItemsCount:(size_t)count
+               newPaths:
+                 (const std::vector<std::pair<std::string, santa::WatchItemPathType>> &)newPaths
+           removedPaths:
+             (const std::vector<std::pair<std::string, santa::WatchItemPathType>> &)removedPaths;
 
 @end
