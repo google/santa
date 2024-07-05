@@ -40,15 +40,15 @@ using santa::EnrichedFile;
 using santa::EnrichedMessage;
 using santa::EnrichedProcess;
 using santa::Message;
+using santa::Processor;
 using santa::WatchItemPathType;
-using santa::santad::Processor;
 
 @interface SNTEndpointSecurityClient (Testing)
 - (void)establishClientOrDie;
 - (bool)muteSelf;
 - (NSString *)errorMessageForNewClientResult:(es_new_client_result_t)result;
 - (void)handleMessage:(Message &&)esMsg
-   recordEventMetrics:(void (^)(santa::santad::EventDisposition disposition))recordEventMetrics;
+   recordEventMetrics:(void (^)(santa::EventDisposition disposition))recordEventMetrics;
 - (BOOL)shouldHandleMessage:(const Message &)esMsg;
 - (int64_t)computeBudgetForDeadline:(uint64_t)deadline currentTime:(uint64_t)currentTime;
 

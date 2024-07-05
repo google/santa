@@ -54,18 +54,18 @@
 using santa::EndpointSecurityAPI;
 using santa::Enricher;
 using santa::EnrichOptions;
+using santa::EventDisposition;
+using santa::FileAccessMetricStatus;
 using santa::Logger;
 using santa::Message;
+using santa::Metrics;
 using santa::OptionalStringToNSString;
+using santa::RateLimiter;
 using santa::StringToNSString;
+using santa::TTYWriter;
 using santa::WatchItemPathType;
 using santa::WatchItemPolicy;
 using santa::WatchItems;
-using santa::santad::EventDisposition;
-using santa::santad::FileAccessMetricStatus;
-using santa::santad::Metrics;
-using santa::santad::TTYWriter;
-using santa::santad::event_providers::RateLimiter;
 
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
@@ -402,10 +402,10 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
                    watchItems:(std::shared_ptr<WatchItems>)watchItems
                      enricher:(std::shared_ptr<santa::Enricher>)enricher
                 decisionCache:(SNTDecisionCache *)decisionCache
-                    ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter {
+                    ttyWriter:(std::shared_ptr<santa::TTYWriter>)ttyWriter {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:metrics
-                    processor:santa::santad::Processor::kFileAccessAuthorizer];
+                    processor:santa::Processor::kFileAccessAuthorizer];
   if (self) {
     _watchItems = std::move(watchItems);
     _logger = std::move(logger);
@@ -416,8 +416,8 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
 
     _configurator = [SNTConfigurator configurator];
 
-    _rateLimiter = RateLimiter::Create(_metrics, santa::santad::Processor::kFileAccessAuthorizer,
-                                       kDefaultRateLimitQPS);
+    _rateLimiter =
+      RateLimiter::Create(_metrics, santa::Processor::kFileAccessAuthorizer, kDefaultRateLimitQPS);
 
     SNTMetricBooleanGauge *famEnabled = [[SNTMetricSet sharedInstance]
       booleanGaugeWithName:@"/santa/fam_enabled"

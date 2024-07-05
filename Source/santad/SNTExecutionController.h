@@ -59,7 +59,7 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
                        eventTable:(SNTEventTable *)eventTable
                     notifierQueue:(SNTNotificationQueue *)notifierQueue
                        syncdQueue:(SNTSyncdQueue *)syncdQueue
-                        ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter
+                        ttyWriter:(std::shared_ptr<santa::TTYWriter>)ttyWriter
          entitlementsPrefixFilter:(NSArray<NSString *> *)prefixFilter
          entitlementsTeamIDFilter:(NSArray<NSString *> *)teamIDFilter;
 

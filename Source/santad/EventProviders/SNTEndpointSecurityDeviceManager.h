@@ -40,10 +40,9 @@ typedef void (^SNTDeviceBlockCallback)(SNTDeviceEvent *event);
 @property(nonatomic, nullable) SNTDeviceBlockCallback deviceBlockCallback;
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                        logger:(std::shared_ptr<santa::Logger>)logger
-              authResultCache:
-                (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+              authResultCache:(std::shared_ptr<santa::AuthResultCache>)authResultCache
                 blockUSBMount:(BOOL)blockUSBMount
                remountUSBMode:(nullable NSArray<NSString *> *)remountUSBMode
            startupPreferences:(SNTDeviceManagerStartupPreferences)startupPrefs;

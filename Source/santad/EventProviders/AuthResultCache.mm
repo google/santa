@@ -36,7 +36,7 @@ static NSString *const kFlushCacheReasonEntitlementsPrefixFilterChanged =
 static NSString *const kFlushCacheReasonEntitlementsTeamIDFilterChanged =
   @"EntitlementsTeamIDFilterChanged";
 
-namespace santa::santad::event_providers {
+namespace santa {
 
 static inline uint64_t GetCurrentUptime() {
   return clock_gettime_nsec_np(CLOCK_MONOTONIC);
@@ -185,4 +185,4 @@ NSArray<NSNumber *> *AuthResultCache::CacheCounts() {
   return @[ @(root_cache_->count()), @(nonroot_cache_->count()) ];
 }
 
-}  // namespace santa::santad::event_providers
+}  // namespace santa

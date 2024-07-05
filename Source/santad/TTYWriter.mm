@@ -21,7 +21,7 @@
 #import "Source/common/SNTLogging.h"
 #include "Source/common/String.h"
 
-namespace santa::santad {
+namespace santa {
 
 std::unique_ptr<TTYWriter> TTYWriter::Create() {
   dispatch_queue_t q = dispatch_queue_create_with_target(
@@ -64,4 +64,4 @@ void TTYWriter::Write(const es_process_t *proc, NSString *msg) {
   });
 }
 
-}  // namespace santa::santad
+}  // namespace santa

@@ -26,10 +26,10 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
+using santa::AuthResultCache;
 using santa::EndpointSecurityAPI;
+using santa::EventDisposition;
 using santa::Message;
-using santa::santad::EventDisposition;
-using santa::santad::event_providers::AuthResultCache;
 
 @interface SNTEndpointSecurityAuthorizer ()
 @property SNTCompilerController *compilerController;
@@ -41,13 +41,13 @@ using santa::santad::event_providers::AuthResultCache;
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                execController:(SNTExecutionController *)execController
            compilerController:(SNTCompilerController *)compilerController
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
-                    processor:santa::santad::Processor::kAuthorizer];
+                    processor:santa::Processor::kAuthorizer];
   if (self) {
     _execController = execController;
     _compilerController = compilerController;

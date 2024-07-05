@@ -27,15 +27,15 @@
 #include "Source/santad/Metrics.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
+using santa::AuthResultCache;
 using santa::EndpointSecurityAPI;
 using santa::EnrichedMessage;
 using santa::Enricher;
+using santa::EventDisposition;
 using santa::Logger;
 using santa::Message;
 using santa::PrefixTree;
 using santa::Unit;
-using santa::santad::EventDisposition;
-using santa::santad::event_providers::AuthResultCache;
 using santa::santad::process_tree::ProcessTree;
 
 es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
@@ -62,7 +62,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger
                      enricher:(std::shared_ptr<Enricher>)enricher
            compilerController:(SNTCompilerController *)compilerController
@@ -71,7 +71,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
                   processTree:(std::shared_ptr<ProcessTree>)processTree {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
-                    processor:santa::santad::Processor::kRecorder
+                    processor:santa::Processor::kRecorder
                   processTree:std::move(processTree)];
   if (self) {
     _enricher = enricher;

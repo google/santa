@@ -29,15 +29,15 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 
-using santa::santad::EventCountTuple;
-using santa::santad::EventDisposition;
-using santa::santad::EventStatChangeTuple;
-using santa::santad::EventStatsTuple;
-using santa::santad::EventTimesTuple;
-using santa::santad::FileAccessEventCountTuple;
-using santa::santad::Processor;
+using santa::EventCountTuple;
+using santa::EventDisposition;
+using santa::EventStatChangeTuple;
+using santa::EventStatsTuple;
+using santa::EventTimesTuple;
+using santa::FileAccessEventCountTuple;
+using santa::Processor;
 
-namespace santa::santad {
+namespace santa {
 
 extern NSString *const ProcessorToString(Processor processor);
 extern NSString *const EventTypeToString(es_event_type_t eventType);
@@ -68,7 +68,7 @@ class MetricsPeer : public Metrics {
   using Metrics::SequenceStats;
 };
 
-}  // namespace santa::santad
+}  // namespace santa
 
 namespace santa {
 
@@ -84,17 +84,17 @@ class MessagePeer : public Message {
 
 }  // namespace santa
 
+using santa::EventDispositionToString;
+using santa::EventTypeToString;
+using santa::FileAccessMetricStatus;
+using santa::FileAccessMetricStatusToString;
+using santa::FileAccessPolicyDecisionToString;
 using santa::MessagePeer;
-using santa::santad::EventDispositionToString;
-using santa::santad::EventTypeToString;
-using santa::santad::FileAccessMetricStatus;
-using santa::santad::FileAccessMetricStatusToString;
-using santa::santad::FileAccessPolicyDecisionToString;
-using santa::santad::Metrics;
-using santa::santad::MetricsPeer;
-using santa::santad::ProcessorToString;
-using santa::santad::StatChangeStepToString;
-using santa::santad::StatResultToString;
+using santa::Metrics;
+using santa::MetricsPeer;
+using santa::ProcessorToString;
+using santa::StatChangeStepToString;
+using santa::StatResultToString;
 
 std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^block)(Metrics *)) {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);
@@ -478,7 +478,7 @@ std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^b
   auto metrics = std::make_shared<MetricsPeer>(self.q, timer, 100, mockEventProcessingTimes,
                                                mockEventCounts, mockEventCounts, mockEventCounts,
                                                mockEventCounts, mockEventCounts, nil,
-                                               ^(santa::santad::Metrics *m){
+                                               ^(santa::Metrics *m){
                                                  // This block intentionally left blank
                                                });
 

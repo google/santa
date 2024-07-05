@@ -30,8 +30,8 @@
 @protocol SNTEndpointSecurityClientBase
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-                    processor:(santa::santad::Processor)processor;
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
+                    processor:(santa::Processor)processor;
 
 /// @note If this fails to establish a new ES client via `es_new_client`, an exception is raised
 /// that should terminate the program.
