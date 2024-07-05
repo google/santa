@@ -19,7 +19,7 @@
 
 #include <cstddef>
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 class Client {
  public:
@@ -64,6 +64,6 @@ class Client {
   es_new_client_result_t result_;
 };
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa
 
 #endif

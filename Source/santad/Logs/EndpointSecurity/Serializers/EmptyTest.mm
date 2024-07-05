@@ -21,8 +21,6 @@
 
 using santa::Empty;
 
-namespace es = santa::santad::event_providers::endpoint_security;
-
 @interface EmptyTest : XCTestCase
 @end
 
@@ -35,17 +33,17 @@ namespace es = santa::santad::event_providers::endpoint_security;
   // instead of constructing real ones since the Empty class never touches the
   // input parameter.
   int fake;
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedClose *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExchange *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExec *)&fake, nil).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedExit *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedFork *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedLink *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedRename *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedUnlink *)&fake).size(), 0);
-  XCTAssertEqual(e->SerializeMessage(*(es::EnrichedCSInvalidated *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedClose *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedExchange *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedExec *)&fake, nil).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedExit *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedFork *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedLink *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedRename *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedUnlink *)&fake).size(), 0);
+  XCTAssertEqual(e->SerializeMessage(*(santa::EnrichedCSInvalidated *)&fake).size(), 0);
 
-  XCTAssertEqual(e->SerializeAllowlist(*(es::Message *)&fake, "").size(), 0);
+  XCTAssertEqual(e->SerializeAllowlist(*(santa::Message *)&fake, "").size(), 0);
   XCTAssertEqual(e->SerializeBundleHashingEvent(nil).size(), 0);
   XCTAssertEqual(e->SerializeDiskAppeared(nil).size(), 0);
   XCTAssertEqual(e->SerializeDiskDisappeared(nil).size(), 0);

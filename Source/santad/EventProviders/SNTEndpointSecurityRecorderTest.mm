@@ -39,15 +39,15 @@
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 
+using santa::EnrichedMessage;
+using santa::Enricher;
 using santa::Logger;
+using santa::Message;
 using santa::PrefixTree;
 using santa::Unit;
 using santa::santad::EventDisposition;
 using santa::santad::Processor;
 using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::Message;
 
 class MockEnricher : public Enricher {
  public:

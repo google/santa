@@ -26,10 +26,10 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
+using santa::EndpointSecurityAPI;
+using santa::Message;
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::Message;
 
 @interface SNTEndpointSecurityAuthorizer ()
 @property SNTCompilerController *compilerController;

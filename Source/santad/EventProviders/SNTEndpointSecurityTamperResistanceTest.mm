@@ -31,10 +31,10 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #import "Source/santad/Metrics.h"
 
+using santa::Client;
+using santa::Message;
 using santa::WatchItemPathType;
 using santa::santad::EventDisposition;
-using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::Message;
 
 static constexpr std::string_view kEventsDBPath = "/private/var/db/santa/events.db";
 static constexpr std::string_view kRulesDBPath = "/private/var/db/santa/rules.db";

@@ -41,17 +41,17 @@
 
 using santa::BasicString;
 using santa::Empty;
+using santa::EnrichedClose;
+using santa::EnrichedFile;
+using santa::EnrichedMessage;
+using santa::EnrichedProcess;
 using santa::File;
 using santa::Logger;
+using santa::Message;
 using santa::Null;
 using santa::Protobuf;
 using santa::Spool;
 using santa::Syslog;
-using santa::santad::event_providers::endpoint_security::EnrichedClose;
-using santa::santad::event_providers::endpoint_security::EnrichedFile;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa {
 
@@ -81,12 +81,10 @@ class MockSerializer : public Empty {
   MOCK_METHOD(std::vector<uint8_t>, SerializeDiskAppeared, (NSDictionary *));
   MOCK_METHOD(std::vector<uint8_t>, SerializeDiskDisappeared, (NSDictionary *));
 
-  MOCK_METHOD(
-    std::vector<uint8_t>, SerializeFileAccess,
-    (const std::string &policy_version, const std::string &policy_name,
-     const santa::santad::event_providers::endpoint_security::Message &msg,
-     const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-     const std::string &target, FileAccessPolicyDecision decision));
+  MOCK_METHOD(std::vector<uint8_t>, SerializeFileAccess,
+              (const std::string &policy_version, const std::string &policy_name,
+               const santa::Message &msg, const santa::EnrichedProcess &enriched_process,
+               const std::string &target, FileAccessPolicyDecision decision));
 };
 
 class MockWriter : public Null {

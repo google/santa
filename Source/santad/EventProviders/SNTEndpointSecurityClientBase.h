@@ -29,11 +29,9 @@
 
 @protocol SNTEndpointSecurityClientBase
 
-- (instancetype)
-  initWithESAPI:
-    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-        metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-      processor:(santa::santad::Processor)processor;
+- (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                    processor:(santa::santad::Processor)processor;
 
 /// @note If this fails to establish a new ES client via `es_new_client`, an exception is raised
 /// that should terminate the program.
@@ -66,27 +64,18 @@
 /// @note If the msg event type requires a flags response, the correct ES API will automatically
 /// be called. ALLOWED results will be translated to having all flags set, and DENIED results
 /// will be translated to having all flags cleared.
-- (bool)respondToMessage:(const santa::santad::event_providers::endpoint_security::Message &)msg
+- (bool)respondToMessage:(const santa::Message &)msg
           withAuthResult:(es_auth_result_t)result
                cacheable:(bool)cacheable;
 
-- (void)
-  processEnrichedMessage:
-    (std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage>)msg
-                 handler:
-                   (void (^)(std::unique_ptr<
-                             santa::santad::event_providers::endpoint_security::EnrichedMessage>))
-                     messageHandler;
+- (void)processEnrichedMessage:(std::unique_ptr<santa::EnrichedMessage>)msg
+                       handler:(void (^)(std::unique_ptr<santa::EnrichedMessage>))messageHandler;
 
-- (void)asynchronouslyProcess:(santa::santad::event_providers::endpoint_security::Message)msg
-                      handler:
-                        (void (^)(santa::santad::event_providers::endpoint_security::Message &&))
-                          messageHandler;
+- (void)asynchronouslyProcess:(santa::Message)msg
+                      handler:(void (^)(santa::Message &&))messageHandler;
 
-- (void)processMessage:(santa::santad::event_providers::endpoint_security::Message &&)msg
-               handler:
-                 (void (^)(const santa::santad::event_providers::endpoint_security::Message &))
-                   messageHandler;
+- (void)processMessage:(santa::Message &&)msg
+               handler:(void (^)(const santa::Message &))messageHandler;
 
 - (bool)clearCache;
 

@@ -28,7 +28,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/ProcessTree/process_tree.pb.h"
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 class EnrichedFile {
  public:
@@ -454,6 +454,6 @@ class EnrichedMessage {
   EnrichedType msg_;
 };
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa
 
 #endif

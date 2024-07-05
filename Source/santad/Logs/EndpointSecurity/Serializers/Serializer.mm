@@ -20,8 +20,6 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/santad/SNTDecisionCache.h"
 
-namespace es = santa::santad::event_providers::endpoint_security;
-
 namespace santa {
 
 Serializer::Serializer(SNTDecisionCache *decision_cache) : decision_cache_(decision_cache) {
@@ -39,7 +37,7 @@ std::string_view Serializer::MachineID() {
   return std::string_view(machine_id_);
 };
 
-std::vector<uint8_t> Serializer::SerializeMessageTemplate(const es::EnrichedExec &msg) {
+std::vector<uint8_t> Serializer::SerializeMessageTemplate(const santa::EnrichedExec &msg) {
   SNTCachedDecision *cd;
   if (msg->action_type == ES_ACTION_TYPE_NOTIFY &&
       msg->action.notify.result.auth == ES_AUTH_RESULT_ALLOW) {

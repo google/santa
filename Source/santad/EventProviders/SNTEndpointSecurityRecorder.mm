@@ -27,15 +27,15 @@
 #include "Source/santad/Metrics.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
+using santa::EndpointSecurityAPI;
+using santa::EnrichedMessage;
+using santa::Enricher;
 using santa::Logger;
+using santa::Message;
 using santa::PrefixTree;
 using santa::Unit;
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::Message;
 using santa::santad::process_tree::ProcessTree;
 
 es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {

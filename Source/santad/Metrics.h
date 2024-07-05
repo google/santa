@@ -88,7 +88,7 @@ class Metrics : public std::enable_shared_from_this<Metrics> {
   void UpdateEventStats(Processor processor, const es_message_t *msg);
 
   void SetEventMetrics(Processor processor, EventDisposition event_disposition, int64_t nanos,
-                       const santa::santad::event_providers::endpoint_security::Message &msg);
+                       const santa::Message &msg);
 
   void SetRateLimitingMetrics(Processor processor, int64_t events_rate_limited_count);
 

@@ -20,7 +20,7 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 Message::Message(std::shared_ptr<EndpointSecurityAPI> esapi, const es_message_t *es_msg)
     : esapi_(std::move(esapi)), es_msg_(es_msg), process_token_(std::nullopt) {
@@ -72,7 +72,7 @@ void Message::UpdateStatState(enum StatChangeStep step) const {
   }
 }
 
-void Message::SetProcessToken(process_tree::ProcessToken tok) {
+void Message::SetProcessToken(santa::santad::process_tree::ProcessToken tok) {
   process_token_ = std::move(tok);
 }
 
@@ -91,4 +91,4 @@ std::string Message::GetProcessName(pid_t pid) const {
   }
 }
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa

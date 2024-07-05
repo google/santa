@@ -34,14 +34,14 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #include "Source/santad/Metrics.h"
 
+using santa::Client;
+using santa::EnrichedClose;
+using santa::EnrichedFile;
+using santa::EnrichedMessage;
+using santa::EnrichedProcess;
+using santa::Message;
 using santa::WatchItemPathType;
 using santa::santad::Processor;
-using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::EnrichedClose;
-using santa::santad::event_providers::endpoint_security::EnrichedFile;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::Message;
 
 @interface SNTEndpointSecurityClient (Testing)
 - (void)establishClientOrDie;

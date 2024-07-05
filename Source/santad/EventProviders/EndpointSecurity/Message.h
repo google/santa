@@ -23,7 +23,7 @@
 #import "Source/common/SNTCommonEnums.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 class EndpointSecurityAPI;
 class MessagePeer;
@@ -41,7 +41,7 @@ class Message {
   Message(const Message& other);
   Message& operator=(const Message& other) = delete;
 
-  void SetProcessToken(process_tree::ProcessToken tok);
+  void SetProcessToken(santa::santad::process_tree::ProcessToken tok);
 
   // Operators to access underlying es_message_t
   inline const es_message_t* operator->() const { return es_msg_; }
@@ -60,12 +60,12 @@ class Message {
   inline StatChangeStep StatChangeStep() const { return stat_change_step_; }
   inline StatResult StatResult() const { return stat_result_; }
 
-  friend class santa::santad::event_providers::endpoint_security::MessagePeer;
+  friend class santa::MessagePeer;
 
  private:
   std::shared_ptr<EndpointSecurityAPI> esapi_;
   const es_message_t* es_msg_;
-  std::optional<process_tree::ProcessToken> process_token_;
+  std::optional<santa::santad::process_tree::ProcessToken> process_token_;
 
   std::string GetProcessName(pid_t pid) const;
 
@@ -73,6 +73,6 @@ class Message {
   mutable enum StatResult stat_result_ = StatResult::kOK;
 };
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa
 
 #endif

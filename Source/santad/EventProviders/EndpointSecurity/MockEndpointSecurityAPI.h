@@ -27,18 +27,13 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-using santa::santad::event_providers::endpoint_security::Client;
+using santa::Client;
 
-class MockEndpointSecurityAPI
-    : public santa::santad::event_providers::endpoint_security::EndpointSecurityAPI {
+class MockEndpointSecurityAPI : public santa::EndpointSecurityAPI {
  public:
-  MOCK_METHOD(santa::santad::event_providers::endpoint_security::Client, NewClient,
-              (void (^message_handler)(
-                es_client_t *, santa::santad::event_providers::endpoint_security::Message)));
+  MOCK_METHOD(santa::Client, NewClient, (void (^message_handler)(es_client_t *, santa::Message)));
 
-  MOCK_METHOD(bool, Subscribe,
-              (const santa::santad::event_providers::endpoint_security::Client &,
-               const std::set<es_event_type_t> &));
+  MOCK_METHOD(bool, Subscribe, (const santa::Client &, const std::set<es_event_type_t> &));
   MOCK_METHOD(bool, UnsubscribeAll, (const Client &client));
 
   MOCK_METHOD(bool, UnmuteAllPaths, (const Client &client));
@@ -56,20 +51,15 @@ class MockEndpointSecurityAPI
   MOCK_METHOD(void, ReleaseMessage, (const es_message_t *msg));
 
   MOCK_METHOD(bool, RespondAuthResult,
-              (const santa::santad::event_providers::endpoint_security::Client &,
-               const santa::santad::event_providers::endpoint_security::Message &msg,
-               es_auth_result_t result, bool cache));
+              (const santa::Client &, const santa::Message &msg, es_auth_result_t result,
+               bool cache));
   MOCK_METHOD(bool, RespondFlagsResult,
-              (const santa::santad::event_providers::endpoint_security::Client &client,
-               const santa::santad::event_providers::endpoint_security::Message &msg,
-               uint32_t allowed_flags, bool cache));
+              (const santa::Client &client, const santa::Message &msg, uint32_t allowed_flags,
+               bool cache));
 
-  MOCK_METHOD(bool, MuteProcess,
-              (const santa::santad::event_providers::endpoint_security::Client &,
-               const audit_token_t *tok));
+  MOCK_METHOD(bool, MuteProcess, (const santa::Client &, const audit_token_t *tok));
 
-  MOCK_METHOD(bool, ClearCache,
-              (const santa::santad::event_providers::endpoint_security::Client &));
+  MOCK_METHOD(bool, ClearCache, (const santa::Client &));
 
   MOCK_METHOD(uint32_t, ExecArgCount, (const es_event_exec_t *event));
   MOCK_METHOD(es_string_token_t, ExecArg, (const es_event_exec_t *event, uint32_t index));
@@ -82,8 +72,7 @@ class MockEndpointSecurityAPI
 
   void SetExpectationsESNewClient() {
     EXPECT_CALL(*this, NewClient)
-      .WillOnce(testing::Return(santa::santad::event_providers::endpoint_security::Client(
-        nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
+      .WillOnce(testing::Return(santa::Client(nullptr, ES_NEW_CLIENT_RESULT_SUCCESS)));
     EXPECT_CALL(*this, MuteProcess).WillOnce(testing::Return(true));
     EXPECT_CALL(*this, ClearCache).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(*this, Subscribe).WillRepeatedly(testing::Return(true));

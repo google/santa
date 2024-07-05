@@ -52,10 +52,10 @@
 #import "Source/santad/SNTSyncdQueue.h"
 #include "absl/synchronization/mutex.h"
 
+using santa::Message;
 using santa::PrefixTree;
 using santa::Unit;
 using santa::santad::TTYWriter;
-using santa::santad::event_providers::endpoint_security::Message;
 
 static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1;  // -1 to account for null terminator
 

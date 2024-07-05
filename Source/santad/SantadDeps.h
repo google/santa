@@ -45,9 +45,7 @@ class SantadDeps {
                                             SNTMetricSet *metric_set);
 
   SantadDeps(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::
-                          EndpointSecurityAPI>
-          esapi,
+      std::shared_ptr<santa::EndpointSecurityAPI> esapi,
       std::unique_ptr<santa::Logger> logger,
       std::shared_ptr<santa::santad::Metrics> metrics,
       std::shared_ptr<santa::WatchItems> watch_items,
@@ -63,11 +61,8 @@ class SantadDeps {
 
   std::shared_ptr<santa::santad::event_providers::AuthResultCache>
   AuthResultCache();
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
-  Enricher();
-  std::shared_ptr<
-      santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
-  ESAPI();
+  std::shared_ptr<santa::Enricher> Enricher();
+  std::shared_ptr<santa::EndpointSecurityAPI> ESAPI();
   std::shared_ptr<santa::Logger> Logger();
   std::shared_ptr<santa::santad::Metrics> Metrics();
   std::shared_ptr<santa::WatchItems> WatchItems();
@@ -81,14 +76,11 @@ class SantadDeps {
   std::shared_ptr<santa::santad::process_tree::ProcessTree> ProcessTree();
 
  private:
-  std::shared_ptr<
-      santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
-      esapi_;
+  std::shared_ptr<santa::EndpointSecurityAPI> esapi_;
   std::shared_ptr<santa::Logger> logger_;
   std::shared_ptr<santa::santad::Metrics> metrics_;
   std::shared_ptr<santa::WatchItems> watch_items_;
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
-      enricher_;
+  std::shared_ptr<santa::Enricher> enricher_;
   std::shared_ptr<santa::santad::event_providers::AuthResultCache>
       auth_result_cache_;
 

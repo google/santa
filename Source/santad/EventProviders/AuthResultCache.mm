@@ -22,8 +22,8 @@
 #import "Source/common/SantaVnodeHash.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
-using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::Client;
+using santa::EndpointSecurityAPI;
 
 static NSString *const kFlushCacheReasonClientModeChanged = @"ClientModeChanged";
 static NSString *const kFlushCacheReasonPathRegexChanged = @"PathRegexChanged";
