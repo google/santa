@@ -43,7 +43,15 @@ using google::protobuf::Timestamp;
 using JsonPrintOptions = google::protobuf::json::PrintOptions;
 using google::protobuf::json::MessageToJsonString;
 
+using santa::EffectiveGroup;
+using santa::EffectiveUser;
+using santa::MountFromName;
+using santa::NonNull;
 using santa::NSStringToUTF8StringView;
+using santa::Pid;
+using santa::Pidversion;
+using santa::RealGroup;
+using santa::RealUser;
 using santa::StringTokenToStringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
@@ -69,14 +77,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAt
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::EffectiveGroup;
-using santa::EffectiveUser;
-using santa::MountFromName;
-using santa::NonNull;
-using santa::Pid;
-using santa::Pidversion;
-using santa::RealGroup;
-using santa::RealUser;
 
 namespace pbv1 = ::santa::pb::v1;
 

@@ -35,6 +35,12 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 
+using santa::MountFromName;
+using santa::NonNull;
+using santa::Pid;
+using santa::Pidversion;
+using santa::RealGroup;
+using santa::RealUser;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
@@ -58,12 +64,6 @@ using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAt
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::MountFromName;
-using santa::NonNull;
-using santa::Pid;
-using santa::Pidversion;
-using santa::RealGroup;
-using santa::RealUser;
 
 namespace santa {
 

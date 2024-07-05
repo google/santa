@@ -39,6 +39,7 @@
 #include "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/TTYWriter.h"
 
+using santa::Logger;
 using santa::PrefixTree;
 using santa::Unit;
 using santa::WatchItems;
@@ -49,7 +50,6 @@ using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::Logger;
 
 static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
   // The syncBaseURL check is here to stop retrying if the sync server is removed.

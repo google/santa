@@ -39,19 +39,19 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
+using santa::BasicString;
+using santa::Empty;
+using santa::File;
+using santa::Logger;
+using santa::Null;
+using santa::Protobuf;
+using santa::Spool;
+using santa::Syslog;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
 using santa::santad::event_providers::endpoint_security::EnrichedFile;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::Logger;
-using santa::BasicString;
-using santa::Empty;
-using santa::Protobuf;
-using santa::File;
-using santa::Null;
-using santa::Spool;
-using santa::Syslog;
 
 namespace santa {
 

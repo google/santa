@@ -37,10 +37,10 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/SNTDecisionCache.h"
 
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::Message;
 using santa::BasicString;
 using santa::Serializer;
+using santa::santad::event_providers::endpoint_security::Enricher;
+using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa {
 extern std::string GetDecisionString(SNTEventState event_state);

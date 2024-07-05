@@ -22,9 +22,9 @@
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
-using santa::santad::event_providers::endpoint_security::Message;
 using santa::GetAllowListTargetFile;
 using santa::MountFromName;
+using santa::santad::event_providers::endpoint_security::Message;
 
 @interface UtilitiesTest : XCTestCase
 @end

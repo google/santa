@@ -51,6 +51,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
+using santa::Logger;
 using santa::OptionalStringToNSString;
 using santa::StringToNSString;
 using santa::WatchItemPathType;
@@ -65,7 +66,6 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::EnrichOptions;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::Logger;
 
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 

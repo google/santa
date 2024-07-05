@@ -27,17 +27,17 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #include "Source/santad/SNTDecisionCache.h"
 
+using santa::BasicString;
+using santa::Empty;
+using santa::File;
+using santa::Null;
+using santa::Protobuf;
+using santa::Spool;
+using santa::Syslog;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::BasicString;
-using santa::Empty;
-using santa::Protobuf;
-using santa::File;
-using santa::Null;
-using santa::Spool;
-using santa::Syslog;
 
 namespace santa {
 
@@ -81,8 +81,7 @@ std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esap
   }
 }
 
-Logger::Logger(std::shared_ptr<santa::Serializer> serializer,
-               std::shared_ptr<santa::Writer> writer)
+Logger::Logger(std::shared_ptr<santa::Serializer> serializer, std::shared_ptr<santa::Writer> writer)
     : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 
 void Logger::Log(std::unique_ptr<EnrichedMessage> msg) {

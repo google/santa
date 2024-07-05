@@ -24,11 +24,11 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
+using santa::Logger;
 using santa::WatchItemPathType;
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::Logger;
 
 static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-driver";
 

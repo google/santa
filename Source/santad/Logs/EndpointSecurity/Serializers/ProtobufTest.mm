@@ -50,12 +50,12 @@ using JsonPrintOptions = google::protobuf::json::PrintOptions;
 using JsonParseOptions = ::google::protobuf::json::ParseOptions;
 using google::protobuf::json::JsonStringToMessage;
 using google::protobuf::json::MessageToJsonString;
+using santa::Protobuf;
+using santa::Serializer;
 using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::Protobuf;
-using santa::Serializer;
 
 namespace pbv1 = ::santa::pb::v1;
 

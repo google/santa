@@ -30,6 +30,7 @@
 #include "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/TTYWriter.h"
 
+using santa::Logger;
 using santa::PrefixTree;
 using santa::Unit;
 using santa::WatchItems;
@@ -38,7 +39,6 @@ using santa::santad::TTYWriter;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::Logger;
 
 namespace santa::santad {
 

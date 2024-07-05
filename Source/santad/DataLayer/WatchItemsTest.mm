@@ -56,10 +56,9 @@ extern bool IsWatchItemNameValid(NSString *watch_item_name, NSError **err);
 extern bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
                                        std::vector<std::shared_ptr<WatchItemPolicy>> &policies,
                                        NSError **err);
-extern std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths,
-                                                                          NSError **err);
-extern std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(
-  NSDictionary *watch_item, NSError **err);
+extern std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSError **err);
+extern std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *watch_item,
+                                                                      NSError **err);
 class WatchItemsPeer : public WatchItems {
  public:
   using WatchItems::WatchItems;
@@ -469,8 +468,7 @@ static NSMutableDictionary *WrapWatchItemsConfig(NSDictionary *config) {
   XCTAssertTrue(std::holds_alternative<PathList>(path_list));
   XCTAssertEqual(std::get<PathList>(path_list).size(), 1);
   XCTAssertCStringEqual(std::get<PathList>(path_list)[0].first.c_str(), "A");
-  XCTAssertEqual(std::get<PathList>(path_list)[0].second,
-                 kWatchItemPolicyDefaultPathType);
+  XCTAssertEqual(std::get<PathList>(path_list)[0].second, kWatchItemPolicyDefaultPathType);
 
   // Test path array dictionary with custom path type
   path_list = VerifyConfigWatchItemPaths(
