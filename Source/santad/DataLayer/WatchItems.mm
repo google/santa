@@ -98,11 +98,13 @@ static constexpr NSUInteger kWatchItemConfigEventDetailURLMaxLength = 6000;
 
 namespace santa {
 
+namespace {
 // Type aliases
 using ValidatorBlock = bool (^)(id, NSError **);
 using PathAndTypePair = std::pair<std::string, WatchItemPathType>;
-using PathList = std::vector<PathAndTypePair>;
-using ProcessList = std::vector<WatchItemPolicy::Process>;
+using PathAndTypeVec = std::vector<PathAndTypePair>;
+using PolicyProcessVec = std::vector<WatchItemPolicy::Process>;
+}  // namespace
 
 static void PopulateError(NSError **err, NSString *msg) {
   if (err) {
@@ -265,8 +267,8 @@ bool VerifyConfigKeyArray(NSDictionary *dict, NSString *key, Class expected, NSE
 ///     <true/>
 ///   </dict>
 /// </array>
-std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSError **err) {
-  PathList path_list;
+std::variant<Unit, PathAndTypeVec> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSError **err) {
+  PathAndTypeVec path_list;
 
   for (id path in paths) {
     if ([path isKindOfClass:[NSDictionary class]]) {
@@ -336,9 +338,9 @@ std::variant<Unit, PathList> VerifyConfigWatchItemPaths(NSArray<id> *paths, NSEr
 ///     <string>EEEE</string>
 ///   </dict>
 /// </array>
-std::variant<Unit, ProcessList> VerifyConfigWatchItemProcesses(NSDictionary *watch_item,
-                                                               NSError **err) {
-  __block ProcessList proc_list;
+std::variant<Unit, PolicyProcessVec> VerifyConfigWatchItemProcesses(NSDictionary *watch_item,
+                                                                    NSError **err) {
+  __block PolicyProcessVec proc_list;
 
   if (!VerifyConfigKeyArray(
         watch_item, kWatchItemConfigKeyProcesses, [NSDictionary class], err,
@@ -429,7 +431,7 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
     return false;
   }
 
-  std::variant<Unit, PathList> path_list =
+  std::variant<Unit, PathAndTypeVec> path_list =
     VerifyConfigWatchItemPaths(watch_item[kWatchItemConfigKeyPaths], err);
 
   if (std::holds_alternative<Unit>(path_list)) {
@@ -485,19 +487,19 @@ bool ParseConfigSingleWatchItem(NSString *name, NSDictionary *watch_item,
   bool enable_silent_tty_mode = GetBoolValue(options, kWatchItemConfigKeyOptionsEnableSilentTTYMode,
                                              kWatchItemPolicyDefaultEnableSilentTTYMode);
 
-  std::variant<Unit, ProcessList> proc_list = VerifyConfigWatchItemProcesses(watch_item, err);
+  std::variant<Unit, PolicyProcessVec> proc_list = VerifyConfigWatchItemProcesses(watch_item, err);
   if (std::holds_alternative<Unit>(proc_list)) {
     return false;
   }
 
-  for (const PathAndTypePair &path_type_pair : std::get<PathList>(path_list)) {
+  for (const PathAndTypePair &path_type_pair : std::get<PathAndTypeVec>(path_list)) {
     policies.push_back(std::make_shared<WatchItemPolicy>(
       NSStringToUTF8StringView(name), path_type_pair.first, path_type_pair.second,
       allow_read_access, audit_only, invert_process_exceptions, enable_silent_mode,
       enable_silent_tty_mode,
       NSStringToUTF8StringView(options[kWatchItemConfigKeyOptionsCustomMessage]),
       options[kWatchItemConfigKeyOptionsEventDetailURL],
-      options[kWatchItemConfigKeyOptionsEventDetailText], std::get<ProcessList>(proc_list)));
+      options[kWatchItemConfigKeyOptionsEventDetailText], std::get<PolicyProcessVec>(proc_list)));
   }
 
   return true;
