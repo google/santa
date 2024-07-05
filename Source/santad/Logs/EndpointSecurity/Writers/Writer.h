@@ -17,7 +17,7 @@
 
 #include <vector>
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 class Writer {
  public:
@@ -27,6 +27,6 @@ class Writer {
   virtual void Flush() = 0;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa
 
 #endif

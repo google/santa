@@ -16,7 +16,7 @@
 
 #include <os/log.h>
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 std::shared_ptr<Syslog> Syslog::Create() {
   return std::make_shared<Syslog>();
@@ -30,4 +30,4 @@ void Syslog::Flush() {
   // Nothing to do here
 }
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa

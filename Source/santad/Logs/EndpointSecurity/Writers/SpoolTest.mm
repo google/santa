@@ -23,7 +23,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/FSSpool/fsspool_log_batch_writer.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Spool.h"
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 class SpoolPeer : public Spool {
  public:
@@ -34,9 +34,9 @@ class SpoolPeer : public Spool {
   std::string GetTypeUrl() { return type_url_; }
 };
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa
 
-using santa::santad::logs::endpoint_security::writers::SpoolPeer;
+using santa::SpoolPeer;
 
 @interface SpoolTest : XCTestCase
 @property dispatch_queue_t q;

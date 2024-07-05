@@ -28,11 +28,11 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
 // Forward declarations
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 class SpoolPeer;
 }
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 class Spool : public Writer, public std::enable_shared_from_this<Spool> {
  public:
   // Factory
@@ -51,7 +51,7 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
   void BeginFlushTask();
 
   // Peer class for testing
-  friend class santa::santad::logs::endpoint_security::writers::SpoolPeer;
+  friend class santa::SpoolPeer;
 
  private:
   bool FlushLocked();
@@ -73,6 +73,6 @@ class Spool : public Writer, public std::enable_shared_from_this<Spool> {
   size_t accumulated_bytes_ = 0;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa
 
 #endif

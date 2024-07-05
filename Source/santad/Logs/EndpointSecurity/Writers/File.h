@@ -24,11 +24,11 @@
 #include <vector>
 
 // Forward declarations
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 class FilePeer;
 }
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 class File : public Writer, public std::enable_shared_from_this<File> {
  public:
@@ -44,7 +44,7 @@ class File : public Writer, public std::enable_shared_from_this<File> {
   void Write(std::vector<uint8_t> &&bytes) override;
   void Flush() override;
 
-  friend class santa::santad::logs::endpoint_security::writers::FilePeer;
+  friend class santa::FilePeer;
 
  private:
   void OpenFileHandleLocked();
@@ -70,6 +70,6 @@ class File : public Writer, public std::enable_shared_from_this<File> {
   size_t buffer_offset_ = 0;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa
 
 #endif

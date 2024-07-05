@@ -48,10 +48,10 @@ using santa::santad::logs::endpoint_security::Logger;
 using santa::santad::logs::endpoint_security::serializers::BasicString;
 using santa::santad::logs::endpoint_security::serializers::Empty;
 using santa::santad::logs::endpoint_security::serializers::Protobuf;
-using santa::santad::logs::endpoint_security::writers::File;
-using santa::santad::logs::endpoint_security::writers::Null;
-using santa::santad::logs::endpoint_security::writers::Spool;
-using santa::santad::logs::endpoint_security::writers::Syslog;
+using santa::File;
+using santa::Null;
+using santa::Spool;
+using santa::Syslog;
 
 namespace santa::santad::logs::endpoint_security {
 
@@ -64,7 +64,7 @@ class LoggerPeer : public Logger {
 
   std::shared_ptr<serializers::Serializer> Serializer() { return serializer_; }
 
-  std::shared_ptr<writers::Writer> Writer() { return writer_; }
+  std::shared_ptr<santa::Writer> Writer() { return writer_; }
 };
 
 }  // namespace santa::santad::logs::endpoint_security

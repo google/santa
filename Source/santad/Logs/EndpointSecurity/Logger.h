@@ -45,7 +45,7 @@ class Logger {
     uint64_t spool_flush_timeout_ms);
 
   Logger(std::shared_ptr<serializers::Serializer> serializer,
-         std::shared_ptr<writers::Writer> writer);
+         std::shared_ptr<santa::Writer> writer);
 
   virtual ~Logger() = default;
 
@@ -72,7 +72,7 @@ class Logger {
 
  private:
   std::shared_ptr<serializers::Serializer> serializer_;
-  std::shared_ptr<writers::Writer> writer_;
+  std::shared_ptr<santa::Writer> writer_;
 };
 
 }  // namespace santa::santad::logs::endpoint_security
