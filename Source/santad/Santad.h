@@ -36,7 +36,7 @@ void SantadMain(
     std::shared_ptr<
         santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
         esapi,
-    std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger,
+    std::shared_ptr<santa::Logger> logger,
     std::shared_ptr<santa::santad::Metrics> metrics,
     std::shared_ptr<santa::WatchItems> watch_items,
     std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>

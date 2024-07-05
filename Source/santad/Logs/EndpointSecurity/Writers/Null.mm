@@ -14,7 +14,7 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Writers/Null.h"
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 std::shared_ptr<Null> Null::Create() {
   return std::make_shared<Null>();
@@ -28,4 +28,4 @@ void Null::Flush() {
   // Intentionally do nothing
 }
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa

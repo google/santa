@@ -51,6 +51,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
+using santa::Logger;
 using santa::OptionalStringToNSString;
 using santa::StringToNSString;
 using santa::WatchItemPathType;
@@ -65,7 +66,6 @@ using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::EnrichOptions;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
 
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
@@ -400,7 +400,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
   initWithESAPI:
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
         metrics:(std::shared_ptr<Metrics>)metrics
-         logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
+         logger:(std::shared_ptr<santa::Logger>)logger
      watchItems:(std::shared_ptr<WatchItems>)watchItems
        enricher:
          (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher

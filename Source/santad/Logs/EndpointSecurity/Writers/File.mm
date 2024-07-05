@@ -18,7 +18,7 @@
 
 #include "Source/common/BranchPrediction.h"
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 std::shared_ptr<File> File::Create(NSString *path, uint64_t flush_timeout_ms,
                                    size_t batch_size_bytes, size_t max_expected_write_size_bytes) {
@@ -143,4 +143,4 @@ void File::FlushLocked() {
   }
 }
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa

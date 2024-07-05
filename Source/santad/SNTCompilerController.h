@@ -25,7 +25,7 @@
 // This function will determine if the instigating process was a compiler and,
 // for appropriate events, will create appropriate transitive rules.
 - (BOOL)handleEvent:(const santa::santad::event_providers::endpoint_security::Message &)msg
-         withLogger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
+         withLogger:(std::shared_ptr<santa::Logger>)logger;
 
 // Set whether or not the given audit token should be tracked as a compiler
 - (void)setProcess:(const audit_token_t &)tok isCompiler:(bool)isCompiler;

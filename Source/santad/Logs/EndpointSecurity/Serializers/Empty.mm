@@ -36,7 +36,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDe
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 std::shared_ptr<Empty> Empty::Create() {
   return std::make_shared<Empty>();
@@ -144,4 +144,4 @@ std::vector<uint8_t> Empty::SerializeDiskDisappeared(NSDictionary *props) {
   return {};
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa

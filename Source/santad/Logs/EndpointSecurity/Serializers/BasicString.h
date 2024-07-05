@@ -27,7 +27,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/SNTDecisionCache.h"
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 class BasicString : public Serializer {
  public:
@@ -110,6 +110,6 @@ class BasicString : public Serializer {
   bool prefix_time_name_;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
 #endif

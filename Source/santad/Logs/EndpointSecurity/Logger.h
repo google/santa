@@ -30,11 +30,11 @@
 
 // Forward declarations
 @class SNTStoredEvent;
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 class LoggerPeer;
 }
 
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 
 class Logger {
  public:
@@ -44,8 +44,7 @@ class Logger {
     NSString *spool_log_path, size_t spool_dir_size_threshold, size_t spool_file_size_threshold,
     uint64_t spool_flush_timeout_ms);
 
-  Logger(std::shared_ptr<serializers::Serializer> serializer,
-         std::shared_ptr<writers::Writer> writer);
+  Logger(std::shared_ptr<santa::Serializer> serializer, std::shared_ptr<santa::Writer> writer);
 
   virtual ~Logger() = default;
 
@@ -68,13 +67,13 @@ class Logger {
 
   void Flush();
 
-  friend class santa::santad::logs::endpoint_security::LoggerPeer;
+  friend class santa::LoggerPeer;
 
  private:
-  std::shared_ptr<serializers::Serializer> serializer_;
-  std::shared_ptr<writers::Writer> writer_;
+  std::shared_ptr<santa::Serializer> serializer_;
+  std::shared_ptr<santa::Writer> writer_;
 };
 
-}  // namespace santa::santad::logs::endpoint_security
+}  // namespace santa
 
 #endif

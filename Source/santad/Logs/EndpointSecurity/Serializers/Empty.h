@@ -23,7 +23,7 @@
 #include "Source/common/SNTCachedDecision.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 class Empty : public Serializer {
  public:
@@ -92,6 +92,6 @@ class Empty : public Serializer {
   std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) override;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
 #endif

@@ -28,7 +28,7 @@
 
 @class SNTStoredEvent;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 class Serializer {
  public:
@@ -118,6 +118,6 @@ class Serializer {
   SNTDecisionCache *decision_cache_;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
 #endif

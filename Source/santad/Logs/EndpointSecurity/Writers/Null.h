@@ -20,7 +20,7 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 class Null : public Writer {
  public:
@@ -31,6 +31,6 @@ class Null : public Writer {
   void Flush() override;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa
 
 #endif

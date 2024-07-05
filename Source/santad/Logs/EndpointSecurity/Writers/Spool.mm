@@ -20,7 +20,7 @@
 
 static const char *kTypeGoogleApisComPrefix = "type.googleapis.com/";
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 std::shared_ptr<Spool> Spool::Create(std::string_view base_dir, size_t max_spool_disk_size,
                                      size_t max_spool_batch_size, uint64_t flush_timeout_ms) {
@@ -149,4 +149,4 @@ void Spool::Write(std::vector<uint8_t> &&bytes) {
   });
 }
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa

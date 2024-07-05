@@ -28,7 +28,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 #import "Source/santad/SNTDecisionCache.h"
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 class Protobuf : public Serializer {
  public:
@@ -123,6 +123,6 @@ class Protobuf : public Serializer {
   bool json_;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
 #endif

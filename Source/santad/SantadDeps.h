@@ -48,7 +48,7 @@ class SantadDeps {
       std::shared_ptr<santa::santad::event_providers::endpoint_security::
                           EndpointSecurityAPI>
           esapi,
-      std::unique_ptr<santa::santad::logs::endpoint_security::Logger> logger,
+      std::unique_ptr<santa::Logger> logger,
       std::shared_ptr<santa::santad::Metrics> metrics,
       std::shared_ptr<santa::WatchItems> watch_items,
       std::shared_ptr<santa::santad::event_providers::AuthResultCache>
@@ -68,7 +68,7 @@ class SantadDeps {
   std::shared_ptr<
       santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
   ESAPI();
-  std::shared_ptr<santa::santad::logs::endpoint_security::Logger> Logger();
+  std::shared_ptr<santa::Logger> Logger();
   std::shared_ptr<santa::santad::Metrics> Metrics();
   std::shared_ptr<santa::WatchItems> WatchItems();
   MOLXPCConnection *ControlConnection();
@@ -84,7 +84,7 @@ class SantadDeps {
   std::shared_ptr<
       santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
       esapi_;
-  std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger_;
+  std::shared_ptr<santa::Logger> logger_;
   std::shared_ptr<santa::santad::Metrics> metrics_;
   std::shared_ptr<santa::WatchItems> watch_items_;
   std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>

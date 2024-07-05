@@ -30,6 +30,6 @@
   initWithESAPI:
     (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
         metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-         logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger;
+         logger:(std::shared_ptr<santa::Logger>)logger;
 
 @end

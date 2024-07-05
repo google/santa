@@ -43,7 +43,15 @@ using google::protobuf::Timestamp;
 using JsonPrintOptions = google::protobuf::json::PrintOptions;
 using google::protobuf::json::MessageToJsonString;
 
+using santa::EffectiveGroup;
+using santa::EffectiveUser;
+using santa::MountFromName;
+using santa::NonNull;
 using santa::NSStringToUTF8StringView;
+using santa::Pid;
+using santa::Pidversion;
+using santa::RealGroup;
+using santa::RealUser;
 using santa::StringTokenToStringView;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::EnrichedClose;
@@ -69,18 +77,10 @@ using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAt
 using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
 using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveGroup;
-using santa::santad::logs::endpoint_security::serializers::Utilities::EffectiveUser;
-using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
-using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
-using santa::santad::logs::endpoint_security::serializers::Utilities::Pid;
-using santa::santad::logs::endpoint_security::serializers::Utilities::Pidversion;
-using santa::santad::logs::endpoint_security::serializers::Utilities::RealGroup;
-using santa::santad::logs::endpoint_security::serializers::Utilities::RealUser;
 
 namespace pbv1 = ::santa::pb::v1;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 static constexpr NSUInteger kMaxEncodeObjectEntries = 64;
 static constexpr NSUInteger kMaxEncodeObjectLevels = 5;
@@ -678,7 +678,7 @@ std::vector<uint8_t> Protobuf::SerializeMessage(const EnrichedExec &msg, SNTCach
   EncodeString([pb_exec] { return pb_exec->mutable_explain(); }, cd.decisionExtra);
   EncodeString([pb_exec] { return pb_exec->mutable_quarantine_url(); }, cd.quarantineURL);
 
-  NSString *orig_path = Utilities::OriginalPathForTranslocation(msg->event.exec.target);
+  NSString *orig_path = santa::OriginalPathForTranslocation(msg->event.exec.target);
   EncodeString([pb_exec] { return pb_exec->mutable_original_path(); }, orig_path);
 
   EncodeEntitlements(pb_exec, cd);
@@ -1009,7 +1009,7 @@ std::vector<uint8_t> Protobuf::SerializeAllowlist(const Message &msg, const std:
   Arena arena;
   ::pbv1::SantaMessage *santa_msg = CreateDefaultProto(&arena);
 
-  const es_file_t *es_file = Utilities::GetAllowListTargetFile(msg);
+  const es_file_t *es_file = santa::GetAllowListTargetFile(msg);
 
   EnrichedFile enriched_file(std::nullopt, std::nullopt, std::nullopt);
   EnrichedProcess enriched_process;
@@ -1047,9 +1047,9 @@ static void EncodeDisk(::pbv1::Disk *pb_disk, ::pbv1::Disk_Action action, NSDict
   NSString *dmg_path = nil;
   NSString *serial = nil;
   if ([props[@"DADeviceModel"] isEqual:@"Disk Image"]) {
-    dmg_path = Utilities::DiskImageForDevice(props[@"DADevicePath"]);
+    dmg_path = santa::DiskImageForDevice(props[@"DADevicePath"]);
   } else {
-    serial = Utilities::SerialForDevice(props[@"DADevicePath"]);
+    serial = santa::SerialForDevice(props[@"DADevicePath"]);
   }
 
   NSString *model = [NSString
@@ -1103,4 +1103,4 @@ std::vector<uint8_t> Protobuf::SerializeDiskDisappeared(NSDictionary *props) {
   return FinalizeProto(santa_msg);
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
