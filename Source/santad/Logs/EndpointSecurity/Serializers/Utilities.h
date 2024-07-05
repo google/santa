@@ -21,7 +21,7 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-namespace santa::santad::logs::endpoint_security::serializers::Utilities {
+namespace santa {
 
 static inline pid_t Pid(const audit_token_t &tok) {
   return audit_token_to_pid(tok);
@@ -61,6 +61,6 @@ es_file_t *GetAllowListTargetFile(
 
 const mach_port_t GetDefaultIOKitCommsPort();
 
-}  // namespace santa::santad::logs::endpoint_security::serializers::Utilities
+}  // namespace santa
 
 #endif

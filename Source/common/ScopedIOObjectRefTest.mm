@@ -21,7 +21,7 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
 using santa::ScopedIOObjectRef;
-using santa::santad::logs::endpoint_security::serializers::Utilities::GetDefaultIOKitCommsPort;
+using santa::GetDefaultIOKitCommsPort;
 
 @interface ScopedIOObjectRefTest : XCTestCase
 @end
