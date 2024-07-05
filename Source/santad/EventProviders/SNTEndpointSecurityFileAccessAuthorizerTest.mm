@@ -44,8 +44,8 @@
 #include "Source/santad/Logs/EndpointSecurity/MockLogger.h"
 #include "Source/santad/SNTDecisionCache.h"
 
+using santa::Message;
 using santa::WatchItemPolicy;
-using santa::santad::event_providers::endpoint_security::Message;
 
 extern NSString *kBadCertHash;
 

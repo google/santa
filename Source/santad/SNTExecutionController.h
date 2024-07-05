@@ -71,8 +71,7 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
 ///  @param message The message received from the EndpointSecurity event provider.
 ///  @param postAction The block invoked with the desired response result.
 ///
-- (void)validateExecEvent:(const santa::santad::event_providers::endpoint_security::Message &)esMsg
-               postAction:(bool (^)(SNTAction))postAction;
+- (void)validateExecEvent:(const santa::Message &)esMsg postAction:(bool (^)(SNTAction))postAction;
 
 ///
 /// Perform light, synchronous processing of the given event to decide whether or not the
@@ -83,8 +82,7 @@ const static NSString *kBlockLongPath = @"BlockLongPath";
 ///  @param message The message received from the EndpointSecurity event provider.
 ///  @return bool True if the event should be processed, otherwise false.
 ///
-- (bool)synchronousShouldProcessExecEvent:
-  (const santa::santad::event_providers::endpoint_security::Message &)esMsg;
+- (bool)synchronousShouldProcessExecEvent:(const santa::Message &)esMsg;
 
 - (void)updateEntitlementsPrefixFilter:(NSArray<NSString *> *)filter;
 - (void)updateEntitlementsTeamIDFilter:(NSArray<NSString *> *)filter;

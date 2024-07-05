@@ -23,8 +23,8 @@
 #include "Source/santad/ProcessTree/process_tree_macos.h"
 #include "absl/status/statusor.h"
 
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::EndpointSecurityAPI;
+using santa::Message;
 
 namespace santa::santad::process_tree {
 

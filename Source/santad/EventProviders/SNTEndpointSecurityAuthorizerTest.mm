@@ -33,9 +33,9 @@
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
 
+using santa::Message;
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::Message;
 
 class MockAuthResultCache : public AuthResultCache {
  public:

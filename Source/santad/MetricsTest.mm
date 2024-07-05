@@ -70,7 +70,7 @@ class MetricsPeer : public Metrics {
 
 }  // namespace santa::santad
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 class MessagePeer : public Message {
  public:
@@ -82,8 +82,9 @@ class MessagePeer : public Message {
   using Message::stat_result_;
 };
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa
 
+using santa::MessagePeer;
 using santa::santad::EventDispositionToString;
 using santa::santad::EventTypeToString;
 using santa::santad::FileAccessMetricStatus;
@@ -94,7 +95,6 @@ using santa::santad::MetricsPeer;
 using santa::santad::ProcessorToString;
 using santa::santad::StatChangeStepToString;
 using santa::santad::StatResultToString;
-using santa::santad::event_providers::endpoint_security::MessagePeer;
 
 std::shared_ptr<MetricsPeer> CreateBasicMetricsPeer(dispatch_queue_t q, void (^block)(Metrics *)) {
   dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, q);

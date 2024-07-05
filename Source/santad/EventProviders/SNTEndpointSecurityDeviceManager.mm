@@ -33,13 +33,13 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
+using santa::EndpointSecurityAPI;
 using santa::Logger;
+using santa::Message;
 using santa::santad::EventDisposition;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::Message;
 
 // Defined operations for startup metrics:
 // Device shouldn't be operated on (e.g. not a mass storage device)

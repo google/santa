@@ -23,7 +23,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Message;
 
 bool IsPidInUse(pid_t pid) {
   char pname[MAXCOMLEN * 2 + 1] = {};

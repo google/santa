@@ -18,7 +18,7 @@
 #include "Source/common/TestUtils.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Enricher.h"
 
-using santa::santad::event_providers::endpoint_security::Enricher;
+using santa::Enricher;
 
 @interface EnricherTest : XCTestCase
 @end

@@ -52,13 +52,12 @@ class AuthResultCache {
   // previously denied binary is allowed, it can be re-executed by the user in a
   // timely manner. But the value should be high enough to allow the cache to be
   // effective in the event the binary is executed in rapid succession.
-  static std::unique_ptr<AuthResultCache> Create(
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTMetricSet *metric_set, uint64_t cache_deny_time_ms = 1500);
+  static std::unique_ptr<AuthResultCache> Create(std::shared_ptr<santa::EndpointSecurityAPI> esapi,
+                                                 SNTMetricSet *metric_set,
+                                                 uint64_t cache_deny_time_ms = 1500);
 
-  AuthResultCache(
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTMetricCounter *flush_count, uint64_t cache_deny_time_ms = 1500);
+  AuthResultCache(std::shared_ptr<santa::EndpointSecurityAPI> esapi, SNTMetricCounter *flush_count,
+                  uint64_t cache_deny_time_ms = 1500);
   virtual ~AuthResultCache();
 
   AuthResultCache(AuthResultCache &&other) = delete;
@@ -81,7 +80,7 @@ class AuthResultCache {
   SantaCache<SantaVnode, uint64_t> *root_cache_;
   SantaCache<SantaVnode, uint64_t> *nonroot_cache_;
 
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi_;
+  std::shared_ptr<santa::EndpointSecurityAPI> esapi_;
   SNTMetricCounter *flush_count_;
   uint64_t root_devno_;
   uint64_t cache_deny_time_ns_;

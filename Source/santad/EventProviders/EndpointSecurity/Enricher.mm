@@ -33,7 +33,7 @@
 
 using santa::StringTokenToStringView;
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 Enricher::Enricher(std::shared_ptr<::santa::santad::process_tree::ProcessTree> pt)
     : username_cache_(256), groupname_cache_(256), process_tree_(std::move(pt)) {}
@@ -134,9 +134,10 @@ EnrichedProcess Enricher::Enrich(const es_process_t &es_proc, EnrichOptions opti
                          UsernameForUID(audit_token_to_ruid(es_proc.audit_token), options),
                          UsernameForGID(audit_token_to_rgid(es_proc.audit_token), options),
                          Enrich(*es_proc.executable, options),
-                         process_tree_ ? process_tree_->ExportAnnotations(
-                                           process_tree::PidFromAuditToken(es_proc.audit_token))
-                                       : std::nullopt);
+                         process_tree_
+                           ? process_tree_->ExportAnnotations(
+                               santa::santad::process_tree::PidFromAuditToken(es_proc.audit_token))
+                           : std::nullopt);
 }
 
 EnrichedFile Enricher::Enrich(const es_file_t &es_file, EnrichOptions options) {
@@ -202,4 +203,4 @@ std::optional<uid_t> Enricher::UIDForUsername(std::string_view username, EnrichO
   return pw ? std::make_optional(pw->pw_uid) : std::nullopt;
 }
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa

@@ -26,10 +26,8 @@
 @interface SNTEndpointSecurityTamperResistance
     : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
-- (instancetype)
-  initWithESAPI:
-    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-        metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-         logger:(std::shared_ptr<santa::Logger>)logger;
+- (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                       logger:(std::shared_ptr<santa::Logger>)logger;
 
 @end

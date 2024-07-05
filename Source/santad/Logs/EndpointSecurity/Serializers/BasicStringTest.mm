@@ -38,9 +38,9 @@
 #import "Source/santad/SNTDecisionCache.h"
 
 using santa::BasicString;
+using santa::Enricher;
+using santa::Message;
 using santa::Serializer;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa {
 extern std::string GetDecisionString(SNTEventState event_state);

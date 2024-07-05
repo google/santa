@@ -38,8 +38,8 @@
 #import "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/SantadDeps.h"
 
+using santa::Message;
 using santa::santad::SantadDeps;
-using santa::santad::event_providers::endpoint_security::Message;
 
 static int HexCharToInt(char hex) {
   if (hex >= '0' && hex <= '9') {

@@ -31,7 +31,7 @@
 #import "Source/santad/SNTDecisionCache.h"
 
 using santa::Logger;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Message;
 
 static const pid_t PID_MAX = 99999;
 static constexpr std::string_view kIgnoredCompilerProcessPathPrefix = "/dev/";

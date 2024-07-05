@@ -29,15 +29,15 @@
 
 using santa::BasicString;
 using santa::Empty;
+using santa::EndpointSecurityAPI;
+using santa::EnrichedMessage;
+using santa::EnrichedProcess;
 using santa::File;
+using santa::Message;
 using santa::Null;
 using santa::Protobuf;
 using santa::Spool;
 using santa::Syslog;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::Message;
 
 namespace santa {
 
@@ -106,11 +106,10 @@ void Logger::LogDiskDisappeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskDisappeared(props));
 }
 
-void Logger::LogFileAccess(
-  const std::string &policy_version, const std::string &policy_name,
-  const santa::santad::event_providers::endpoint_security::Message &msg,
-  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-  const std::string &target, FileAccessPolicyDecision decision) {
+void Logger::LogFileAccess(const std::string &policy_version, const std::string &policy_name,
+                           const santa::Message &msg,
+                           const santa::EnrichedProcess &enriched_process,
+                           const std::string &target, FileAccessPolicyDecision decision) {
   writer_->Write(serializer_->SerializeFileAccess(policy_version, policy_name, msg,
                                                   enriched_process, target, decision));
 }

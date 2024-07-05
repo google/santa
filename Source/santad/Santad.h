@@ -33,14 +33,11 @@
 #include "Source/santad/TTYWriter.h"
 
 void SantadMain(
-    std::shared_ptr<
-        santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
-        esapi,
+    std::shared_ptr<santa::EndpointSecurityAPI> esapi,
     std::shared_ptr<santa::Logger> logger,
     std::shared_ptr<santa::santad::Metrics> metrics,
     std::shared_ptr<santa::WatchItems> watch_items,
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
-        enricher,
+    std::shared_ptr<santa::Enricher> enricher,
     std::shared_ptr<santa::santad::event_providers::AuthResultCache>
         auth_result_cache,
     MOLXPCConnection* control_connection,

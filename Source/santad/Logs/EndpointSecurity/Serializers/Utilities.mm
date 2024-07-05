@@ -28,7 +28,7 @@ extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTransl
 extern "C" CFURLRef __nullable SecTranslocateCreateOriginalPathForURL(CFURLRef translocatedPath,
                                                                       CFErrorRef *__nullable error);
 
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Message;
 
 namespace santa {
 

@@ -21,7 +21,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 enum class EnrichOptions {
   // Specifies default enricher operation.
@@ -34,7 +34,8 @@ enum class EnrichOptions {
 
 class Enricher {
  public:
-  Enricher(std::shared_ptr<process_tree::ProcessTree> pt = nullptr);
+  Enricher(
+      std::shared_ptr<santa::santad::process_tree::ProcessTree> pt = nullptr);
   virtual ~Enricher() = default;
   virtual std::unique_ptr<EnrichedMessage> Enrich(Message &&msg);
   virtual EnrichedProcess Enrich(
@@ -58,9 +59,9 @@ class Enricher {
       username_cache_;
   SantaCache<gid_t, std::optional<std::shared_ptr<std::string>>>
       groupname_cache_;
-  std::shared_ptr<process_tree::ProcessTree> process_tree_;
+  std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree_;
 };
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa
 
 #endif

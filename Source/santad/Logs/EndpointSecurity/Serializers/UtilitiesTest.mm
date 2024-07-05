@@ -23,8 +23,8 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 
 using santa::GetAllowListTargetFile;
+using santa::Message;
 using santa::MountFromName;
-using santa::santad::event_providers::endpoint_security::Message;
 
 @interface UtilitiesTest : XCTestCase
 @end

@@ -38,32 +38,30 @@ namespace santa {
 
 class Logger {
  public:
-  static std::unique_ptr<Logger> Create(
-    std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI> esapi,
-    SNTEventLogType log_type, SNTDecisionCache *decision_cache, NSString *event_log_path,
-    NSString *spool_log_path, size_t spool_dir_size_threshold, size_t spool_file_size_threshold,
-    uint64_t spool_flush_timeout_ms);
+  static std::unique_ptr<Logger> Create(std::shared_ptr<santa::EndpointSecurityAPI> esapi,
+                                        SNTEventLogType log_type, SNTDecisionCache *decision_cache,
+                                        NSString *event_log_path, NSString *spool_log_path,
+                                        size_t spool_dir_size_threshold,
+                                        size_t spool_file_size_threshold,
+                                        uint64_t spool_flush_timeout_ms);
 
   Logger(std::shared_ptr<santa::Serializer> serializer, std::shared_ptr<santa::Writer> writer);
 
   virtual ~Logger() = default;
 
-  virtual void Log(
-    std::unique_ptr<santa::santad::event_providers::endpoint_security::EnrichedMessage> msg);
+  virtual void Log(std::unique_ptr<santa::EnrichedMessage> msg);
 
-  void LogAllowlist(const santa::santad::event_providers::endpoint_security::Message &msg,
-                    const std::string_view hash);
+  void LogAllowlist(const santa::Message &msg, const std::string_view hash);
 
   void LogBundleHashingEvents(NSArray<SNTStoredEvent *> *events);
 
   void LogDiskAppeared(NSDictionary *props);
   void LogDiskDisappeared(NSDictionary *props);
 
-  virtual void LogFileAccess(
-    const std::string &policy_version, const std::string &policy_name,
-    const santa::santad::event_providers::endpoint_security::Message &msg,
-    const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-    const std::string &target, FileAccessPolicyDecision decision);
+  virtual void LogFileAccess(const std::string &policy_version, const std::string &policy_name,
+                             const santa::Message &msg,
+                             const santa::EnrichedProcess &enriched_process,
+                             const std::string &target, FileAccessPolicyDecision decision);
 
   void Flush();
 

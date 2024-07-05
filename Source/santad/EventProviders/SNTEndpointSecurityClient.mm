@@ -37,14 +37,14 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
+using santa::Client;
+using santa::EndpointSecurityAPI;
+using santa::EnrichedMessage;
+using santa::Message;
 using santa::WatchItemPathType;
 using santa::santad::EventDisposition;
 using santa::santad::Metrics;
 using santa::santad::Processor;
-using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::Message;
 
 constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db",
                                                 "/private/var/db/santa/events.db"};
