@@ -22,8 +22,8 @@
 @property std::shared_ptr<santa::santad::process_tree::ProcessTree> processTree;
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-                    processor:(santa::santad::Processor)processor
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
+                    processor:(santa::Processor)processor
                   processTree:
                     (std::shared_ptr<santa::santad::process_tree::ProcessTree>)processTree;
 @end

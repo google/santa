@@ -24,10 +24,10 @@
 #include "Source/santad/ProcessTree/process_tree_macos.h"
 
 using santa::EndpointSecurityAPI;
+using santa::EventDisposition;
 using santa::Message;
-using santa::santad::EventDisposition;
-using santa::santad::Metrics;
-using santa::santad::Processor;
+using santa::Metrics;
+using santa::Processor;
 
 @implementation SNTEndpointSecurityTreeAwareClient {
   std::vector<bool> _addedEvents;

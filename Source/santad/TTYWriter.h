@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace santa::santad {
+namespace santa {
 
 // Small helper class to synchronize writing to TTYs
 class TTYWriter {
@@ -46,6 +46,6 @@ class TTYWriter {
   dispatch_queue_t q_;
 };
 
-}  // namespace santa::santad
+}  // namespace santa
 
 #endif

@@ -87,7 +87,7 @@ static NSString *const kFileAccessPolicyDecisionAllowedAuditOnly = @"AllowedAudi
 
 static NSString *const kFileAccessMetricsAccessType = @"access";
 
-namespace santa::santad {
+namespace santa {
 
 NSString *const ProcessorToString(Processor processor) {
   switch (processor) {
@@ -494,4 +494,4 @@ void Metrics::SetFileAccessEventMetrics(std::string policy_version, std::string 
   });
 }
 
-}  // namespace santa::santad
+}  // namespace santa

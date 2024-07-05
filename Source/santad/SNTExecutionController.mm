@@ -54,8 +54,8 @@
 
 using santa::Message;
 using santa::PrefixTree;
+using santa::TTYWriter;
 using santa::Unit;
-using santa::santad::TTYWriter;
 
 static const size_t kMaxAllowedPathLength = MAXPATHLEN - 1;  // -1 to account for null terminator
 

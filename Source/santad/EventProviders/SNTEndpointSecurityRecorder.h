@@ -30,12 +30,11 @@
     : SNTEndpointSecurityTreeAwareClient <SNTEndpointSecurityEventHandler>
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                        logger:(std::shared_ptr<santa::Logger>)logger
                      enricher:(std::shared_ptr<santa::Enricher>)enricher
            compilerController:(SNTCompilerController *)compilerController
-              authResultCache:
-                (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
+              authResultCache:(std::shared_ptr<santa::AuthResultCache>)authResultCache
                    prefixTree:(std::shared_ptr<santa::PrefixTree<santa::Unit>>)prefixTree
                   processTree:
                     (std::shared_ptr<santa::santad::process_tree::ProcessTree>)processTree;

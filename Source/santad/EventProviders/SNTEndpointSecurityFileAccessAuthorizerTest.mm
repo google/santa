@@ -744,12 +744,12 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   id fileAccessClient = [[SNTEndpointSecurityFileAccessAuthorizer alloc]
     initWithESAPI:mockESApi
           metrics:nullptr
-        processor:santa::santad::Processor::kFileAccessAuthorizer];
+        processor:santa::Processor::kFileAccessAuthorizer];
 
   [fileAccessClient enable];
 
   for (const auto &event : expectedEventSubs) {
-    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+    XCTAssertNoThrow(santa::EventTypeToString(event));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

@@ -27,7 +27,7 @@
 // Called Synchronously and serially for each message provided by the
 // EndpointSecurity framework.
 - (void)handleMessage:(santa::Message &&)esMsg
-   recordEventMetrics:(void (^)(santa::santad::EventDisposition))recordEventMetrics;
+   recordEventMetrics:(void (^)(santa::EventDisposition))recordEventMetrics;
 
 // Called after Santa has finished initializing itself.
 // This is an optimal place to subscribe to ES events

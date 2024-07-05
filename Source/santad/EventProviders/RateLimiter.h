@@ -23,11 +23,11 @@
 #include "Source/santad/Metrics.h"
 
 // Forward declarations
-namespace santa::santad::event_providers {
+namespace santa {
 class RateLimiterPeer;
-}
+}  // namespace santa
 
-namespace santa::santad::event_providers {
+namespace santa {
 
 // Very basic rate limiting infrastructure.
 // Currently only handles X events per duration.
@@ -39,12 +39,11 @@ class RateLimiter {
  public:
   // Factory
   static std::shared_ptr<RateLimiter> Create(
-      std::shared_ptr<santa::santad::Metrics> metrics,
-      santa::santad::Processor processor, uint16_t max_qps,
-      NSTimeInterval reset_duration = kDefaultResetDuration);
+      std::shared_ptr<santa::Metrics> metrics, santa::Processor processor,
+      uint16_t max_qps, NSTimeInterval reset_duration = kDefaultResetDuration);
 
-  RateLimiter(std::shared_ptr<santa::santad::Metrics> metrics,
-              santa::santad::Processor processor, uint16_t max_qps,
+  RateLimiter(std::shared_ptr<santa::Metrics> metrics,
+              santa::Processor processor, uint16_t max_qps,
               NSTimeInterval reset_duration);
 
   enum class Decision {
@@ -54,7 +53,7 @@ class RateLimiter {
 
   Decision Decide(uint64_t cur_mach_time);
 
-  friend class santa::santad::event_providers::RateLimiterPeer;
+  friend class santa::RateLimiterPeer;
 
  private:
   bool ShouldRateLimitLocked();
@@ -63,8 +62,8 @@ class RateLimiter {
 
   static constexpr NSTimeInterval kDefaultResetDuration = 15.0;
 
-  std::shared_ptr<santa::santad::Metrics> metrics_;
-  santa::santad::Processor processor_;
+  std::shared_ptr<santa::Metrics> metrics_;
+  santa::Processor processor_;
   size_t log_count_total_ = 0;
   size_t max_log_count_total_;
   uint64_t reset_mach_time_;
@@ -72,6 +71,6 @@ class RateLimiter {
   dispatch_queue_t q_;
 };
 
-}  // namespace santa::santad::event_providers
+}  // namespace santa
 
 #endif

@@ -40,11 +40,11 @@
 using santa::Client;
 using santa::EndpointSecurityAPI;
 using santa::EnrichedMessage;
+using santa::EventDisposition;
 using santa::Message;
+using santa::Metrics;
+using santa::Processor;
 using santa::WatchItemPathType;
-using santa::santad::EventDisposition;
-using santa::santad::Metrics;
-using santa::santad::Processor;
 
 constexpr std::string_view kProtectedFiles[] = {"/private/var/db/santa/rules.db",
                                                 "/private/var/db/santa/events.db"};

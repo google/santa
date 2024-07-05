@@ -24,7 +24,7 @@
 #import "Source/santad/Santad.h"
 #include "Source/santad/SantadDeps.h"
 
-using santa::santad::SantadDeps;
+using santa::SantadDeps;
 
 // Number of seconds to wait between checks.
 const int kWatchdogTimeInterval = 30;

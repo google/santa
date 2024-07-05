@@ -20,12 +20,11 @@
 #include "Source/common/SystemResources.h"
 #include "Source/santad/Metrics.h"
 
-using santa::santad::event_providers::RateLimiter;
+using santa::RateLimiter;
 
-static const santa::santad::Processor kDefaultProcessor =
-  santa::santad::Processor::kFileAccessAuthorizer;
+static const santa::Processor kDefaultProcessor = santa::Processor::kFileAccessAuthorizer;
 
-namespace santa::santad::event_providers {
+namespace santa {
 
 class RateLimiterPeer : public RateLimiter {
  public:
@@ -39,9 +38,9 @@ class RateLimiterPeer : public RateLimiter {
   using RateLimiter::reset_mach_time_;
 };
 
-}  // namespace santa::santad::event_providers
+}  // namespace santa
 
-using santa::santad::event_providers::RateLimiterPeer;
+using santa::RateLimiterPeer;
 
 @interface RateLimiterTest : XCTestCase
 @end

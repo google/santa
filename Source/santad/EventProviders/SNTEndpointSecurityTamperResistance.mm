@@ -25,10 +25,10 @@
 #include "Source/santad/Metrics.h"
 
 using santa::EndpointSecurityAPI;
+using santa::EventDisposition;
 using santa::Logger;
 using santa::Message;
 using santa::WatchItemPathType;
-using santa::santad::EventDisposition;
 
 static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-driver";
 
@@ -37,11 +37,11 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
-                    processor:santa::santad::Processor::kTamperResistance];
+                    processor:santa::Processor::kTamperResistance];
   if (self) {
     _logger = logger;
 

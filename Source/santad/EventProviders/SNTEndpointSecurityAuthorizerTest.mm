@@ -33,9 +33,9 @@
 #import "Source/santad/SNTCompilerController.h"
 #import "Source/santad/SNTExecutionController.h"
 
+using santa::AuthResultCache;
+using santa::EventDisposition;
 using santa::Message;
-using santa::santad::EventDisposition;
-using santa::santad::event_providers::AuthResultCache;
 
 class MockAuthResultCache : public AuthResultCache {
  public:
@@ -72,7 +72,7 @@ class MockAuthResultCache : public AuthResultCache {
   id authClient =
     [[SNTEndpointSecurityAuthorizer alloc] initWithESAPI:mockESApi
                                                  metrics:nullptr
-                                               processor:santa::santad::Processor::kAuthorizer];
+                                               processor:santa::Processor::kAuthorizer];
 
   EXPECT_CALL(*mockESApi, ClearCache)
     .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
@@ -82,7 +82,7 @@ class MockAuthResultCache : public AuthResultCache {
   [authClient enable];
 
   for (const auto &event : expectedEventSubs) {
-    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+    XCTAssertNoThrow(santa::EventTypeToString(event));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

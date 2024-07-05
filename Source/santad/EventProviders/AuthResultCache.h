@@ -27,7 +27,7 @@
 #import "Source/common/SantaVnode.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
 
-namespace santa::santad::event_providers {
+namespace santa {
 
 enum class FlushCacheMode {
   kNonRootOnly,
@@ -87,6 +87,6 @@ class AuthResultCache {
   dispatch_queue_t q_;
 };
 
-}  // namespace santa::santad::event_providers
+}  // namespace santa
 
 #endif

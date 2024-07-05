@@ -27,7 +27,7 @@
     : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
 - (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                        logger:(std::shared_ptr<santa::Logger>)logger;
 
 @end

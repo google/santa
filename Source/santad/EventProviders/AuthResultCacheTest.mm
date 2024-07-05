@@ -27,15 +27,15 @@
 #include "Source/santad/EventProviders/AuthResultCache.h"
 #include "Source/santad/EventProviders/EndpointSecurity/MockEndpointSecurityAPI.h"
 
-using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::FlushCacheMode;
-using santa::santad::event_providers::FlushCacheReason;
+using santa::AuthResultCache;
+using santa::FlushCacheMode;
+using santa::FlushCacheReason;
 
-namespace santa::santad::event_providers {
+namespace santa {
 extern NSString *const FlushCacheReasonToString(FlushCacheReason reason);
-}
+}  // namespace santa
 
-using santa::santad::event_providers::FlushCacheReasonToString;
+using santa::FlushCacheReasonToString;
 
 // Grab the st_dev number of the root volume to match the root cache
 static uint64_t RootDevno() {

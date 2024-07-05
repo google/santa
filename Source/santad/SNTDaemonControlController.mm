@@ -36,12 +36,12 @@
 #import "Source/santad/SNTPolicyProcessor.h"
 #import "Source/santad/SNTSyncdQueue.h"
 
+using santa::AuthResultCache;
+using santa::FlushCacheMode;
+using santa::FlushCacheReason;
 using santa::Logger;
 using santa::WatchItems;
 using santa::WatchItemsState;
-using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::FlushCacheMode;
-using santa::santad::event_providers::FlushCacheReason;
 
 // Globals used by the santad watchdog thread
 uint64_t watchdogCPUEvents = 0;
