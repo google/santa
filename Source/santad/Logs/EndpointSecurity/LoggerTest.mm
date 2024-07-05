@@ -44,7 +44,7 @@ using santa::santad::event_providers::endpoint_security::EnrichedFile;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::EnrichedProcess;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::Logger;
 using santa::BasicString;
 using santa::Empty;
 using santa::Protobuf;
@@ -53,7 +53,7 @@ using santa::Null;
 using santa::Spool;
 using santa::Syslog;
 
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 
 class LoggerPeer : public Logger {
  public:
@@ -67,9 +67,9 @@ class LoggerPeer : public Logger {
   std::shared_ptr<santa::Writer> Writer() { return writer_; }
 };
 
-}  // namespace santa::santad::logs::endpoint_security
+}  // namespace santa
 
-using santa::santad::logs::endpoint_security::LoggerPeer;
+using santa::LoggerPeer;
 
 class MockSerializer : public Empty {
  public:

@@ -21,7 +21,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Logs/EndpointSecurity/Logger.h"
 
-class MockLogger : public santa::santad::logs::endpoint_security::Logger {
+class MockLogger : public santa::Logger {
  public:
   using Logger::Logger;
 

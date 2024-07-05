@@ -30,11 +30,11 @@
 
 // Forward declarations
 @class SNTStoredEvent;
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 class LoggerPeer;
 }
 
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 
 class Logger {
  public:
@@ -68,13 +68,13 @@ class Logger {
 
   void Flush();
 
-  friend class santa::santad::logs::endpoint_security::LoggerPeer;
+  friend class santa::LoggerPeer;
 
  private:
   std::shared_ptr<santa::Serializer> serializer_;
   std::shared_ptr<santa::Writer> writer_;
 };
 
-}  // namespace santa::santad::logs::endpoint_security
+}  // namespace santa
 
 #endif

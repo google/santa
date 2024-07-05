@@ -50,11 +50,11 @@ extern std::string GetAccessTypeString(es_event_type_t event_type);
 extern std::string GetFileAccessPolicyDecisionString(FileAccessPolicyDecision decision);
 }  // namespace santa
 
-using santaGetAccessTypeString;
-using santaGetDecisionString;
-using santaGetFileAccessPolicyDecisionString;
-using santaGetModeString;
-using santaGetReasonString;
+using santa::GetAccessTypeString;
+using santa::GetDecisionString;
+using santa::GetFileAccessPolicyDecisionString;
+using santa::GetModeString;
+using santa::GetReasonString;
 
 std::string BasicStringSerializeMessage(std::shared_ptr<MockEndpointSecurityAPI> mockESApi,
                                         es_message_t *esMsg, SNTDecisionCache *decisionCache) {

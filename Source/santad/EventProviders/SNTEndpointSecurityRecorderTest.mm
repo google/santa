@@ -47,7 +47,7 @@ using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::Logger;
 
 class MockEnricher : public Enricher {
  public:

@@ -22,7 +22,7 @@
 
 #include "Source/common/TestUtils.h"
 
-using santaSanitizableString;
+using santa::SanitizableString;
 
 @interface SanitizableStringTest : XCTestCase
 @end

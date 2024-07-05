@@ -41,7 +41,7 @@ using santa::WatchItemsState;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::Logger;
 
 // Globals used by the santad watchdog thread
 uint64_t watchdogCPUEvents = 0;

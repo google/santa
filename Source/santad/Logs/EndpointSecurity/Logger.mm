@@ -39,7 +39,7 @@ using santa::Null;
 using santa::Spool;
 using santa::Syslog;
 
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 
 // Flush the write buffer every 5 seconds
 static const uint64_t kFlushBufferTimeoutMS = 10000;
@@ -120,4 +120,4 @@ void Logger::Flush() {
   writer_->Flush();
 }
 
-}  // namespace santa::santad::logs::endpoint_security
+}  // namespace santa

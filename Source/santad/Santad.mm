@@ -49,7 +49,7 @@ using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::Logger;
 
 static void EstablishSyncServiceConnection(SNTSyncdQueue *syncd_queue) {
   // The syncBaseURL check is here to stop retrying if the sync server is removed.

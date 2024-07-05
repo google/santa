@@ -54,8 +54,8 @@ using santa::santad::event_providers::endpoint_security::EnrichedEventType;
 using santa::santad::event_providers::endpoint_security::EnrichedMessage;
 using santa::santad::event_providers::endpoint_security::Enricher;
 using santa::santad::event_providers::endpoint_security::Message;
-using santaProtobuf;
-using santaSerializer;
+using santa::Protobuf;
+using santa::Serializer;
 
 namespace pbv1 = ::santa::pb::v1;
 
@@ -74,17 +74,17 @@ extern ::pbv1::OpenSSHLogin::Result GetOpenSSHLoginResultType(es_openssh_login_r
 #endif  // HAVE_MACOS_13
 }  // namespace santa
 
-using santaEncodeEntitlements;
-using santaEncodeExitStatus;
-using santaGetAccessType;
-using santaGetDecisionEnum;
-using santaGetFileDescriptorType;
-using santaGetModeEnum;
-using santaGetPolicyDecision;
-using santaGetReasonEnum;
+using santa::EncodeEntitlements;
+using santa::EncodeExitStatus;
+using santa::GetAccessType;
+using santa::GetDecisionEnum;
+using santa::GetFileDescriptorType;
+using santa::GetModeEnum;
+using santa::GetPolicyDecision;
+using santa::GetReasonEnum;
 #if HAVE_MACOS_13
-using santaGetOpenSSHLoginResultType;
-using santaGetSocketAddressType;
+using santa::GetOpenSSHLoginResultType;
+using santa::GetSocketAddressType;
 #endif  // HAVE_MACOS_13
 
 @interface ProtobufTest : XCTestCase

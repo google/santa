@@ -39,7 +39,7 @@ using santa::santad::event_providers::FlushCacheMode;
 using santa::santad::event_providers::FlushCacheReason;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::Logger;
 
 // Defined operations for startup metrics:
 // Device shouldn't be operated on (e.g. not a mass storage device)

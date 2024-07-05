@@ -34,6 +34,6 @@
     (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
         notificationQueue:(SNTNotificationQueue *)notQueue
                syncdQueue:(SNTSyncdQueue *)syncdQueue
-                   logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
+                   logger:(std::shared_ptr<santa::Logger>)logger
                watchItems:(std::shared_ptr<santa::WatchItems>)watchItems;
 @end

@@ -19,7 +19,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/EnrichedTypes.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Empty.h"
 
-using santaEmpty;
+using santa::Empty;
 
 namespace es = santa::santad::event_providers::endpoint_security;
 

@@ -38,7 +38,7 @@ using santa::santad::TTYWriter;
 using santa::santad::event_providers::AuthResultCache;
 using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
 using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::Logger;
 
 namespace santa::santad {
 

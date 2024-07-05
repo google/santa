@@ -33,7 +33,7 @@
 #import "Source/santad/SNTDecisionCache.h"
 
 using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::Logger;
 
 static const pid_t PID_MAX = 99999;
 
