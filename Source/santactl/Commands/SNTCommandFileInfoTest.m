@@ -33,7 +33,6 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 - (SNTAttributeBlock)codeSigned;
 - (instancetype)initWithDaemonConnection:(MOLXPCConnection *)daemonConn;
 - (NSArray *)parseArguments:(NSArray *)arguments;
-- (void)printInfoForFile:(NSString *)file;
 
 @end
 
