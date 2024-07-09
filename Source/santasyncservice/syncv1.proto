@@ -199,7 +199,7 @@ message Event {
 
 message EventUploadRequest {
   repeated Event events = 1;
-  // The UUID of the machine that generated this event.
+  // The UUID of the machine where the event(s) occurred
   string machine_id = 2;
 }
 
