@@ -24,9 +24,7 @@ namespace santa::santad::process_tree {
 // Inform the tree of the ES event in msg.
 // This is idempotent on the tree, so can be called from multiple places with
 // the same msg.
-void InformFromESEvent(
-    ProcessTree &tree,
-    const santa::santad::event_providers::endpoint_security::Message &msg);
+void InformFromESEvent(ProcessTree &tree, const santa::Message &msg);
 
 }  // namespace santa::santad::process_tree
 

@@ -22,7 +22,7 @@
 #include <string>
 #include <string_view>
 
-namespace santa::common {
+namespace santa {
 
 static inline std::string_view NSStringToUTF8StringView(NSString *str) {
   return std::string_view(str.UTF8String, [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
@@ -53,6 +53,6 @@ static inline std::string_view StringTokenToStringView(es_string_token_t es_str)
   return std::string_view(es_str.data, es_str.length);
 }
 
-}  // namespace santa::common
+}  // namespace santa
 
 #endif

@@ -35,37 +35,37 @@
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Utilities.h"
 #import "Source/santad/SNTDecisionCache.h"
 
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::EnrichedClose;
-using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
-using santa::santad::event_providers::endpoint_security::EnrichedEventType;
-using santa::santad::event_providers::endpoint_security::EnrichedExchange;
-using santa::santad::event_providers::endpoint_security::EnrichedExec;
-using santa::santad::event_providers::endpoint_security::EnrichedExit;
-using santa::santad::event_providers::endpoint_security::EnrichedFork;
-using santa::santad::event_providers::endpoint_security::EnrichedLink;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginLogin;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginLogout;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock;
-using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin;
-using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::EnrichedRename;
-using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
-using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
-using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::serializers::Utilities::MountFromName;
-using santa::santad::logs::endpoint_security::serializers::Utilities::NonNull;
-using santa::santad::logs::endpoint_security::serializers::Utilities::Pid;
-using santa::santad::logs::endpoint_security::serializers::Utilities::Pidversion;
-using santa::santad::logs::endpoint_security::serializers::Utilities::RealGroup;
-using santa::santad::logs::endpoint_security::serializers::Utilities::RealUser;
+using santa::EndpointSecurityAPI;
+using santa::EnrichedClose;
+using santa::EnrichedCSInvalidated;
+using santa::EnrichedEventType;
+using santa::EnrichedExchange;
+using santa::EnrichedExec;
+using santa::EnrichedExit;
+using santa::EnrichedFork;
+using santa::EnrichedLink;
+using santa::EnrichedLoginLogin;
+using santa::EnrichedLoginLogout;
+using santa::EnrichedLoginWindowSessionLock;
+using santa::EnrichedLoginWindowSessionLogin;
+using santa::EnrichedLoginWindowSessionLogout;
+using santa::EnrichedLoginWindowSessionUnlock;
+using santa::EnrichedOpenSSHLogin;
+using santa::EnrichedOpenSSHLogout;
+using santa::EnrichedProcess;
+using santa::EnrichedRename;
+using santa::EnrichedScreenSharingAttach;
+using santa::EnrichedScreenSharingDetach;
+using santa::EnrichedUnlink;
+using santa::Message;
+using santa::MountFromName;
+using santa::NonNull;
+using santa::Pid;
+using santa::Pidversion;
+using santa::RealGroup;
+using santa::RealUser;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 static inline SanitizableString FilePath(const es_file_t *file) {
   return SanitizableString(file);
@@ -365,7 +365,7 @@ std::vector<uint8_t> BasicString::SerializeMessage(const EnrichedExec &msg, SNTC
   str.append("|path=");
   str.append(FilePath(msg->event.exec.target->executable).Sanitized());
 
-  NSString *origPath = Utilities::OriginalPathForTranslocation(msg->event.exec.target);
+  NSString *origPath = santa::OriginalPathForTranslocation(msg->event.exec.target);
   if (origPath) {
     str.append("|origpath=");
     str.append(SanitizableString(origPath).Sanitized());
@@ -685,7 +685,7 @@ std::vector<uint8_t> BasicString::SerializeAllowlist(const Message &msg,
   str.append("|pidversion=");
   str.append(std::to_string(Pidversion(msg->process->audit_token)));
   str.append("|path=");
-  str.append(FilePath(Utilities::GetAllowListTargetFile(msg)).Sanitized());
+  str.append(FilePath(santa::GetAllowListTargetFile(msg)).Sanitized());
   str.append("|sha256=");
   str.append(hash);
 
@@ -715,9 +715,9 @@ std::vector<uint8_t> BasicString::SerializeDiskAppeared(NSDictionary *props) {
   NSString *dmg_path = nil;
   NSString *serial = nil;
   if ([props[@"DADeviceModel"] isEqual:@"Disk Image"]) {
-    dmg_path = Utilities::DiskImageForDevice(props[@"DADevicePath"]);
+    dmg_path = santa::DiskImageForDevice(props[@"DADevicePath"]);
   } else {
-    serial = Utilities::SerialForDevice(props[@"DADevicePath"]);
+    serial = santa::SerialForDevice(props[@"DADevicePath"]);
   }
 
   NSString *model = [NSString
@@ -768,4 +768,4 @@ std::vector<uint8_t> BasicString::SerializeDiskDisappeared(NSDictionary *props) 
   return FinalizeString(str);
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa

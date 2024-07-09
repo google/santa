@@ -38,11 +38,11 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityDeviceManager.h"
 #include "Source/santad/Metrics.h"
 
-using santa::santad::EventDisposition;
-using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::FlushCacheMode;
-using santa::santad::event_providers::FlushCacheReason;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::AuthResultCache;
+using santa::EventDisposition;
+using santa::FlushCacheMode;
+using santa::FlushCacheReason;
+using santa::Message;
 
 class MockAuthResultCache : public AuthResultCache {
  public:
@@ -498,10 +498,10 @@ class MockAuthResultCache : public AuthResultCache {
   };
   auto mockESApi = std::make_shared<MockEndpointSecurityAPI>();
 
-  id deviceClient = [[SNTEndpointSecurityDeviceManager alloc]
-    initWithESAPI:mockESApi
-          metrics:nullptr
-        processor:santa::santad::Processor::kDeviceManager];
+  id deviceClient =
+    [[SNTEndpointSecurityDeviceManager alloc] initWithESAPI:mockESApi
+                                                    metrics:nullptr
+                                                  processor:santa::Processor::kDeviceManager];
 
   EXPECT_CALL(*mockESApi, ClearCache(testing::_))
     .After(EXPECT_CALL(*mockESApi, Subscribe(testing::_, expectedEventSubs))
@@ -511,7 +511,7 @@ class MockAuthResultCache : public AuthResultCache {
   [deviceClient enable];
 
   for (const auto &event : expectedEventSubs) {
-    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+    XCTAssertNoThrow(santa::EventTypeToString(event));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

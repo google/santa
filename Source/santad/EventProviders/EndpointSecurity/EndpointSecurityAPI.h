@@ -25,7 +25,7 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurityAPI> {
  public:
@@ -43,9 +43,9 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
   virtual bool InvertTargetPathMuting(const Client &client);
 
   virtual bool MuteTargetPath(const Client &client, std::string_view path,
-                              santa::santad::data_layer::WatchItemPathType path_type);
+                              santa::WatchItemPathType path_type);
   virtual bool UnmuteTargetPath(const Client &client, std::string_view path,
-                                santa::santad::data_layer::WatchItemPathType path_type);
+                                santa::WatchItemPathType path_type);
 
   virtual void RetainMessage(const es_message_t *msg);
   virtual void ReleaseMessage(const es_message_t *msg);
@@ -69,6 +69,6 @@ class EndpointSecurityAPI : public std::enable_shared_from_this<EndpointSecurity
   virtual const es_fd_t *ExecFD(const es_event_exec_t *event, uint32_t index);
 };
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa
 
 #endif

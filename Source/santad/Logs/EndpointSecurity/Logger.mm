@@ -27,19 +27,19 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #include "Source/santad/SNTDecisionCache.h"
 
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::serializers::BasicString;
-using santa::santad::logs::endpoint_security::serializers::Empty;
-using santa::santad::logs::endpoint_security::serializers::Protobuf;
-using santa::santad::logs::endpoint_security::writers::File;
-using santa::santad::logs::endpoint_security::writers::Null;
-using santa::santad::logs::endpoint_security::writers::Spool;
-using santa::santad::logs::endpoint_security::writers::Syslog;
+using santa::BasicString;
+using santa::Empty;
+using santa::EndpointSecurityAPI;
+using santa::EnrichedMessage;
+using santa::EnrichedProcess;
+using santa::File;
+using santa::Message;
+using santa::Null;
+using santa::Protobuf;
+using santa::Spool;
+using santa::Syslog;
 
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 
 // Flush the write buffer every 5 seconds
 static const uint64_t kFlushBufferTimeoutMS = 10000;
@@ -81,8 +81,7 @@ std::unique_ptr<Logger> Logger::Create(std::shared_ptr<EndpointSecurityAPI> esap
   }
 }
 
-Logger::Logger(std::shared_ptr<serializers::Serializer> serializer,
-               std::shared_ptr<writers::Writer> writer)
+Logger::Logger(std::shared_ptr<santa::Serializer> serializer, std::shared_ptr<santa::Writer> writer)
     : serializer_(std::move(serializer)), writer_(std::move(writer)) {}
 
 void Logger::Log(std::unique_ptr<EnrichedMessage> msg) {
@@ -107,11 +106,10 @@ void Logger::LogDiskDisappeared(NSDictionary *props) {
   writer_->Write(serializer_->SerializeDiskDisappeared(props));
 }
 
-void Logger::LogFileAccess(
-  const std::string &policy_version, const std::string &policy_name,
-  const santa::santad::event_providers::endpoint_security::Message &msg,
-  const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-  const std::string &target, FileAccessPolicyDecision decision) {
+void Logger::LogFileAccess(const std::string &policy_version, const std::string &policy_name,
+                           const santa::Message &msg,
+                           const santa::EnrichedProcess &enriched_process,
+                           const std::string &target, FileAccessPolicyDecision decision) {
   writer_->Write(serializer_->SerializeFileAccess(policy_version, policy_name, msg,
                                                   enriched_process, target, decision));
 }
@@ -120,4 +118,4 @@ void Logger::Flush() {
   writer_->Flush();
 }
 
-}  // namespace santa::santad::logs::endpoint_security
+}  // namespace santa

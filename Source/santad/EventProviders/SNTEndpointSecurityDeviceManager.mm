@@ -33,13 +33,13 @@
 #include "Source/santad/EventProviders/EndpointSecurity/Message.h"
 #include "Source/santad/Metrics.h"
 
-using santa::santad::EventDisposition;
-using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::FlushCacheMode;
-using santa::santad::event_providers::FlushCacheReason;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::AuthResultCache;
+using santa::EndpointSecurityAPI;
+using santa::EventDisposition;
+using santa::FlushCacheMode;
+using santa::FlushCacheReason;
+using santa::Logger;
+using santa::Message;
 
 // Defined operations for startup metrics:
 // Device shouldn't be operated on (e.g. not a mass storage device)
@@ -178,7 +178,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger
               authResultCache:(std::shared_ptr<AuthResultCache>)authResultCache
                 blockUSBMount:(BOOL)blockUSBMount
@@ -186,7 +186,7 @@ NS_ASSUME_NONNULL_BEGIN
            startupPreferences:(SNTDeviceManagerStartupPreferences)startupPrefs {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
-                    processor:santa::santad::Processor::kDeviceManager];
+                    processor:santa::Processor::kDeviceManager];
   if (self) {
     _logger = logger;
     _authResultCache = authResultCache;

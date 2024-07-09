@@ -34,7 +34,7 @@
 #import "Source/santad/SNTDecisionCache.h"
 #import "Source/santad/SNTExecutionController.h"
 
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Message;
 
 using PostActionBlock = bool (^)(SNTAction);
 using VerifyPostActionBlock = PostActionBlock (^)(SNTAction);

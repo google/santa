@@ -50,16 +50,16 @@ using JsonPrintOptions = google::protobuf::json::PrintOptions;
 using JsonParseOptions = ::google::protobuf::json::ParseOptions;
 using google::protobuf::json::JsonStringToMessage;
 using google::protobuf::json::MessageToJsonString;
-using santa::santad::event_providers::endpoint_security::EnrichedEventType;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::serializers::Protobuf;
-using santa::santad::logs::endpoint_security::serializers::Serializer;
+using santa::EnrichedEventType;
+using santa::EnrichedMessage;
+using santa::Enricher;
+using santa::Message;
+using santa::Protobuf;
+using santa::Serializer;
 
 namespace pbv1 = ::santa::pb::v1;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 extern void EncodeExitStatus(::pbv1::Exit *pbExit, int exitStatus);
 extern void EncodeEntitlements(::pbv1::Execution *pb_exec, SNTCachedDecision *cd);
 extern ::pbv1::Execution::Decision GetDecisionEnum(SNTEventState event_state);
@@ -72,19 +72,19 @@ extern ::pbv1::FileAccess::PolicyDecision GetPolicyDecision(FileAccessPolicyDeci
 extern ::pbv1::SocketAddress::Type GetSocketAddressType(es_address_type_t type);
 extern ::pbv1::OpenSSHLogin::Result GetOpenSSHLoginResultType(es_openssh_login_result_type_t type);
 #endif  // HAVE_MACOS_13
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
-using santa::santad::logs::endpoint_security::serializers::EncodeEntitlements;
-using santa::santad::logs::endpoint_security::serializers::EncodeExitStatus;
-using santa::santad::logs::endpoint_security::serializers::GetAccessType;
-using santa::santad::logs::endpoint_security::serializers::GetDecisionEnum;
-using santa::santad::logs::endpoint_security::serializers::GetFileDescriptorType;
-using santa::santad::logs::endpoint_security::serializers::GetModeEnum;
-using santa::santad::logs::endpoint_security::serializers::GetPolicyDecision;
-using santa::santad::logs::endpoint_security::serializers::GetReasonEnum;
+using santa::EncodeEntitlements;
+using santa::EncodeExitStatus;
+using santa::GetAccessType;
+using santa::GetDecisionEnum;
+using santa::GetFileDescriptorType;
+using santa::GetModeEnum;
+using santa::GetPolicyDecision;
+using santa::GetReasonEnum;
 #if HAVE_MACOS_13
-using santa::santad::logs::endpoint_security::serializers::GetOpenSSHLoginResultType;
-using santa::santad::logs::endpoint_security::serializers::GetSocketAddressType;
+using santa::GetOpenSSHLoginResultType;
+using santa::GetSocketAddressType;
 #endif  // HAVE_MACOS_13
 
 @interface ProtobufTest : XCTestCase

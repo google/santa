@@ -33,16 +33,13 @@ typedef void (^SNTFileAccessBlockCallback)(SNTFileAccessEvent *event, NSString *
 @interface SNTEndpointSecurityFileAccessAuthorizer
     : SNTEndpointSecurityClient <SNTEndpointSecurityDynamicEventHandler>
 
-- (instancetype)
-  initWithESAPI:
-    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-        metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-         logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-     watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems
-       enricher:
-         (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
-  decisionCache:(SNTDecisionCache *)decisionCache
-      ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter;
+- (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
+                       logger:(std::shared_ptr<santa::Logger>)logger
+                   watchItems:(std::shared_ptr<santa::WatchItems>)watchItems
+                     enricher:(std::shared_ptr<santa::Enricher>)enricher
+                decisionCache:(SNTDecisionCache *)decisionCache
+                    ttyWriter:(std::shared_ptr<santa::TTYWriter>)ttyWriter;
 
 @property SNTFileAccessBlockCallback fileAccessBlockCallback;
 

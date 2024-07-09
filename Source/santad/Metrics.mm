@@ -87,7 +87,7 @@ static NSString *const kFileAccessPolicyDecisionAllowedAuditOnly = @"AllowedAudi
 
 static NSString *const kFileAccessMetricsAccessType = @"access";
 
-namespace santa::santad {
+namespace santa {
 
 NSString *const ProcessorToString(Processor processor) {
   switch (processor) {
@@ -431,9 +431,8 @@ void Metrics::StopPoll() {
   });
 }
 
-void Metrics::SetEventMetrics(
-  Processor processor, EventDisposition event_disposition, int64_t nanos,
-  const santa::santad::event_providers::endpoint_security::Message &msg) {
+void Metrics::SetEventMetrics(Processor processor, EventDisposition event_disposition,
+                              int64_t nanos, const santa::Message &msg) {
   dispatch_sync(events_q_, ^{
     event_counts_cache_[EventCountTuple{processor, msg->event_type, event_disposition}]++;
     event_times_cache_[EventTimesTuple{processor, msg->event_type}] = nanos;
@@ -495,4 +494,4 @@ void Metrics::SetFileAccessEventMetrics(std::string policy_version, std::string 
   });
 }
 
-}  // namespace santa::santad
+}  // namespace santa

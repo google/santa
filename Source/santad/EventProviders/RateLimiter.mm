@@ -17,10 +17,10 @@
 #include "Source/common/BranchPrediction.h"
 #include "Source/common/SystemResources.h"
 
-using santa::santad::Metrics;
-using santa::santad::Processor;
+using santa::Metrics;
+using santa::Processor;
 
-namespace santa::santad::event_providers {
+namespace santa {
 
 std::shared_ptr<RateLimiter> RateLimiter::Create(std::shared_ptr<Metrics> metrics,
                                                  Processor processor, uint16_t max_qps,
@@ -82,4 +82,4 @@ RateLimiter::Decision RateLimiter::Decide(uint64_t cur_mach_time) {
   return decision;
 }
 
-}  // namespace santa::santad::event_providers
+}  // namespace santa

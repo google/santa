@@ -22,7 +22,7 @@
 
 #include "Source/common/TestUtils.h"
 
-using santa::santad::logs::endpoint_security::serializers::SanitizableString;
+using santa::SanitizableString;
 
 @interface SanitizableStringTest : XCTestCase
 @end

@@ -29,11 +29,9 @@
 ///
 @interface SNTDaemonControlController : NSObject <SNTDaemonControlXPC>
 
-- (instancetype)
-  initWithAuthResultCache:
-    (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache
-        notificationQueue:(SNTNotificationQueue *)notQueue
-               syncdQueue:(SNTSyncdQueue *)syncdQueue
-                   logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-               watchItems:(std::shared_ptr<santa::santad::data_layer::WatchItems>)watchItems;
+- (instancetype)initWithAuthResultCache:(std::shared_ptr<santa::AuthResultCache>)authResultCache
+                      notificationQueue:(SNTNotificationQueue *)notQueue
+                             syncdQueue:(SNTSyncdQueue *)syncdQueue
+                                 logger:(std::shared_ptr<santa::Logger>)logger
+                             watchItems:(std::shared_ptr<santa::WatchItems>)watchItems;
 @end

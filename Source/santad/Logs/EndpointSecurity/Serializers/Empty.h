@@ -23,68 +23,41 @@
 #include "Source/common/SNTCachedDecision.h"
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Serializer.h"
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 class Empty : public Serializer {
  public:
   static std::shared_ptr<Empty> Create();
   Empty();
 
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedClose &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedExchange &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedExec &,
-    SNTCachedDecision *) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedExit &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedFork &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedLink &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedRename &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedUnlink &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin &)
-    override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout &)
-    override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock &)
-    override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock &)
-    override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach &)
-    override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach &)
-    override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedLoginLogin &) override;
-  std::vector<uint8_t> SerializeMessage(
-    const santa::santad::event_providers::endpoint_security::EnrichedLoginLogout &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedClose &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedExchange &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedExec &, SNTCachedDecision *) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedExit &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedFork &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedLink &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedRename &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedUnlink &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedCSInvalidated &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedLoginWindowSessionLogin &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedLoginWindowSessionLogout &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedLoginWindowSessionLock &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedLoginWindowSessionUnlock &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedScreenSharingAttach &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedScreenSharingDetach &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedOpenSSHLogin &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedOpenSSHLogout &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedLoginLogin &) override;
+  std::vector<uint8_t> SerializeMessage(const santa::EnrichedLoginLogout &) override;
 
-  std::vector<uint8_t> SerializeFileAccess(
-    const std::string &policy_version, const std::string &policy_name,
-    const santa::santad::event_providers::endpoint_security::Message &msg,
-    const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-    const std::string &target, FileAccessPolicyDecision decision) override;
+  std::vector<uint8_t> SerializeFileAccess(const std::string &policy_version,
+                                           const std::string &policy_name,
+                                           const santa::Message &msg,
+                                           const santa::EnrichedProcess &enriched_process,
+                                           const std::string &target,
+                                           FileAccessPolicyDecision decision) override;
 
-  std::vector<uint8_t> SerializeAllowlist(
-    const santa::santad::event_providers::endpoint_security::Message &,
-    const std::string_view) override;
+  std::vector<uint8_t> SerializeAllowlist(const santa::Message &, const std::string_view) override;
 
   std::vector<uint8_t> SerializeBundleHashingEvent(SNTStoredEvent *) override;
 
@@ -92,6 +65,6 @@ class Empty : public Serializer {
   std::vector<uint8_t> SerializeDiskDisappeared(NSDictionary *) override;
 };
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa
 
 #endif

@@ -27,15 +27,15 @@
 #include "Source/santad/Metrics.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 
-using santa::common::PrefixTree;
-using santa::common::Unit;
-using santa::santad::EventDisposition;
-using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::AuthResultCache;
+using santa::EndpointSecurityAPI;
+using santa::EnrichedMessage;
+using santa::Enricher;
+using santa::EventDisposition;
+using santa::Logger;
+using santa::Message;
+using santa::PrefixTree;
+using santa::Unit;
 using santa::santad::process_tree::ProcessTree;
 
 es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
@@ -62,7 +62,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
 }
 
 - (instancetype)initWithESAPI:(std::shared_ptr<EndpointSecurityAPI>)esApi
-                      metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
                        logger:(std::shared_ptr<Logger>)logger
                      enricher:(std::shared_ptr<Enricher>)enricher
            compilerController:(SNTCompilerController *)compilerController
@@ -71,7 +71,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
                   processTree:(std::shared_ptr<ProcessTree>)processTree {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:std::move(metrics)
-                    processor:santa::santad::Processor::kRecorder
+                    processor:santa::Processor::kRecorder
                   processTree:std::move(processTree)];
   if (self) {
     _enricher = enricher;
@@ -142,7 +142,7 @@ es_file_t *GetTargetFileForPrefixTree(const es_message_t *msg) {
       }
 
       // Only log file changes that match the given regex
-      NSString *targetPath = santa::common::StringToNSString(targetFile->path.data);
+      NSString *targetPath = santa::StringToNSString(targetFile->path.data);
       if (![[self.configurator fileChangesRegex]
             numberOfMatchesInString:targetPath
                             options:0

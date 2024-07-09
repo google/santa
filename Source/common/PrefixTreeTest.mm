@@ -17,7 +17,7 @@
 #define SANTA_PREFIX_TREE_DEBUG 1
 #include "Source/common/PrefixTree.h"
 
-using santa::common::PrefixTree;
+using santa::PrefixTree;
 
 @interface PrefixTreeTest : XCTestCase
 @end

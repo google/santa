@@ -39,21 +39,21 @@
 #include "Source/santad/Logs/EndpointSecurity/Writers/Syslog.h"
 #include "Source/santad/Logs/EndpointSecurity/Writers/Writer.h"
 
-using santa::santad::event_providers::endpoint_security::EnrichedClose;
-using santa::santad::event_providers::endpoint_security::EnrichedFile;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
-using santa::santad::logs::endpoint_security::serializers::BasicString;
-using santa::santad::logs::endpoint_security::serializers::Empty;
-using santa::santad::logs::endpoint_security::serializers::Protobuf;
-using santa::santad::logs::endpoint_security::writers::File;
-using santa::santad::logs::endpoint_security::writers::Null;
-using santa::santad::logs::endpoint_security::writers::Spool;
-using santa::santad::logs::endpoint_security::writers::Syslog;
+using santa::BasicString;
+using santa::Empty;
+using santa::EnrichedClose;
+using santa::EnrichedFile;
+using santa::EnrichedMessage;
+using santa::EnrichedProcess;
+using santa::File;
+using santa::Logger;
+using santa::Message;
+using santa::Null;
+using santa::Protobuf;
+using santa::Spool;
+using santa::Syslog;
 
-namespace santa::santad::logs::endpoint_security {
+namespace santa {
 
 class LoggerPeer : public Logger {
  public:
@@ -62,14 +62,14 @@ class LoggerPeer : public Logger {
 
   LoggerPeer(std::unique_ptr<Logger> l) : Logger(l->serializer_, l->writer_) {}
 
-  std::shared_ptr<serializers::Serializer> Serializer() { return serializer_; }
+  std::shared_ptr<santa::Serializer> Serializer() { return serializer_; }
 
-  std::shared_ptr<writers::Writer> Writer() { return writer_; }
+  std::shared_ptr<santa::Writer> Writer() { return writer_; }
 };
 
-}  // namespace santa::santad::logs::endpoint_security
+}  // namespace santa
 
-using santa::santad::logs::endpoint_security::LoggerPeer;
+using santa::LoggerPeer;
 
 class MockSerializer : public Empty {
  public:
@@ -81,12 +81,10 @@ class MockSerializer : public Empty {
   MOCK_METHOD(std::vector<uint8_t>, SerializeDiskAppeared, (NSDictionary *));
   MOCK_METHOD(std::vector<uint8_t>, SerializeDiskDisappeared, (NSDictionary *));
 
-  MOCK_METHOD(
-    std::vector<uint8_t>, SerializeFileAccess,
-    (const std::string &policy_version, const std::string &policy_name,
-     const santa::santad::event_providers::endpoint_security::Message &msg,
-     const santa::santad::event_providers::endpoint_security::EnrichedProcess &enriched_process,
-     const std::string &target, FileAccessPolicyDecision decision));
+  MOCK_METHOD(std::vector<uint8_t>, SerializeFileAccess,
+              (const std::string &policy_version, const std::string &policy_name,
+               const santa::Message &msg, const santa::EnrichedProcess &enriched_process,
+               const std::string &target, FileAccessPolicyDecision decision));
 };
 
 class MockWriter : public Null {

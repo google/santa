@@ -18,7 +18,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <assert.h>
 
-namespace santa::common {
+namespace santa {
 
 template <typename ElementT, ElementT InvalidV, auto RetainFunc,
           auto ReleaseFunc>
@@ -75,6 +75,6 @@ class ScopedTypeRef {
   ElementT object_;
 };
 
-}  // namespace santa::common
+}  // namespace santa
 
 #endif

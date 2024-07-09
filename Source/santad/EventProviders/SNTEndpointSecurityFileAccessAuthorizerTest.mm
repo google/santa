@@ -44,8 +44,8 @@
 #include "Source/santad/Logs/EndpointSecurity/MockLogger.h"
 #include "Source/santad/SNTDecisionCache.h"
 
-using santa::santad::data_layer::WatchItemPolicy;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Message;
+using santa::WatchItemPolicy;
 
 extern NSString *kBadCertHash;
 
@@ -744,12 +744,12 @@ void ClearWatchItemPolicyProcess(WatchItemPolicy::Process &proc) {
   id fileAccessClient = [[SNTEndpointSecurityFileAccessAuthorizer alloc]
     initWithESAPI:mockESApi
           metrics:nullptr
-        processor:santa::santad::Processor::kFileAccessAuthorizer];
+        processor:santa::Processor::kFileAccessAuthorizer];
 
   [fileAccessClient enable];
 
   for (const auto &event : expectedEventSubs) {
-    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+    XCTAssertNoThrow(santa::EventTypeToString(event));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

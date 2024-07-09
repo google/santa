@@ -27,14 +27,10 @@
 @interface SNTEndpointSecurityAuthorizer
     : SNTEndpointSecurityClient <SNTEndpointSecurityEventHandler>
 
-- (instancetype)
-       initWithESAPI:
-         (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)
-           esApi
-             metrics:(std::shared_ptr<santa::santad::Metrics>)metrics
-      execController:(SNTExecutionController *)execController
-  compilerController:(SNTCompilerController *)compilerController
-     authResultCache:
-       (std::shared_ptr<santa::santad::event_providers::AuthResultCache>)authResultCache;
+- (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<santa::Metrics>)metrics
+               execController:(SNTExecutionController *)execController
+           compilerController:(SNTCompilerController *)compilerController
+              authResultCache:(std::shared_ptr<santa::AuthResultCache>)authResultCache;
 
 @end

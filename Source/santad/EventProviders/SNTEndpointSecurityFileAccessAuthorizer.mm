@@ -51,21 +51,21 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
-using santa::common::OptionalStringToNSString;
-using santa::common::StringToNSString;
-using santa::santad::EventDisposition;
-using santa::santad::FileAccessMetricStatus;
-using santa::santad::Metrics;
-using santa::santad::TTYWriter;
-using santa::santad::data_layer::WatchItemPathType;
-using santa::santad::data_layer::WatchItemPolicy;
-using santa::santad::data_layer::WatchItems;
-using santa::santad::event_providers::RateLimiter;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::EnrichOptions;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::EndpointSecurityAPI;
+using santa::Enricher;
+using santa::EnrichOptions;
+using santa::EventDisposition;
+using santa::FileAccessMetricStatus;
+using santa::Logger;
+using santa::Message;
+using santa::Metrics;
+using santa::OptionalStringToNSString;
+using santa::RateLimiter;
+using santa::StringToNSString;
+using santa::TTYWriter;
+using santa::WatchItemPathType;
+using santa::WatchItemPolicy;
+using santa::WatchItems;
 
 NSString *kBadCertHash = @"BAD_CERT_HASH";
 
@@ -396,19 +396,16 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
   std::shared_ptr<Metrics> _metrics;
 }
 
-- (instancetype)
-  initWithESAPI:
-    (std::shared_ptr<santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>)esApi
-        metrics:(std::shared_ptr<Metrics>)metrics
-         logger:(std::shared_ptr<santa::santad::logs::endpoint_security::Logger>)logger
-     watchItems:(std::shared_ptr<WatchItems>)watchItems
-       enricher:
-         (std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>)enricher
-  decisionCache:(SNTDecisionCache *)decisionCache
-      ttyWriter:(std::shared_ptr<santa::santad::TTYWriter>)ttyWriter {
+- (instancetype)initWithESAPI:(std::shared_ptr<santa::EndpointSecurityAPI>)esApi
+                      metrics:(std::shared_ptr<Metrics>)metrics
+                       logger:(std::shared_ptr<santa::Logger>)logger
+                   watchItems:(std::shared_ptr<WatchItems>)watchItems
+                     enricher:(std::shared_ptr<santa::Enricher>)enricher
+                decisionCache:(SNTDecisionCache *)decisionCache
+                    ttyWriter:(std::shared_ptr<santa::TTYWriter>)ttyWriter {
   self = [super initWithESAPI:std::move(esApi)
                       metrics:metrics
-                    processor:santa::santad::Processor::kFileAccessAuthorizer];
+                    processor:santa::Processor::kFileAccessAuthorizer];
   if (self) {
     _watchItems = std::move(watchItems);
     _logger = std::move(logger);
@@ -419,8 +416,8 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
 
     _configurator = [SNTConfigurator configurator];
 
-    _rateLimiter = RateLimiter::Create(_metrics, santa::santad::Processor::kFileAccessAuthorizer,
-                                       kDefaultRateLimitQPS);
+    _rateLimiter =
+      RateLimiter::Create(_metrics, santa::Processor::kFileAccessAuthorizer, kDefaultRateLimitQPS);
 
     SNTMetricBooleanGauge *famEnabled = [[SNTMetricSet sharedInstance]
       booleanGaugeWithName:@"/santa/fam_enabled"
@@ -797,7 +794,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
                cacheable:(policyResult == ES_AUTH_RESULT_ALLOW && !allow_read_access)];
 }
 
-- (void)handleMessage:(santa::santad::event_providers::endpoint_security::Message &&)esMsg
+- (void)handleMessage:(santa::Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   SNTOverrideFileAccessAction overrideAction = [self.configurator overrideFileAccessAction];
 

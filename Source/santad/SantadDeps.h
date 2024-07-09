@@ -37,7 +37,7 @@
 #import "Source/santad/SNTSyncdQueue.h"
 #include "Source/santad/TTYWriter.h"
 
-namespace santa::santad {
+namespace santa {
 
 class SantadDeps {
  public:
@@ -45,64 +45,52 @@ class SantadDeps {
                                             SNTMetricSet *metric_set);
 
   SantadDeps(
-      std::shared_ptr<santa::santad::event_providers::endpoint_security::
-                          EndpointSecurityAPI>
-          esapi,
-      std::unique_ptr<santa::santad::logs::endpoint_security::Logger> logger,
-      std::shared_ptr<santa::santad::Metrics> metrics,
-      std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items,
-      std::shared_ptr<santa::santad::event_providers::AuthResultCache>
-          auth_result_cache,
+      std::shared_ptr<santa::EndpointSecurityAPI> esapi,
+      std::unique_ptr<santa::Logger> logger,
+      std::shared_ptr<santa::Metrics> metrics,
+      std::shared_ptr<santa::WatchItems> watch_items,
+      std::shared_ptr<santa::AuthResultCache> auth_result_cache,
       MOLXPCConnection *control_connection,
       SNTCompilerController *compiler_controller,
       SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
       SNTExecutionController *exec_controller,
-      std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>>
-          prefix_tree,
-      std::shared_ptr<santa::santad::TTYWriter> tty_writer,
-      std::shared_ptr<process_tree::ProcessTree> process_tree);
+      std::shared_ptr<santa::PrefixTree<santa::Unit>> prefix_tree,
+      std::shared_ptr<santa::TTYWriter> tty_writer,
+      std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree);
 
-  std::shared_ptr<santa::santad::event_providers::AuthResultCache>
-  AuthResultCache();
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
-  Enricher();
-  std::shared_ptr<
-      santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
-  ESAPI();
-  std::shared_ptr<santa::santad::logs::endpoint_security::Logger> Logger();
-  std::shared_ptr<santa::santad::Metrics> Metrics();
-  std::shared_ptr<santa::santad::data_layer::WatchItems> WatchItems();
+  std::shared_ptr<santa::AuthResultCache> AuthResultCache();
+  std::shared_ptr<santa::Enricher> Enricher();
+  std::shared_ptr<santa::EndpointSecurityAPI> ESAPI();
+  std::shared_ptr<santa::Logger> Logger();
+  std::shared_ptr<santa::Metrics> Metrics();
+  std::shared_ptr<santa::WatchItems> WatchItems();
   MOLXPCConnection *ControlConnection();
   SNTCompilerController *CompilerController();
   SNTNotificationQueue *NotifierQueue();
   SNTSyncdQueue *SyncdQueue();
   SNTExecutionController *ExecController();
-  std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> PrefixTree();
-  std::shared_ptr<santa::santad::TTYWriter> TTYWriter();
-  std::shared_ptr<process_tree::ProcessTree> ProcessTree();
+  std::shared_ptr<santa::PrefixTree<santa::Unit>> PrefixTree();
+  std::shared_ptr<santa::TTYWriter> TTYWriter();
+  std::shared_ptr<santa::santad::process_tree::ProcessTree> ProcessTree();
 
  private:
-  std::shared_ptr<
-      santa::santad::event_providers::endpoint_security::EndpointSecurityAPI>
-      esapi_;
-  std::shared_ptr<santa::santad::logs::endpoint_security::Logger> logger_;
-  std::shared_ptr<santa::santad::Metrics> metrics_;
-  std::shared_ptr<santa::santad::data_layer::WatchItems> watch_items_;
-  std::shared_ptr<santa::santad::event_providers::endpoint_security::Enricher>
-      enricher_;
-  std::shared_ptr<santa::santad::event_providers::AuthResultCache>
-      auth_result_cache_;
+  std::shared_ptr<santa::EndpointSecurityAPI> esapi_;
+  std::shared_ptr<santa::Logger> logger_;
+  std::shared_ptr<santa::Metrics> metrics_;
+  std::shared_ptr<santa::WatchItems> watch_items_;
+  std::shared_ptr<santa::Enricher> enricher_;
+  std::shared_ptr<santa::AuthResultCache> auth_result_cache_;
 
   MOLXPCConnection *control_connection_;
   SNTCompilerController *compiler_controller_;
   SNTNotificationQueue *notifier_queue_;
   SNTSyncdQueue *syncd_queue_;
   SNTExecutionController *exec_controller_;
-  std::shared_ptr<santa::common::PrefixTree<santa::common::Unit>> prefix_tree_;
-  std::shared_ptr<santa::santad::TTYWriter> tty_writer_;
-  std::shared_ptr<process_tree::ProcessTree> process_tree_;
+  std::shared_ptr<santa::PrefixTree<santa::Unit>> prefix_tree_;
+  std::shared_ptr<santa::TTYWriter> tty_writer_;
+  std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree_;
 };
 
-}  // namespace santa::santad
+}  // namespace santa
 
 #endif

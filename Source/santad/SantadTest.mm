@@ -38,8 +38,8 @@
 #import "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/SantadDeps.h"
 
-using santa::santad::SantadDeps;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Message;
+using santa::SantadDeps;
 
 static int HexCharToInt(char hex) {
   if (hex >= '0' && hex <= '9') {
@@ -196,7 +196,7 @@ static const char *kBlockedCDHash = "7218eddfee4d3eba4873dedf22d1391d79aea25f";
   });
 
   [authClient handleMessage:Message(mockESApi, &esMsg)
-         recordEventMetrics:^(santa::santad::EventDisposition d){
+         recordEventMetrics:^(santa::EventDisposition d){
            // This block intentionally left blank
          }];
 

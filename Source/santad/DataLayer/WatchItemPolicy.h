@@ -23,7 +23,7 @@
 #include <string_view>
 #include <vector>
 
-namespace santa::santad::data_layer {
+namespace santa {
 
 enum class WatchItemPathType {
   kPrefix,
@@ -117,6 +117,6 @@ struct WatchItemPolicy {
   std::string version = "temp_version";
 };
 
-}  // namespace santa::santad::data_layer
+}  // namespace santa
 
 #endif

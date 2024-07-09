@@ -30,17 +30,17 @@
 #include "Source/santad/SNTDecisionCache.h"
 #include "Source/santad/TTYWriter.h"
 
-using santa::common::PrefixTree;
-using santa::common::Unit;
-using santa::santad::Metrics;
-using santa::santad::TTYWriter;
-using santa::santad::data_layer::WatchItems;
-using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::AuthResultCache;
+using santa::EndpointSecurityAPI;
+using santa::Enricher;
+using santa::Logger;
+using santa::Metrics;
+using santa::PrefixTree;
+using santa::TTYWriter;
+using santa::Unit;
+using santa::WatchItems;
 
-namespace santa::santad {
+namespace santa {
 
 std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
                                                SNTMetricSet *metric_set) {
@@ -156,18 +156,18 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
     exit(EXIT_FAILURE);
   }
 
-  std::shared_ptr<process_tree::ProcessTree> process_tree;
-  std::vector<std::unique_ptr<process_tree::Annotator>> annotators;
+  std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree;
+  std::vector<std::unique_ptr<santa::santad::process_tree::Annotator>> annotators;
 
   for (NSString *annotation in [configurator enabledProcessAnnotations]) {
     if ([[annotation lowercaseString] isEqualToString:@"originator"]) {
-      annotators.emplace_back(std::make_unique<process_tree::OriginatorAnnotator>());
+      annotators.emplace_back(std::make_unique<santa::santad::process_tree::OriginatorAnnotator>());
     } else {
       LOGW(@"Unrecognized process annotation %@", annotation);
     }
   }
 
-  auto tree_status = process_tree::CreateTree(std::move(annotators));
+  auto tree_status = santa::santad::process_tree::CreateTree(std::move(annotators));
   if (!tree_status.ok()) {
     LOGE(@"Failed to create process tree: %@", @(tree_status.status().ToString().c_str()));
     exit(EXIT_FAILURE);
@@ -183,11 +183,11 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
 SantadDeps::SantadDeps(
   std::shared_ptr<EndpointSecurityAPI> esapi, std::unique_ptr<::Logger> logger,
   std::shared_ptr<::Metrics> metrics, std::shared_ptr<::WatchItems> watch_items,
-  std::shared_ptr<santa::santad::event_providers::AuthResultCache> auth_result_cache,
-  MOLXPCConnection *control_connection, SNTCompilerController *compiler_controller,
-  SNTNotificationQueue *notifier_queue, SNTSyncdQueue *syncd_queue,
-  SNTExecutionController *exec_controller, std::shared_ptr<::PrefixTree<Unit>> prefix_tree,
-  std::shared_ptr<::TTYWriter> tty_writer, std::shared_ptr<process_tree::ProcessTree> process_tree)
+  std::shared_ptr<santa::AuthResultCache> auth_result_cache, MOLXPCConnection *control_connection,
+  SNTCompilerController *compiler_controller, SNTNotificationQueue *notifier_queue,
+  SNTSyncdQueue *syncd_queue, SNTExecutionController *exec_controller,
+  std::shared_ptr<::PrefixTree<Unit>> prefix_tree, std::shared_ptr<::TTYWriter> tty_writer,
+  std::shared_ptr<santa::santad::process_tree::ProcessTree> process_tree)
     : esapi_(std::move(esapi)),
       logger_(std::move(logger)),
       metrics_(std::move(metrics)),
@@ -254,8 +254,8 @@ std::shared_ptr<::TTYWriter> SantadDeps::TTYWriter() {
   return tty_writer_;
 }
 
-std::shared_ptr<process_tree::ProcessTree> SantadDeps::ProcessTree() {
+std::shared_ptr<santa::santad::process_tree::ProcessTree> SantadDeps::ProcessTree() {
   return process_tree_;
 }
 
-}  // namespace santa::santad
+}  // namespace santa

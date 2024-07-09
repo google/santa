@@ -22,8 +22,8 @@
 #import "Source/common/SantaVnodeHash.h"
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
-using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::EndpointSecurityAPI;
+using santa::Client;
+using santa::EndpointSecurityAPI;
 
 static NSString *const kFlushCacheReasonClientModeChanged = @"ClientModeChanged";
 static NSString *const kFlushCacheReasonPathRegexChanged = @"PathRegexChanged";
@@ -36,7 +36,7 @@ static NSString *const kFlushCacheReasonEntitlementsPrefixFilterChanged =
 static NSString *const kFlushCacheReasonEntitlementsTeamIDFilterChanged =
   @"EntitlementsTeamIDFilterChanged";
 
-namespace santa::santad::event_providers {
+namespace santa {
 
 static inline uint64_t GetCurrentUptime() {
   return clock_gettime_nsec_np(CLOCK_MONOTONIC);
@@ -185,4 +185,4 @@ NSArray<NSNumber *> *AuthResultCache::CacheCounts() {
   return @[ @(root_cache_->count()), @(nonroot_cache_->count()) ];
 }
 
-}  // namespace santa::santad::event_providers
+}  // namespace santa

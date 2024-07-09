@@ -52,11 +52,11 @@ extern NSString *const kWatchItemConfigKeyProcessesCDHash;
 extern NSString *const kWatchItemConfigKeyProcessesPlatformBinary;
 
 // Forward declarations
-namespace santa::santad::data_layer {
+namespace santa {
 class WatchItemsPeer;
 }
 
-namespace santa::santad::data_layer {
+namespace santa {
 
 struct WatchItemsState {
   uint64_t rule_count;
@@ -69,7 +69,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
  public:
   using VersionAndPolicies =
     std::pair<std::string, std::vector<std::optional<std::shared_ptr<WatchItemPolicy>>>>;
-  using WatchItemsTree = santa::common::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
+  using WatchItemsTree = santa::PrefixTree<std::shared_ptr<WatchItemPolicy>>;
 
   // Factory
   static std::shared_ptr<WatchItems> Create(NSString *config_path,
@@ -99,7 +99,7 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   std::pair<NSString *, NSString *> EventDetailLinkInfo(
     const std::shared_ptr<WatchItemPolicy> &watch_item);
 
-  friend class santa::santad::data_layer::WatchItemsPeer;
+  friend class santa::WatchItemsPeer;
 
  private:
   static std::shared_ptr<WatchItems> CreateInternal(NSString *config_path, NSDictionary *config,
@@ -135,6 +135,6 @@ class WatchItems : public std::enable_shared_from_this<WatchItems> {
   NSString *policy_event_detail_text_ ABSL_GUARDED_BY(lock_);
 };
 
-}  // namespace santa::santad::data_layer
+}  // namespace santa
 
 #endif

@@ -19,9 +19,9 @@
 
 #include "Source/common/Platform.h"
 
-using santa::santad::data_layer::WatchItemPathType;
+using santa::WatchItemPathType;
 
-namespace santa::santad::event_providers::endpoint_security {
+namespace santa {
 
 Client EndpointSecurityAPI::NewClient(void (^message_handler)(es_client_t *, Message)) {
   es_client_t *client = NULL;
@@ -163,4 +163,4 @@ const es_fd_t *EndpointSecurityAPI::ExecFD(const es_event_exec_t *event, uint32_
   return es_exec_fd(event, index);
 }
 
-}  // namespace santa::santad::event_providers::endpoint_security
+}  // namespace santa

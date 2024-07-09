@@ -21,7 +21,7 @@
 #import "Source/common/SNTLogging.h"
 #include "Source/common/String.h"
 
-namespace santa::santad {
+namespace santa {
 
 std::unique_ptr<TTYWriter> TTYWriter::Create() {
   dispatch_queue_t q = dispatch_queue_create_with_target(
@@ -48,7 +48,7 @@ void TTYWriter::Write(const es_process_t *proc, NSString *msg) {
 
   // Copy the data from the es_process_t so the ES message doesn't
   // need to be retained
-  NSString *tty = santa::common::StringToNSString(proc->tty->path.data);
+  NSString *tty = santa::StringToNSString(proc->tty->path.data);
 
   dispatch_async(q_, ^{
     int fd = open(tty.UTF8String, O_WRONLY | O_NOCTTY);
@@ -57,11 +57,11 @@ void TTYWriter::Write(const es_process_t *proc, NSString *msg) {
       return;
     }
 
-    std::string_view str = santa::common::NSStringToUTF8StringView(msg);
+    std::string_view str = santa::NSStringToUTF8StringView(msg);
     write(fd, str.data(), str.length());
 
     close(fd);
   });
 }
 
-}  // namespace santa::santad
+}  // namespace santa

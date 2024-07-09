@@ -20,7 +20,7 @@
 
 #include "Source/santad/EventProviders/EndpointSecurity/Client.h"
 
-using santa::santad::event_providers::endpoint_security::Client;
+using santa::Client;
 
 // Global semaphore used for custom `es_delete_client` function
 dispatch_semaphore_t gSema;

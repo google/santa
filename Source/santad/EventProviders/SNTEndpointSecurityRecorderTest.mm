@@ -39,15 +39,15 @@
 #include "Source/santad/Metrics.h"
 #import "Source/santad/SNTCompilerController.h"
 
-using santa::common::PrefixTree;
-using santa::common::Unit;
-using santa::santad::EventDisposition;
-using santa::santad::Processor;
-using santa::santad::event_providers::AuthResultCache;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::Enricher;
-using santa::santad::event_providers::endpoint_security::Message;
-using santa::santad::logs::endpoint_security::Logger;
+using santa::AuthResultCache;
+using santa::EnrichedMessage;
+using santa::Enricher;
+using santa::EventDisposition;
+using santa::Logger;
+using santa::Message;
+using santa::PrefixTree;
+using santa::Processor;
+using santa::Unit;
 
 class MockEnricher : public Enricher {
  public:
@@ -120,7 +120,7 @@ class MockLogger : public Logger {
   [recorderClient enable];
 
   for (const auto &event : expectedEventSubs) {
-    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+    XCTAssertNoThrow(santa::EventTypeToString(event));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

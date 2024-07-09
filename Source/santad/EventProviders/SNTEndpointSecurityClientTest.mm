@@ -34,21 +34,21 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityClient.h"
 #include "Source/santad/Metrics.h"
 
-using santa::santad::Processor;
-using santa::santad::data_layer::WatchItemPathType;
-using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::EnrichedClose;
-using santa::santad::event_providers::endpoint_security::EnrichedFile;
-using santa::santad::event_providers::endpoint_security::EnrichedMessage;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Client;
+using santa::EnrichedClose;
+using santa::EnrichedFile;
+using santa::EnrichedMessage;
+using santa::EnrichedProcess;
+using santa::Message;
+using santa::Processor;
+using santa::WatchItemPathType;
 
 @interface SNTEndpointSecurityClient (Testing)
 - (void)establishClientOrDie;
 - (bool)muteSelf;
 - (NSString *)errorMessageForNewClientResult:(es_new_client_result_t)result;
 - (void)handleMessage:(Message &&)esMsg
-   recordEventMetrics:(void (^)(santa::santad::EventDisposition disposition))recordEventMetrics;
+   recordEventMetrics:(void (^)(santa::EventDisposition disposition))recordEventMetrics;
 - (BOOL)shouldHandleMessage:(const Message &)esMsg;
 - (int64_t)computeBudgetForDeadline:(uint64_t)deadline currentTime:(uint64_t)currentTime;
 

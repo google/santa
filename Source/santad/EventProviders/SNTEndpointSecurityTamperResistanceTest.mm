@@ -31,10 +31,10 @@
 #import "Source/santad/EventProviders/SNTEndpointSecurityTamperResistance.h"
 #import "Source/santad/Metrics.h"
 
-using santa::santad::EventDisposition;
-using santa::santad::data_layer::WatchItemPathType;
-using santa::santad::event_providers::endpoint_security::Client;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Client;
+using santa::EventDisposition;
+using santa::Message;
+using santa::WatchItemPathType;
 
 static constexpr std::string_view kEventsDBPath = "/private/var/db/santa/events.db";
 static constexpr std::string_view kRulesDBPath = "/private/var/db/santa/rules.db";
@@ -81,7 +81,7 @@ static constexpr std::string_view kSantaKextIdentifier = "com.google.santa-drive
   [mockTamperClient enable];
 
   for (const auto &event : expectedEventSubs) {
-    XCTAssertNoThrow(santa::santad::EventTypeToString(event));
+    XCTAssertNoThrow(santa::EventTypeToString(event));
   }
 
   XCTBubbleMockVerifyAndClearExpectations(mockESApi.get());

@@ -28,9 +28,9 @@ extern "C" Boolean SecTranslocateIsTranslocatedURL(CFURLRef path, bool *isTransl
 extern "C" CFURLRef __nullable SecTranslocateCreateOriginalPathForURL(CFURLRef translocatedPath,
                                                                       CFErrorRef *__nullable error);
 
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::Message;
 
-namespace santa::santad::logs::endpoint_security::serializers::Utilities {
+namespace santa {
 
 NSString *OriginalPathForTranslocation(const es_process_t *es_proc) {
   // Cache vnodes that have been determined to not be translocated
@@ -109,7 +109,7 @@ NSString *MountFromName(NSString *path) {
     return nil;
   }
 
-  NSString *mntFromName = santa::common::StringToNSString(sfs.f_mntfromname);
+  NSString *mntFromName = santa::StringToNSString(sfs.f_mntfromname);
 
   return mntFromName.length > 0 ? mntFromName : nil;
 }
@@ -148,4 +148,4 @@ es_file_t *GetAllowListTargetFile(const Message &msg) {
   }
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers::Utilities
+}  // namespace santa

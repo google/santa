@@ -28,7 +28,7 @@
 
 #include <google/protobuf/json/json.h>
 
-using santa::common::NSStringToUTF8String;
+using santa::NSStringToUTF8String;
 
 @interface SNTSyncStage ()
 

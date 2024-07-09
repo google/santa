@@ -14,29 +14,29 @@
 
 #include "Source/santad/Logs/EndpointSecurity/Serializers/Empty.h"
 
-using santa::santad::event_providers::endpoint_security::EnrichedClose;
-using santa::santad::event_providers::endpoint_security::EnrichedCSInvalidated;
-using santa::santad::event_providers::endpoint_security::EnrichedExchange;
-using santa::santad::event_providers::endpoint_security::EnrichedExec;
-using santa::santad::event_providers::endpoint_security::EnrichedExit;
-using santa::santad::event_providers::endpoint_security::EnrichedFork;
-using santa::santad::event_providers::endpoint_security::EnrichedLink;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginLogin;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginLogout;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLock;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogin;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionLogout;
-using santa::santad::event_providers::endpoint_security::EnrichedLoginWindowSessionUnlock;
-using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogin;
-using santa::santad::event_providers::endpoint_security::EnrichedOpenSSHLogout;
-using santa::santad::event_providers::endpoint_security::EnrichedProcess;
-using santa::santad::event_providers::endpoint_security::EnrichedRename;
-using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingAttach;
-using santa::santad::event_providers::endpoint_security::EnrichedScreenSharingDetach;
-using santa::santad::event_providers::endpoint_security::EnrichedUnlink;
-using santa::santad::event_providers::endpoint_security::Message;
+using santa::EnrichedClose;
+using santa::EnrichedCSInvalidated;
+using santa::EnrichedExchange;
+using santa::EnrichedExec;
+using santa::EnrichedExit;
+using santa::EnrichedFork;
+using santa::EnrichedLink;
+using santa::EnrichedLoginLogin;
+using santa::EnrichedLoginLogout;
+using santa::EnrichedLoginWindowSessionLock;
+using santa::EnrichedLoginWindowSessionLogin;
+using santa::EnrichedLoginWindowSessionLogout;
+using santa::EnrichedLoginWindowSessionUnlock;
+using santa::EnrichedOpenSSHLogin;
+using santa::EnrichedOpenSSHLogout;
+using santa::EnrichedProcess;
+using santa::EnrichedRename;
+using santa::EnrichedScreenSharingAttach;
+using santa::EnrichedScreenSharingDetach;
+using santa::EnrichedUnlink;
+using santa::Message;
 
-namespace santa::santad::logs::endpoint_security::serializers {
+namespace santa {
 
 std::shared_ptr<Empty> Empty::Create() {
   return std::make_shared<Empty>();
@@ -144,4 +144,4 @@ std::vector<uint8_t> Empty::SerializeDiskDisappeared(NSDictionary *props) {
   return {};
 }
 
-}  // namespace santa::santad::logs::endpoint_security::serializers
+}  // namespace santa

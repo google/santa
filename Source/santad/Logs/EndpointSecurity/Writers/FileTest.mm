@@ -22,7 +22,7 @@
 #include "Source/common/TestUtils.h"
 #import "Source/santad/Logs/EndpointSecurity/Writers/File.h"
 
-namespace santa::santad::logs::endpoint_security::writers {
+namespace santa {
 
 class FilePeer : public File {
  public:
@@ -59,9 +59,9 @@ class FilePeer : public File {
   }
 };
 
-}  // namespace santa::santad::logs::endpoint_security::writers
+}  // namespace santa
 
-using santa::santad::logs::endpoint_security::writers::FilePeer;
+using santa::FilePeer;
 
 bool WaitFor(bool (^condition)(void)) {
   int attempts = 0;
