@@ -222,6 +222,7 @@ using santa::NSStringToUTF8String;
                                  code:4
                              userInfo:@{NSLocalizedDescriptionKey : errStr}];
     }
+    return nil;
   }
 
   google::protobuf::json::ParseOptions options{
