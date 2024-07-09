@@ -262,7 +262,7 @@ message Rule {
 message RuleDownloadRequest {
   string cursor = 1;
   // The UUID of the machine that is requesting the rules.
-  string machined_id = 2;
+  string machine_id = 2;
 }
 
 message RuleDownloadResponse {

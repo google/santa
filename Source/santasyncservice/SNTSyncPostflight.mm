@@ -18,11 +18,14 @@
 
 #import "Source/common/SNTSyncConstants.h"
 #import "Source/common/SNTXPCControlInterface.h"
+#import "Source/common/String.h"
 #import "Source/santasyncservice/SNTSyncState.h"
 
 #include <google/protobuf/arena.h>
 #include "Source/santasyncservice/syncv1.pb.h"
 namespace pbv1 = ::santa::sync::v1;
+
+using santa::NSStringToUTF8String;
 
 @implementation SNTSyncPostflight
 
@@ -34,7 +37,7 @@ namespace pbv1 = ::santa::sync::v1;
 - (BOOL)sync {
   google::protobuf::Arena arena;
   auto req = google::protobuf::Arena::Create<::pbv1::PostflightRequest>(&arena);
-  req->set_machine_id(self.syncState.machineID);
+  req->set_machine_id(NSStringToUTF8String(self.syncState.machineID));
   req->set_rules_received(self.syncState.rulesReceived);
   req->set_rules_processed(self.syncState.rulesProcessed);
 

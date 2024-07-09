@@ -29,6 +29,7 @@
 #include "Source/santasyncservice/syncv1.pb.h"
 namespace pbv1 = ::santa::sync::v1;
 
+using santa::NSStringToUTF8String;
 using santa::StringToNSString;
 
 SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
@@ -104,7 +105,7 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
 
   do {
     auto req = google::protobuf::Arena::Create<::pbv1::RuleDownloadRequest>(&arena);
-    req->set_machine_id(self.syncState.machineID);
+    req->set_machine_id(NSStringToUTF8String(self.syncState.machineID));
 
     if (!cursor.empty()) {
       req->set_cursor(cursor);
