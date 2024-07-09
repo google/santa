@@ -104,6 +104,8 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
 
   do {
     auto req = google::protobuf::Arena::Create<::pbv1::RuleDownloadRequest>(&arena);
+    req->set_machine_id(self.syncState.machineID);
+
     if (!cursor.empty()) {
       req->set_cursor(cursor);
     }

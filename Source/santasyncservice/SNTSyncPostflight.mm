@@ -34,6 +34,7 @@ namespace pbv1 = ::santa::sync::v1;
 - (BOOL)sync {
   google::protobuf::Arena arena;
   auto req = google::protobuf::Arena::Create<::pbv1::PostflightRequest>(&arena);
+  req->set_machine_id(self.syncState.machineID);
   req->set_rules_received(self.syncState.rulesReceived);
   req->set_rules_processed(self.syncState.rulesProcessed);
 
