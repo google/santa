@@ -212,6 +212,16 @@ using santa::NSStringToUTF8String;
   NSData *data = [self dataFromRequest:request timeout:timeout];
   if (data.length == 0) return nil;
 
+  if ([[SNTConfigurator configurator] syncEnableProtoTransfer]) {
+    if (!message->ParseFromString(std::string((const char *)d.bytes, d.length))) {
+      NSString *errStr = @"Failed to parse response proto into message";
+      SLOGE(@"%@", errStr);
+      return [NSError errorWithDomain:@"com.google.santa.syncservice"
+                                 code:4
+                             userInfo:@{NSLocalizedDescriptionKey : errStr}];
+    }
+  }
+
   google::protobuf::json::ParseOptions options{
     .ignore_unknown_fields = true,
   };
