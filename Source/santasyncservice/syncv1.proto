@@ -27,8 +27,9 @@ service SantaSync {
 
 // ClientMode represents the operating mode for an agent.
 enum ClientMode {
-  MONITOR = 0;
-  LOCKDOWN = 1;
+  UNKNOWN_CLIENT_MODE = 0;
+  MONITOR = 1;
+  LOCKDOWN = 2;
 }
 
 message PreflightRequest {
@@ -54,6 +55,10 @@ message PreflightRequest {
 }
 
 message PreflightResponse {
+  // The client mode that the client should move into at the end of this sync.
+  // The mode does not change until the Postflight request has been made, to
+  // ensure the client has received all the needed rules before potentially going
+  // into Lockdown.
   ClientMode client_mode = 1;
 
   // Possible values are "normal" (default if unspecified), "clean", or "clean_all".
