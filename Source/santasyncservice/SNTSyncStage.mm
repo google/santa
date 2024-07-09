@@ -215,7 +215,7 @@ using santa::NSStringToUTF8String;
   if (data.length == 0) return nil;
 
   if ([[SNTConfigurator configurator] syncEnableProtoTransfer]) {
-    if (!message->ParseFromString(std::string((const char *)d.bytes, d.length))) {
+    if (!message->ParseFromString(std::string((const char *)data.bytes, data.length))) {
       NSString *errStr = @"Failed to parse response proto into message";
       SLOGE(@"%@", errStr);
       return [NSError errorWithDomain:@"com.google.santa.syncservice"
