@@ -56,6 +56,8 @@ using santa::NSStringToUTF8String;
 - (BOOL)uploadEvents:(NSArray *)events {
   google::protobuf::Arena arena;
   auto req = google::protobuf::Arena::Create<::pbv1::EventUploadRequest>(&arena);
+  req->set_machine_id(NSStringToUTF8String(self.syncState.machineID));
+
   google::protobuf::RepeatedPtrField<::pbv1::Event> *uploadEvents = req->mutable_events();
 
   NSMutableSet *eventIds = [NSMutableSet setWithCapacity:events.count];

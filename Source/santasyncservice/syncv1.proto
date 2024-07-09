@@ -52,6 +52,8 @@ message PreflightRequest {
   uint32 teamid_rule_count = 15;
   uint32 signingid_rule_count = 16;
   uint32 cdhash_rule_count = 17;
+  // The UUID of the machine that is sending this preflight.
+  string machine_id = 18;
 }
 
 message PreflightResponse {
@@ -202,6 +204,8 @@ message Event {
 
 message EventUploadRequest {
   repeated Event events = 1;
+  // The UUID of the machine where the event(s) occurred
+  string machine_id = 2;
 }
 
 message EventUploadResponse {
@@ -257,6 +261,8 @@ message Rule {
 
 message RuleDownloadRequest {
   string cursor = 1;
+  // The UUID of the machine that is requesting the rules.
+  string machine_id = 2;
 }
 
 message RuleDownloadResponse {
@@ -267,6 +273,8 @@ message RuleDownloadResponse {
 message PostflightRequest {
   uint64 rules_received = 1;
   uint64 rules_processed = 2;
+  // The UUID of the machine that is sending this postflight.
+  string machine_id = 3;
 }
 
 message PostflightResponse { }
