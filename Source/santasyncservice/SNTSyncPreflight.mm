@@ -135,7 +135,11 @@ The following table expands upon the above logic to list most of the permutation
       resp.deprecated_transitive_whitelisting_enabled());
   self.syncState.enableAllEventUpload = @(resp.enable_all_event_upload());
   self.syncState.disableUnknownEventUpload = @(resp.disable_unknown_event_upload());
-  self.syncState.eventBatchSize = resp.batch_size();
+
+  self.syncState.eventBatchSize = kDefaultEventBatchSize;
+  if (resp.batch_size() > 0) {
+    self.syncState.eventBatchSize = resp.batch_size();
+  }
 
   // Don't let these go too low
   uint64_t value = resp.push_notification_full_sync_interval_seconds()

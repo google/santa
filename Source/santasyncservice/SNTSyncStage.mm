@@ -82,7 +82,9 @@ using santa::NSStringToUTF8String;
   absl::Status status = google::protobuf::json::MessageToJsonString(*message, &json, options);
 
   if (!status.ok()) {
-    SLOGE(@"Failed to convert protobuf to JSON: %s", status.ToString().c_str());
+    NSString *errStr = [NSString
+      stringWithFormat:@"Failed to convert protobuf to JSON: %s", status.ToString().c_str()];
+    SLOGE(@"%@", errStr);
     return nil;
   }
 
@@ -230,8 +232,12 @@ using santa::NSStringToUTF8String;
   absl::Status status =
     google::protobuf::json::JsonStringToMessage(NSStringToUTF8String(jsonData), message, options);
   if (!status.ok()) {
-    SLOGE(@"Failed to parse response JSON into message: %s", status.ToString().c_str());
-    return nil;
+    NSString *errStr = [NSString stringWithFormat:@"Failed to parse response JSON into message: %s",
+                                                  status.ToString().c_str()];
+    SLOGE(@"%@", errStr);
+    return [NSError errorWithDomain:@"com.google.santa.syncservice"
+                               code:3
+                           userInfo:@{NSLocalizedDescriptionKey : errStr}];
   }
 
   return nil;
