@@ -24,6 +24,7 @@
 typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
 @property(nonatomic) BOOL recursive;
 @property(nonatomic) BOOL jsonOutput;
+@property(nonatomic) BOOL filterInclusive;
 @property(nonatomic) NSNumber *certIndex;
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
 @property(nonatomic) NSDictionary<NSString *, SNTAttributeBlock> *propertyMap;
@@ -248,6 +249,12 @@ typedef id (^SNTAttributeBlock)(SNTCommandFileInfo *, SNTFileInfo *);
   OCMStub([self.cscMock initWithBinaryPath:OCMOCK_ANY error:[OCMArg setTo:err]])
     .andReturn(self.cscMock);
   XCTAssertEqualObjects(self.cfi.codeSigned(self.cfi, self.fileInfo), expected);
+}
+
+- (void)testParseArgumentsFilterInclusiveTrue {
+  NSArray *filePaths = [self.cfi parseArguments:@[ @"--filter-inclusive", @"/usr/bin/yes" ]];
+  XCTAssertTrue(self.cfi.filterInclusive);
+  XCTAssertTrue([filePaths containsObject:@"/usr/bin/yes"]);
 }
 
 @end

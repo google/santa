@@ -85,6 +85,7 @@ NSString *formattedStringForKeyArray(NSArray<NSString *> *array) {
 @property(nonatomic) BOOL recursive;
 @property(nonatomic) BOOL jsonOutput;
 @property(nonatomic) BOOL bundleInfo;
+@property(nonatomic) BOOL filterInclusive;
 @property(nonatomic) NSNumber *certIndex;
 @property(nonatomic, copy) NSArray<NSString *> *outputKeyList;
 @property(nonatomic, copy) NSDictionary<NSString *, NSRegularExpression *> *outputFilters;
@@ -189,6 +190,10 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                 @"              case-insensitive regular expression which must match anywhere in\n"
                 @"              the keyed property value for the file's info to be displayed.\n"
                 @"              You may specify multiple filters by repeating this flag.\n"
+                @"              If multiple filters are specified, any match will display the\n"
+                @"              file.\n"
+                @"    --filter-inclusive: If multiple filters are specified, they must all match\n"
+                @"                        for the file to be displayed.\n"
                 @"    --bundleinfo: If the file is part of a bundle, will also display bundle\n"
                 @"                  hash information and hashes of all bundle executables.\n"
                 @"                  Incompatible with --recursive and --cert-index.\n"
@@ -654,8 +659,29 @@ REGISTER_COMMAND_NAME(@"fileinfo")
   [operationQueue waitUntilAllOperationsAreFinished];
 }
 
+- (BOOL)shouldOutputValueToDictionary:(NSMutableDictionary *)outputDict
+                          valueForKey:(NSString * (^)(NSString *key))valueForKey {
+  if (self.outputFilters.count == 0) return YES;
+
+  int matches = 0;
+  for (NSString *key in self.outputFilters) {
+    NSString *value = valueForKey(key);
+    NSRegularExpression *regex = self.outputFilters[key];
+    if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) continue;
+    // If this is a value we want to show, store it in the output dictionary.
+    // This does a linear search on an array, but it's a small array.
+    if (outputDict && value.length && [self.outputKeyList containsObject:key]) {
+      outputDict[key] = value;
+    }
+    ++matches;
+  }
+
+  return self.filterInclusive ? matches == self.outputFilters.count : matches > 0;
+}
+
 // Prints out the info for a single (non-directory) file.  Which info is printed is controlled
 // by the keys in self.outputKeyList.
+// TODO: Refactor so this method is testable.
 - (void)printInfoForFile:(NSString *)path {
   SNTFileInfo *fileInfo = [[SNTFileInfo alloc] initWithPath:path];
   if (!fileInfo) {
@@ -689,40 +715,30 @@ REGISTER_COMMAND_NAME(@"fileinfo")
     NSDictionary *cert = signingChain[index];
 
     // Check if we should skip over this item based on outputFilters.
-    BOOL filterMatch = self.outputFilters.count == 0;
-    for (NSString *key in self.outputFilters) {
-      NSString *value = cert[key] ?: @"";
-      NSRegularExpression *regex = self.outputFilters[key];
-      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) continue;
-      filterMatch = YES;
-      break;
+    BOOL shouldOutput = [self shouldOutputValueToDictionary:nil
+                                                valueForKey:^NSString *(NSString *key) {
+                                                  return cert[key] ?: @"";
+                                                }];
+    if (!shouldOutput) {
+      return;
     }
-
-    if (!filterMatch) return;
 
     // Filter out the info we want now, in case JSON output
     for (NSString *key in self.outputKeyList) {
       outputDict[key] = cert[key];
     }
   } else {
-    // Check if we should skip over this item based on outputFilters.  We do this before collecting
+    // Check if we should skip over this item based on outputFilters. We do this before collecting
     // output info because there's a chance that we can bail out early if a filter doesn't match.
     // However we also don't want to recompute info, so we save any values that we plan to show.
-    BOOL filterMatch = self.outputFilters.count == 0;
-    for (NSString *key in self.outputFilters) {
-      NSString *value = self.propertyMap[key](self, fileInfo) ?: @"";
-      NSRegularExpression *regex = self.outputFilters[key];
-      if (![regex firstMatchInString:value options:0 range:NSMakeRange(0, value.length)]) continue;
-      // If this is a value we want to show, store it in the output dictionary.
-      // This does a linear search on an array, but it's a small array.
-      if (value.length && [self.outputKeyList containsObject:key]) {
-        outputDict[key] = value;
-      }
-      filterMatch = YES;
-      break;
+    BOOL shouldOutput =
+      [self shouldOutputValueToDictionary:outputDict
+                              valueForKey:^NSString *(NSString *key) {
+                                return self.propertyMap[key](self, fileInfo) ?: @"";
+                              }];
+    if (!shouldOutput) {
+      return;
     }
-
-    if (!filterMatch) return;
 
     // Then fill the outputDict with the rest of the missing values.
     for (NSString *key in self.outputKeyList) {
@@ -896,6 +912,8 @@ REGISTER_COMMAND_NAME(@"fileinfo")
                 @"\n--bundleinfo is incompatible with --recursive and --cert-index"];
       }
       self.bundleInfo = YES;
+    } else if ([arg caseInsensitiveCompare:@"--filter-inclusive"] == NSOrderedSame) {
+      self.filterInclusive = YES;
     } else {
       [paths addObject:arg];
     }
