@@ -17,7 +17,6 @@
 
 NSString *FormatSigningID(MOLCodesignChecker *csc) {
   if (!csc.signingID.length) {
-    LOGD(@"unable to format signing ID as it's missing");
     return nil;
   }
 
