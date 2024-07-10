@@ -225,11 +225,7 @@ using santa::NSStringToUTF8String;
     return error;
   }
   if (data.length == 0) {
-    NSString *errStr = @"Response is empty";
-    SLOGE(@"%@", errStr);
-    return [NSError errorWithDomain:@"com.google.santa.syncservice"
-                               code:4
-                           userInfo:@{NSLocalizedDescriptionKey : errStr}];
+    return nil;
   }
 
   if ([[SNTConfigurator configurator] syncEnableProtoTransfer]) {
