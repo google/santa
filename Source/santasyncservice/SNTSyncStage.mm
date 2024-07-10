@@ -159,9 +159,11 @@ using santa::NSStringToUTF8String;
                                  }];
 }
 
-- (NSData *)dataFromRequest:(NSURLRequest *)request timeout:(NSTimeInterval)timeout {
+- (NSData *)dataFromRequest:(NSURLRequest *)request
+                    timeout:(NSTimeInterval)timeout
+                      error:(NSError **)error {
   NSHTTPURLResponse *response;
-  NSError *error;
+  NSError *requestError;
   NSData *data;
 
   int maxAttempts = 5;
@@ -174,14 +176,14 @@ using santa::NSStringToUTF8String;
     }
 
     SLOGD(@"Performing request, attempt %d (of %d maximum)...", attempt, maxAttempts);
-    data = [self performRequest:request timeout:timeout response:&response error:&error];
+    data = [self performRequest:request timeout:timeout response:&response error:&requestError];
     if (response.statusCode == 200) break;
 
     // If the original request failed because of an auth error, attempt to get a new XSRF token and
     // try again. Unfortunately some servers cause NSURLSession to return 'client cert required' or
     // 'could not parse response' when a 403 occurs and SSL cert auth is enabled.
-    if ((response.statusCode == 403 || error.code == NSURLErrorClientCertificateRequired ||
-         error.code == NSURLErrorCannotParseResponse) &&
+    if ((response.statusCode == 403 || requestError.code == NSURLErrorClientCertificateRequired ||
+         requestError.code == NSURLErrorCannotParseResponse) &&
         [self fetchXSRFToken]) {
       NSMutableURLRequest *mutableRequest = [request mutableCopy];
       NSString *xsrfHeader = self.syncState.xsrfTokenHeader ?: kDefaultXSRFTokenHeader;
@@ -199,10 +201,15 @@ using santa::NSStringToUTF8String;
       code = response.statusCode;
       errStr = [NSHTTPURLResponse localizedStringForStatusCode:response.statusCode];
     } else {
-      code = (long)error.code;
-      errStr = error.localizedDescription;
+      code = (long)requestError.code;
+      errStr = requestError.localizedDescription;
     }
     LOGE(@"HTTP Response: %ld %@", code, errStr);
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"com.google.santa.syncservice"
+                                   code:code
+                               userInfo:@{NSLocalizedDescriptionKey : errStr}];
+    }
     return nil;
   }
   return data;
@@ -211,8 +218,19 @@ using santa::NSStringToUTF8String;
 - (NSError *)performRequest:(NSURLRequest *)request
                 intoMessage:(google::protobuf::Message *)message
                     timeout:(NSTimeInterval)timeout {
-  NSData *data = [self dataFromRequest:request timeout:timeout];
-  if (data.length == 0) return nil;
+  NSError *error;
+  NSData *data = [self dataFromRequest:request timeout:timeout error:&error];
+  if (*error != NULL) {
+    SLOGE(@"Error performing request: %@", error.localizedDescription);
+    return error;
+  }
+  if (data.length == 0) {
+    NSString *errStr = @"Response is empty";
+    SLOGE(@"%@", errStr);
+    return [NSError errorWithDomain:@"com.google.santa.syncservice"
+                               code:4
+                           userInfo:@{NSLocalizedDescriptionKey : errStr}];
+  }
 
   if ([[SNTConfigurator configurator] syncEnableProtoTransfer]) {
     if (!message->ParseFromString(std::string((const char *)data.bytes, data.length))) {
