@@ -220,7 +220,7 @@ using santa::NSStringToUTF8String;
                     timeout:(NSTimeInterval)timeout {
   NSError *error;
   NSData *data = [self dataFromRequest:request timeout:timeout error:&error];
-  if (*error != NULL) {
+  if (error) {
     SLOGE(@"Error performing request: %@", error.localizedDescription);
     return error;
   }
