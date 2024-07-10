@@ -76,6 +76,7 @@ The following table expands upon the above logic to list most of the permutation
 - (BOOL)sync {
   google::protobuf::Arena arena;
   auto req = google::protobuf::Arena::Create<::pbv1::PreflightRequest>(&arena);
+  req->set_machine_id(NSStringToUTF8String(self.syncState.machineID));
   req->set_serial_number(NSStringToUTF8String([SNTSystemInfo serialNumber]));
   req->set_hostname(NSStringToUTF8String([SNTSystemInfo longHostname]));
   req->set_os_version(NSStringToUTF8String([SNTSystemInfo osVersion]));
