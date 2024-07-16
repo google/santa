@@ -71,6 +71,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     [bc resume];
     [[bc remoteObjectProxy] spindown];
     [bc invalidate];
+    // Remove app from Cmd+Tab and Dock.
+    NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
     [NSApp hide:self];
   }
 }
@@ -125,6 +127,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   [self.pendingNotifications addObject:pendingMsg];
 
   if (!self.currentWindowController) {
+    // Add app to Cmd+Tab and Dock.
+    NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
     [self showQueuedWindow];
   }
 }
