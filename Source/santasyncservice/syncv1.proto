@@ -56,6 +56,44 @@ message PreflightRequest {
   string machine_id = 18;
 }
 
+enum SyncType {
+  option allow_alias = true;
+
+  // An unspecified SyncType will fallback to default "NORMAL" handling
+  SYNC_TYPE_UNSPECIFIED = 0;
+
+  // Standard, progressive sync
+  NORMAL = 1;
+  normal = 1 [deprecated=true];
+
+  // Delete all non-transitive, previously received rules before applying the newly received rules.
+  CLEAN = 2; // [json_name="CLEAN"],
+  clean = 2 [deprecated=true];
+
+  // Delete all previously received rules before applying the newly received rules.
+  CLEAN_ALL = 3;
+  clean_all = 3 [deprecated=true];
+}
+
+enum FileAccessAction {
+  option allow_alias = true;
+
+  // An unspecified FileAccessAction will fallback to not changing any settings on the host
+  FILE_ACCESS_ACTION_UNSPECIFIED = 0;
+
+  // The policy will be applied as written
+  NONE = 1;
+  None = 1 [deprecated=true];
+
+  // Actions that would be denied are logged but allowed
+  AUDIT_ONLY = 2;
+  AuditOnly = 2 [deprecated=true];
+
+  // No action will be taken
+  DISABLE = 3;
+  Disable = 3 [deprecated=true];
+}
+
 message PreflightResponse {
   // The client mode that the client should move into at the end of this sync.
   // The mode does not change until the Postflight request has been made, to
@@ -63,32 +101,26 @@ message PreflightResponse {
   // into Lockdown.
   ClientMode client_mode = 1;
 
-  // Possible values are "normal" (default if unspecified), "clean", or "clean_all".
-  // "normal" is a standard progressive sync
-  // "clean" deletes all previously received rules before applying the newly received rules.
-  // "clean_all" deletes all rules, including transitive rules, before applying the newly received rules.
-  // This should be an enum but we won't match lowercase values if specified as an enum unless the
-  // enum values are also lowercase (which is odd), and this is the behavior from the pre-proto protocol.
-  string sync_type = 2;
+  optional SyncType sync_type = 2;
 
   // Controls how many events Santa should upload in a single EventUpload request.
   // If the server doesn't specify, the default is 50.
   uint32 batch_size = 3;
 
   // Enable bundle hashing and bundle rules.
-  bool enable_bundles = 4;
+  optional bool enable_bundles = 4;
 
   // Enable transitive (ALLOWLIST_COMPILER) rules.
   // Without this enabled, any received ALLOWLIST_COMPILER rules will be treated as ALLOWLIST.
-  bool enable_transitive_rules = 5;
+  optional bool enable_transitive_rules = 5;
 
   // Ordinarily, Santa will only upload events about executions that are denied or would be denied if the machine
   // were in LOCKDOWN mode. With this enabled, Santa will upload details about all events.
-  bool enable_all_event_upload = 6;
+  optional bool enable_all_event_upload = 6;
 
   // Ordinarily, Santa will only upload events about executions that are denied or would be denied if the machine
   // were in LOCKDOWN mode. With this enabled, Santa will NOT upload events for binaries that would have been blocked in LOCKDOWN.
-  bool disable_unknown_event_upload = 7;
+  optional bool disable_unknown_event_upload = 7;
 
   // Specifies the time interval in seconds between full syncs. Defaults to 600 (10 minutes). Cannot be set lower than 60.
   uint64 full_sync_interval_seconds = 8 [json_name="full_sync_interval"];
@@ -119,7 +151,7 @@ message PreflightResponse {
   //   `disable`: No action will be taken
   //   `auditonly`: Actions that would be denied are logged but allowed
   //   `none`: The policy will be applied as written
-  optional string override_file_access_action = 15;
+  optional FileAccessAction override_file_access_action = 15;
 
   // These fields are deprecated forms of other fields and exist here solely for backwards compatibility
   optional bool deprecated_enabled_transitive_whitelisting = 1000 [json_name="enabled_transitive_whitelisting", deprecated=true];

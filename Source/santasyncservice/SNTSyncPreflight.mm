@@ -33,6 +33,11 @@ namespace pbv1 = ::santa::sync::v1;
 using santa::NSStringToUTF8String;
 using santa::StringToNSString;
 
+// Ignoring warning regarding deprecated declarations because of large number of
+// reported issues due to checking deprecated proto fields.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 /*
 
 Clean Sync Implementation Notes
@@ -130,12 +135,27 @@ The following table expands upon the above logic to list most of the permutation
     return NO;
   }
 
-  self.syncState.enableBundles = @(resp.enable_bundles() || resp.deprecated_bundles_enabled());
-  self.syncState.enableTransitiveRules =
-    @(resp.enable_transitive_rules() || resp.deprecated_enabled_transitive_whitelisting() ||
-      resp.deprecated_transitive_whitelisting_enabled());
-  self.syncState.enableAllEventUpload = @(resp.enable_all_event_upload());
-  self.syncState.disableUnknownEventUpload = @(resp.disable_unknown_event_upload());
+  if (resp.has_enable_bundles()) {
+    self.syncState.enableBundles = @(resp.enable_bundles());
+  } else if (resp.has_deprecated_bundles_enabled()) {
+    self.syncState.enableBundles = @(resp.deprecated_bundles_enabled());
+  }
+
+  if (resp.has_enable_transitive_rules()) {
+    self.syncState.enableTransitiveRules = @(resp.enable_transitive_rules());
+  } else if (resp.has_deprecated_enabled_transitive_whitelisting()) {
+    self.syncState.enableTransitiveRules = @(resp.deprecated_enabled_transitive_whitelisting());
+  } else if (resp.has_deprecated_transitive_whitelisting_enabled()) {
+    self.syncState.enableTransitiveRules = @(resp.deprecated_transitive_whitelisting_enabled());
+  }
+
+  if (resp.has_enable_all_event_upload()) {
+    self.syncState.enableAllEventUpload = @(resp.enable_all_event_upload());
+  }
+
+  if (resp.has_disable_unknown_event_upload()) {
+    self.syncState.disableUnknownEventUpload = @(resp.disable_unknown_event_upload());
+  }
 
   self.syncState.eventBatchSize = kDefaultEventBatchSize;
   if (resp.batch_size() > 0) {
@@ -179,15 +199,29 @@ The following table expands upon the above logic to list most of the permutation
 
   if (resp.has_block_usb_mount()) {
     self.syncState.blockUSBMount = @(resp.block_usb_mount());
-  }
 
-  self.syncState.remountUSBMode = [NSMutableArray array];
-  for (const std::string &mode : resp.remount_usb_mode()) {
-    [(NSMutableArray *)self.syncState.remountUSBMode addObject:StringToNSString(mode)];
+    self.syncState.remountUSBMode = [NSMutableArray array];
+    for (const std::string &mode : resp.remount_usb_mode()) {
+      [(NSMutableArray *)self.syncState.remountUSBMode addObject:StringToNSString(mode)];
+    }
   }
 
   if (resp.has_override_file_access_action()) {
-    self.syncState.overrideFileAccessAction = StringToNSString(resp.override_file_access_action());
+    switch(resp.override_file_access_action()) {
+      case ::pbv1::NONE:
+        self.syncState.overrideFileAccessAction = @"none";
+        break;
+      case ::pbv1::AUDIT_ONLY:
+        self.syncState.overrideFileAccessAction = @"auditonly";
+        break;
+      case ::pbv1::DISABLE:
+        self.syncState.overrideFileAccessAction = @"disable";
+        break;
+      case ::pbv1::FILE_ACCESS_ACTION_UNSPECIFIED: // Intentional fallthrough
+      default:
+        self.syncState.overrideFileAccessAction = nil;
+        break;
+    }
   }
 
   // Default sync type is SNTSyncTypeNormal
@@ -203,26 +237,32 @@ The following table expands upon the above logic to list most of the permutation
   // sync was requested, but the server responded that it was doing a clean or
   // clean_all sync, that will take precedence. Similarly, if only a clean sync
   // was requested, the server can force a "clean_all" operation to take place.
-  self.syncState.syncType = SNTSyncTypeNormal;
 
   // If kSyncType response key exists, it overrides the kCleanSyncDeprecated value
   // First check if the kSyncType reponse key exists. If so, it takes precedence
   // over the kCleanSyncDeprecated key.
-  std::string responseSyncType = resp.sync_type();
-  if (!responseSyncType.empty()) {
-    // If the client wants to Clean All, this takes precedence. The server
-    // cannot override the client wanting to remove all rules.
-    if (responseSyncType == "clean") {
-      SLOGD(@"Clean sync requested by server");
-      if (requestSyncType == SNTSyncTypeCleanAll) {
+  if (resp.has_sync_type()) {
+    switch (resp.sync_type()) {
+      case ::pbv1::CLEAN:
+        // If the client wants to Clean All, this takes precedence. The server
+        // cannot override the client wanting to remove all rules.
+        SLOGD(@"Clean sync requested by server");
+        if (requestSyncType == SNTSyncTypeCleanAll) {
+          self.syncState.syncType = SNTSyncTypeCleanAll;
+        } else {
+          self.syncState.syncType = SNTSyncTypeClean;
+        }
+        break;
+      case ::pbv1::CLEAN_ALL:
         self.syncState.syncType = SNTSyncTypeCleanAll;
-      } else {
-        self.syncState.syncType = SNTSyncTypeClean;
-      }
-    } else if (responseSyncType == "clean_all") {
-      self.syncState.syncType = SNTSyncTypeCleanAll;
+        break;
+      case ::pbv1::SYNC_TYPE_UNSPECIFIED: // Intentional fallthrough
+      case ::pbv1::NORMAL: // Intentional fallthrough
+      default:
+        self.syncState.syncType = SNTSyncTypeNormal;
+        break;
     }
-  } else if (resp.deprecated_clean_sync()) {
+  } else if (resp.has_deprecated_clean_sync()) {
     // If the deprecated key is set, the type of sync clean performed should be
     // the type that was requested. This must be set appropriately so that it
     // can be propagated during the Rule Download stage so SNTRuleTable knows
@@ -233,9 +273,14 @@ The following table expands upon the above logic to list most of the permutation
     } else {
       self.syncState.syncType = SNTSyncTypeClean;
     }
+  } else {
+    // Fallback if unspecified is a normal sync
+    self.syncState.syncType = SNTSyncTypeNormal;
   }
 
   return YES;
 }
 
 @end
+
+#pragma clang diagnostic pop
