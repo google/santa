@@ -1,3 +1,5 @@
+// LINT: LEGACY_NAMES
+
 syntax = "proto3";
 
 package santa.sync.v1;
@@ -67,7 +69,7 @@ enum SyncType {
   normal = 1 [deprecated=true];
 
   // Delete all non-transitive, previously received rules before applying the newly received rules.
-  CLEAN = 2; // [json_name="CLEAN"],
+  CLEAN = 2;
   clean = 2 [deprecated=true];
 
   // Delete all previously received rules before applying the newly received rules.
