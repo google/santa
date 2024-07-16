@@ -617,7 +617,9 @@
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_basic.plist"];
 
   NSError *err;
-  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses fromData:eventData error:&err];
+  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses
+                                                        fromData:eventData
+                                                           error:&err];
   XCTAssertNil(err);
 
   OCMStub([self.daemonConnRop databaseEventsPending:([OCMArg invokeBlockWithArgs:events, nil])]);
@@ -684,7 +686,9 @@
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_quarantine.plist"];
 
   NSError *err;
-  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses fromData:eventData error:&err];
+  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses
+                                                        fromData:eventData
+                                                           error:&err];
   XCTAssertNil(err);
 
   OCMStub([self.daemonConnRop databaseEventsPending:([OCMArg invokeBlockWithArgs:events, nil])]);
@@ -726,7 +730,9 @@
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_basic.plist"];
 
   NSError *err;
-  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses fromData:eventData error:&err];
+  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses
+                                                        fromData:eventData
+                                                           error:&err];
   XCTAssertNil(err);
 
   OCMStub([self.daemonConnRop databaseEventsPending:([OCMArg invokeBlockWithArgs:events, nil])]);

@@ -207,20 +207,12 @@ The following table expands upon the above logic to list most of the permutation
   }
 
   if (resp.has_override_file_access_action()) {
-    switch(resp.override_file_access_action()) {
-      case ::pbv1::NONE:
-        self.syncState.overrideFileAccessAction = @"NONE";
-        break;
-      case ::pbv1::AUDIT_ONLY:
-        self.syncState.overrideFileAccessAction = @"AUDIT_ONLY";
-        break;
-      case ::pbv1::DISABLE:
-        self.syncState.overrideFileAccessAction = @"DISABLE";
-        break;
-      case ::pbv1::FILE_ACCESS_ACTION_UNSPECIFIED: // Intentional fallthrough
-      default:
-        self.syncState.overrideFileAccessAction = nil;
-        break;
+    switch (resp.override_file_access_action()) {
+      case ::pbv1::NONE: self.syncState.overrideFileAccessAction = @"NONE"; break;
+      case ::pbv1::AUDIT_ONLY: self.syncState.overrideFileAccessAction = @"AUDIT_ONLY"; break;
+      case ::pbv1::DISABLE: self.syncState.overrideFileAccessAction = @"DISABLE"; break;
+      case ::pbv1::FILE_ACCESS_ACTION_UNSPECIFIED:  // Intentional fallthrough
+      default: self.syncState.overrideFileAccessAction = nil; break;
     }
   }
 
@@ -253,14 +245,10 @@ The following table expands upon the above logic to list most of the permutation
           self.syncState.syncType = SNTSyncTypeClean;
         }
         break;
-      case ::pbv1::CLEAN_ALL:
-        self.syncState.syncType = SNTSyncTypeCleanAll;
-        break;
-      case ::pbv1::SYNC_TYPE_UNSPECIFIED: // Intentional fallthrough
-      case ::pbv1::NORMAL: // Intentional fallthrough
-      default:
-        self.syncState.syncType = SNTSyncTypeNormal;
-        break;
+      case ::pbv1::CLEAN_ALL: self.syncState.syncType = SNTSyncTypeCleanAll; break;
+      case ::pbv1::SYNC_TYPE_UNSPECIFIED:  // Intentional fallthrough
+      case ::pbv1::NORMAL:                 // Intentional fallthrough
+      default: self.syncState.syncType = SNTSyncTypeNormal; break;
     }
   } else if (resp.has_deprecated_clean_sync()) {
     // If the deprecated key is set, the type of sync clean performed should be
