@@ -116,6 +116,18 @@
   }
 }
 
+- (void)showWindow:(id)sender {
+  // Add app to Cmd+Tab and Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
+  [super showWindow:sender];
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+  // Remove app from Cmd+Tab and Dock.
+  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
+  [super windowWillClose:notification];
+}
+
 - (NSString *)messageHash {
   return self.event.fileSHA256;
 }
