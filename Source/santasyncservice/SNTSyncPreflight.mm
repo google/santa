@@ -209,13 +209,13 @@ The following table expands upon the above logic to list most of the permutation
   if (resp.has_override_file_access_action()) {
     switch(resp.override_file_access_action()) {
       case ::pbv1::NONE:
-        self.syncState.overrideFileAccessAction = @"none";
+        self.syncState.overrideFileAccessAction = @"NONE";
         break;
       case ::pbv1::AUDIT_ONLY:
-        self.syncState.overrideFileAccessAction = @"auditonly";
+        self.syncState.overrideFileAccessAction = @"AUDIT_ONLY";
         break;
       case ::pbv1::DISABLE:
-        self.syncState.overrideFileAccessAction = @"disable";
+        self.syncState.overrideFileAccessAction = @"DISABLE";
         break;
       case ::pbv1::FILE_ACCESS_ACTION_UNSPECIFIED: // Intentional fallthrough
       default:

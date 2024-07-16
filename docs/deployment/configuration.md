@@ -82,7 +82,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | FileAccessPolicy                   | Dictionary | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
 | FileAccessPolicyUpdateIntervalSec  | Integer    | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
 | FileAccessBlockMessage             | String     | This is the message shown to the user when a access to a file is blocked because of a rule defined by `FileAccessPolicy` if that rule doesn't provide a custom message. If this is not configured a reasonable default is provided. |
-| OverrideFileAccessAction           | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `auditonly` (no access will be blocked, only logged), `disabled` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `none`. |
+| OverrideFileAccessAction           | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `AUDIT_ONLY` (no access will be blocked, only logged), `DISABLE` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `NONE`. Note: `AUDITONLY` without an underscore is deprecated. |
 | SyncClientContentEncoding          | String     | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none". Defaults to deflate. |
 | SyncExtraHeaders                   | Dictionary | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
 | EnableDebugLogging                 | Bool       | If true, the client will log additional debug messages to the Apple Unified Log.  For example, transitive rule creation logs can be viewed with `log stream --predicate 'sender=="com.google.santa.daemon"'`. Defaults to false. |
@@ -275,7 +275,7 @@ ways to install configuration profiles:
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
 | block\_usb\_mount                   | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
 | remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
-| override\_file\_access\_action      | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `auditonly` (no access will be blocked, only logged), `disabled` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `none`. |
+| override\_file\_access\_action      | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `AUDIT_ONLY` (no access will be blocked, only logged), `DISABLE` (no access will be blocked or logged), `NONE` (enforce policy as defined in each rule). Defaults to `NONE`. |
 
 
 *Held only in memory. Not persistent upon process restart.
