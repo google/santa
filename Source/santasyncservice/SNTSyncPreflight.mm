@@ -45,30 +45,30 @@ Clean Sync Implementation Notes
 The clean sync implementation seems a bit complex at first glance, but boils
 down to the following rules:
 
-1. If the server says to do a "clean" sync, a "clean" sync is performed, unless the
-   client specified a "clean all" sync, in which case "clean all" is performed.
-2. If the server responded that it is performing a "clean all" sync, a "clean all" is performed.
-3. All other server responses result in a "normal" sync.
+1. If the server says to do a "CLEAN" sync, a "CLEAN" sync is performed, unless the
+   client specified a "CLEAN_ALL" sync, in which case "CLEAN_ALL" is performed.
+2. If the server responded that it is performing a "CLEAN_ALL" sync, a "CLEAN_ALL" is performed.
+3. All other server responses result in a "NORMAL" sync.
 
 The following table expands upon the above logic to list most of the permutations:
 
 | Client Sync State | Clean Sync Request? | Server Response    | Sync Type Performed |
 | ----------------- | ------------------- | ------------------ | ------------------- |
-| normal            | No                  | normal OR <empty>  | normal              |
-| normal            | No                  | clean              | clean               |
-| normal            | No                  | clean_all          | clean_all           |
-| normal            | No                  | clean_sync (dep)   | clean               |
-| normal            | Yes                 | New AND Dep Key    | Dep key ignored     |
-| clean             | Yes                 | normal OR <empty>  | normal              |
-| clean             | Yes                 | clean              | clean               |
-| clean             | Yes                 | clean_all          | clean_all           |
-| clean             | Yes                 | clean_sync (dep)   | clean               |
-| clean             | Yes                 | New AND Dep Key    | Dep key ignored     |
-| clean_all         | Yes                 | normal OR <empty>  | normal              |
-| clean_all         | Yes                 | clean              | clean_all           |
-| clean_all         | Yes                 | clean_all          | clean_all           |
-| clean_all         | Yes                 | clean_sync (dep)   | clean_all           |
-| clean_all         | Yes                 | New AND Dep Key    | Dep key ignored     |
+| NORMAL            | No                  | NORMAL OR <empty>  | NORMAL              |
+| NORMAL            | No                  | CLEAN              | CLEAN               |
+| NORMAL            | No                  | CLEAN_ALL          | CLEAN_ALL           |
+| NORMAL            | No                  | clean_sync (dep)   | CLEAN               |
+| NORMAL            | Yes                 | New AND Dep Key    | Dep key ignored     |
+| CLEAN             | Yes                 | NORMAL OR <empty>  | NORMAL              |
+| CLEAN             | Yes                 | CLEAN              | CLEAN               |
+| CLEAN             | Yes                 | CLEAN_ALL          | CLEAN_ALL           |
+| CLEAN             | Yes                 | clean_sync (dep)   | CLEAN               |
+| CLEAN             | Yes                 | New AND Dep Key    | Dep key ignored     |
+| CLEAN_ALL         | Yes                 | NORMAL OR <empty>  | NORMAL              |
+| CLEAN_ALL         | Yes                 | CLEAN              | CLEAN_ALL           |
+| CLEAN_ALL         | Yes                 | CLEAN_ALL          | CLEAN_ALL           |
+| CLEAN_ALL         | Yes                 | clean_sync (dep)   | CLEAN_ALL           |
+| CLEAN_ALL         | Yes                 | New AND Dep Key    | Dep key ignored     |
 
 */
 @implementation SNTSyncPreflight
@@ -228,15 +228,15 @@ The following table expands upon the above logic to list most of the permutation
   //
   // Logic overview:
   // The requested sync type (clean or normal) is merely informative. The server
-  // can choose to respond with a normal, clean or clean_all.
+  // can choose to respond with a NORMAL, CLEAN or CLEAN_ALL.
   //
   // If the server responds that it will perform a clean sync, santa will
-  // treat it as either a clean or clean_all depending on which was requested.
+  // treat it as either a clean or CLEAN_ALL depending on which was requested.
   //
   // The server can also "override" the requested clean operation. If a normal
   // sync was requested, but the server responded that it was doing a clean or
-  // clean_all sync, that will take precedence. Similarly, if only a clean sync
-  // was requested, the server can force a "clean_all" operation to take place.
+  // CLEAN_ALL sync, that will take precedence. Similarly, if only a clean sync
+  // was requested, the server can force a "CLEAN_ALL" operation to take place.
 
   // If kSyncType response key exists, it overrides the kCleanSyncDeprecated value
   // First check if the kSyncType reponse key exists. If so, it takes precedence

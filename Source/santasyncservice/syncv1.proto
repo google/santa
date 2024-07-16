@@ -162,8 +162,8 @@ message PreflightResponse {
   optional string deprecated_whitelist_regex = 1005 [json_name="whitelist_regex", deprecated=true];
   optional string deprecated_blacklist_regex = 1006 [json_name="blacklist_regex", deprecated=true];
 
-  // Deprecated but still supported key that acts like sync_type was set to "clean" unless
-  // the client had requested a clean sync, in which case it acts like "clean_all"
+  // Deprecated but still supported key that acts like sync_type was set to "CLEAN" unless
+  // the client had requested a clean sync, in which case it acts like "CLEAN_ALL"
   optional bool deprecated_clean_sync = 1007 [json_name="clean_sync", deprecated=true];
 }
 
