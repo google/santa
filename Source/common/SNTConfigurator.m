@@ -1059,7 +1059,8 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
     }
   }
 
-  if ([action isEqualToString:@"auditonly"]) {
+  // Note: `auditonly` without an underscore is a deprecated, but still accepted form.
+  if ([action isEqualToString:@"audit_only"] || [action isEqualToString:@"auditonly"]) {
     return SNTOverrideFileAccessActionAuditOnly;
   } else if ([action isEqualToString:@"disable"]) {
     return SNTOverrideFileAccessActionDiable;
