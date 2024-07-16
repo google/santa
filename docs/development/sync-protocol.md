@@ -140,7 +140,7 @@ The JSON object has the following keys:
 | enable_bundles              | Use previous setting                        | boolean | Enable bundle scanning | true |
 | enable_transitive_rules     | Use previous setting                        | boolean | Whether or not to enable transitive allowlisting | true |
 | batch_size                  | Use a Santa-defined default value           | integer | Number of events to upload at a time | 128 |
-| full_sync_interval          | Use a Santa-defined default value           | integer | Number of seconds between full syncs. Note: Santa enforces a minimum value of 60. The default value will be used if a smaller value is provided. | 600 |
+| full_sync_interval          | Defaults to 600 seconds                     | integer | Number of seconds between full syncs. Note: Santa enforces a minimum value of 60. The default value will be used if a smaller value is provided. | 600 |
 | client_mode                 | Use previous setting                        | string  | Operating mode to set for the client | either `MONITOR` or `LOCKDOWN` |
 | allowed_path_regex          | Use previous setting                        | string  | Regular expression to allow a binary to execute from a path | "/Users/markowsk/foo/.\*" |
 | blocked_path_regex          | Use previous setting                        | string  | Regular expression to block a binary from executing by path | "/tmp/" |
