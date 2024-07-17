@@ -71,6 +71,8 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
     [bc resume];
     [[bc remoteObjectProxy] spindown];
     [bc invalidate];
+    // Remove app from Cmd+Tab and Dock.
+    NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
     [NSApp hide:self];
   }
 }
@@ -101,32 +103,37 @@ static NSString *const silencedNotificationsKey = @"SilencedNotifications";
   // If GUI is in silent mode or if there's already a notification queued for
   // this message, don't do anything else.
   if ([SNTConfigurator configurator].enableSilentMode) return;
-  if ([self notificationAlreadyQueued:pendingMsg]) return;
 
-  // See if this message has been user-silenced.
-  NSString *messageHash = [pendingMsg messageHash];
-  NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
-  NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][messageHash];
-  if ([silenceDate isKindOfClass:[NSDate class]]) {
-    NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
-    if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
-      LOGI(@"Notification silence: date is in the future, ignoring");
-      [self updateSilenceDate:nil forHash:messageHash];
-    } else if ([silenceDate compare:oneDayAgo] == NSOrderedAscending) {
-      LOGI(@"Notification silence: date is more than one day ago, ignoring");
-      [self updateSilenceDate:nil forHash:messageHash];
-    } else {
-      LOGI(@"Notification silence: dropping notification for %@", messageHash);
-      return;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if ([self notificationAlreadyQueued:pendingMsg]) return;
+
+    // See if this message has been user-silenced.
+    NSString *messageHash = [pendingMsg messageHash];
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSDate *silenceDate = [ud objectForKey:silencedNotificationsKey][messageHash];
+    if ([silenceDate isKindOfClass:[NSDate class]]) {
+      NSDate *oneDayAgo = [NSDate dateWithTimeIntervalSinceNow:-86400];
+      if ([silenceDate compare:[NSDate date]] == NSOrderedDescending) {
+        LOGI(@"Notification silence: date is in the future, ignoring");
+        [self updateSilenceDate:nil forHash:messageHash];
+      } else if ([silenceDate compare:oneDayAgo] == NSOrderedAscending) {
+        LOGI(@"Notification silence: date is more than one day ago, ignoring");
+        [self updateSilenceDate:nil forHash:messageHash];
+      } else {
+        LOGI(@"Notification silence: dropping notification for %@", messageHash);
+        return;
+      }
     }
-  }
 
-  pendingMsg.delegate = self;
-  [self.pendingNotifications addObject:pendingMsg];
+    pendingMsg.delegate = self;
+    [self.pendingNotifications addObject:pendingMsg];
 
-  if (!self.currentWindowController) {
-    [self showQueuedWindow];
-  }
+    if (!self.currentWindowController) {
+      // Add app to Cmd+Tab and Dock.
+      NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
+      [self showQueuedWindow];
+    }
+  });
 }
 
 // For blocked execution notifications, post an NSDistributedNotificationCenter
