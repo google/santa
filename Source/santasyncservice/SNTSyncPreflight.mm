@@ -250,7 +250,7 @@ The following table expands upon the above logic to list most of the permutation
       case ::pbv1::NORMAL:                 // Intentional fallthrough
       default: self.syncState.syncType = SNTSyncTypeNormal; break;
     }
-  } else if (resp.has_deprecated_clean_sync()) {
+  } else if (resp.deprecated_clean_sync()) {
     // If the deprecated key is set, the type of sync clean performed should be
     // the type that was requested. This must be set appropriately so that it
     // can be propagated during the Rule Download stage so SNTRuleTable knows
