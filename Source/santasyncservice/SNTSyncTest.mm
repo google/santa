@@ -579,6 +579,13 @@
                                   response:@{kCleanSyncDeprecated : @YES}];
 }
 
+- (void)testPreflightStateNormalRequestNormalResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kCleanSyncDeprecated : @NO}];
+}
+
 - (void)testPreflightStateCleanAllRequestCleanResponseUnknown {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
