@@ -97,6 +97,7 @@ static NSString *const kAboutTextKey = @"AboutText";
 static NSString *const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString *const kEventDetailURLKey = @"EventDetailURL";
 static NSString *const kEventDetailTextKey = @"EventDetailText";
+static NSString *const kDismissTextKey = @"DismissText";
 static NSString *const kUnknownBlockMessage = @"UnknownBlockMessage";
 static NSString *const kBannedBlockMessage = @"BannedBlockMessage";
 static NSString *const kBannedUSBBlockMessage = @"BannedUSBBlockMessage";
@@ -227,6 +228,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
       kEventDetailTextKey : string,
+      kDismissTextKey : string,
       kUnknownBlockMessage : string,
       kBannedBlockMessage : string,
       kBannedUSBBlockMessage : string,
@@ -406,6 +408,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEventDetailText {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingDismissText {
   return [self configStateSet];
 }
 
@@ -772,6 +778,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 
 - (NSString *)eventDetailText {
   return self.configState[kEventDetailTextKey];
+}
+
+- (NSString *)dismissText {
+  return self.configState[kDismissTextKey];
 }
 
 - (NSString *)unknownBlockMessage {
