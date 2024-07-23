@@ -348,6 +348,11 @@
 @property(readonly, nonatomic) NSString *eventDetailText;
 
 ///
+///  This string represents the text to show on the "Dismiss" button in the UI instead of "Dismiss".
+///
+@property(readonly, nonatomic) NSString *dismissText;
+
+///
 ///  In lockdown mode this is the message shown to the user when an unknown binary
 ///  is blocked. If this message is not configured, a reasonable default is provided.
 ///

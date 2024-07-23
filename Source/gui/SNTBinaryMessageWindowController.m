@@ -99,6 +99,11 @@
     }
   }
 
+  NSString *dismissButtonText = [[SNTConfigurator configurator] dismissText];
+  if (dismissButtonText.length) {
+    [self.dismissEventButton setTitle:dismissButtonText];
+  }
+
   if (!self.event.needsBundleHash) {
     [self.bundleHashLabel removeFromSuperview];
     [self.hashingIndicator removeFromSuperview];
