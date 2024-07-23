@@ -411,6 +411,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
   return [self configStateSet];
 }
 
++ (NSSet *)keyPathsForValuesAffectingDismissText {
+  return [self configStateSet];
+}
+
 + (NSSet *)keyPathsForValuesAffectingUnknownBlockMessage {
   return [self configStateSet];
 }
