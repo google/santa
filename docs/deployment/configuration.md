@@ -39,6 +39,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MoreInfoURL                        | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
 | EventDetailURL                     | String     | See the [EventDetailURL](#eventdetailurl) section below. |
 | EventDetailText                    | String     | Related to the above property, this string represents the text to show on the button. |
+| DismissText                        | String     | The text to display on the button that dismisses the binary block dialog. The default text is "Dismiss". |
 | UnknownBlockMessage                | String     | In Lockdown mode this is the message shown to the user when an unknown binary is blocked. If this message is not configured a reasonable default is provided. |
 | BannedBlockMessage                 | String     | This is the message shown to the user when a binary is blocked because of a rule if that rule doesn't provide a custom message. If this is not configured a reasonable default is provided. |
 | ModeNotificationMonitor            | String     | The notification text to display when the client goes into Monitor mode. Defaults to "Switching into Monitor mode". |
