@@ -202,7 +202,9 @@ using santa::NSStringToUTF8String;
       errStr = [NSHTTPURLResponse localizedStringForStatusCode:response.statusCode];
     } else {
       code = (long)requestError.code;
+      if (code == 0) code = response.StatusCode;
       errStr = requestError.localizedDescription;
+      if (!errStr) errStr = @"Unknown Error";
     }
     LOGE(@"HTTP Response: %ld %@", code, errStr);
     if (error != NULL) {
