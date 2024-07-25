@@ -205,7 +205,7 @@ using santa::NSStringToUTF8String;
     if (error != NULL) {
       *error = [NSError errorWithDomain:@"com.google.santa.syncservice"
                                    code:code
-                               userInfo:@{NSLocalizedDescriptionKey : errStr}];
+                               userInfo:@{NSLocalizedDescriptionKey : errStr ?: @""}];
     }
     return nil;
   }
