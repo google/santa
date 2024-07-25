@@ -195,12 +195,9 @@ using santa::NSStringToUTF8String;
 
   // If the final attempt resulted in an error, log the error and return nil.
   if (response.statusCode != 200) {
-    long code;
-    NSString *errStr;
-    if (response.statusCode > 0) {
-      code = response.statusCode;
-      errStr = [NSHTTPURLResponse localizedStringForStatusCode:response.statusCode];
-    } else {
+    long code = response.statusCode;
+    NSString *errStr = [NSHTTPURLResponse localizedStringForStatusCode:response.statusCode];
+    if (requestError.localizedDescription) {
       code = (long)requestError.code;
       errStr = requestError.localizedDescription;
     }
@@ -208,7 +205,7 @@ using santa::NSStringToUTF8String;
     if (error != NULL) {
       *error = [NSError errorWithDomain:@"com.google.santa.syncservice"
                                    code:code
-                               userInfo:@{NSLocalizedDescriptionKey : errStr}];
+                               userInfo:@{NSLocalizedDescriptionKey : errStr ?: @""}];
     }
     return nil;
   }
