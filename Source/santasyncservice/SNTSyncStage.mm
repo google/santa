@@ -74,10 +74,7 @@ using santa::NSStringToUTF8String;
                      contentType:@"application/x-protobuf"];
   }
 
-  google::protobuf::json::PrintOptions options{
-    .always_print_enums_as_ints = false,
-    .preserve_proto_field_names = true,
-  };
+  google::protobuf::json::PrintOptions options{};
   std::string json;
   absl::Status status = google::protobuf::json::MessageToJsonString(*message, &json, options);
 

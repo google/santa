@@ -74,6 +74,21 @@
   return @(model);
 }
 
++ (NSString *)santaProductVersion {
+  NSDictionary *info_dict = [[NSBundle mainBundle] infoDictionary];
+  return info_dict[@"CFBundleShortVersionString"];
+}
+
++ (NSString *)santaBuildVersion {
+  NSDictionary *info_dict = [[NSBundle mainBundle] infoDictionary];
+  return [[info_dict[@"CFBundleVersion"] componentsSeparatedByString:@"."] lastObject];
+}
+
++ (NSString *)santaFullVersion {
+  NSDictionary *info_dict = [[NSBundle mainBundle] infoDictionary];
+  return info_dict[@"CFBundleVersion"];
+}
+
 #pragma mark - Internal
 
 + (NSDictionary *)_systemVersionDictionary {

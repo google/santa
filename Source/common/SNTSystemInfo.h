@@ -54,4 +54,19 @@
 ///
 + (NSString *)modelIdentifier;
 
+///
+///  @return The Santa product version, e.g. 2024.6
+///
++ (NSString *)santaProductVersion;
+
+///
+///  @return The Santa build version, e.g. 655965194
+///
++ (NSString *)santaBuildVersion;
+
+///
+///  @return The full Santa versoin, e.g. 2024.6.655965194
+///
++ (NSString *)santaFullVersion;
+
 @end
