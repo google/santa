@@ -20,6 +20,7 @@
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTMetricSet.h"
+#import "Source/common/SNTSystemInfo.h"
 #import "Source/common/SystemResources.h"
 #import "Source/santad/Santad.h"
 #include "Source/santad/SantadDeps.h"
@@ -111,13 +112,10 @@ int main(int argc, char *argv[]) {
     // Do not wait on child processes
     signal(SIGCHLD, SIG_IGN);
 
-    NSDictionary *info_dict = [[NSBundle mainBundle] infoDictionary];
+    NSString *product_version = [SNTSystemInfo santaProductVersion];
+    NSString *build_version = [SNTSystemInfo santaBuildVersion];
+
     NSProcessInfo *pi = [NSProcessInfo processInfo];
-
-    NSString *product_version = info_dict[@"CFBundleShortVersionString"];
-    NSString *build_version =
-      [[info_dict[@"CFBundleVersion"] componentsSeparatedByString:@"."] lastObject];
-
     if ([pi.arguments containsObject:@"-v"]) {
       printf("%s (build %s)\n", [product_version UTF8String], [build_version UTF8String]);
       return 0;
