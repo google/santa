@@ -14,7 +14,7 @@
 
 #import "Source/santasyncservice/SNTSyncFCM.h"
 
-#import <SystemConfiguration/SystemConfiguration.h>
+#import <Network/Network.h>
 
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 
@@ -80,7 +80,7 @@ static const uint32_t kDefaultConnectDelayMaxSeconds = 10;
 @property(copy, nonatomic) SNTSyncFCMMessageHandler messageHandler;
 
 /**  Is used throughout the class to reconnect to FCM after a connection loss. */
-@property SCNetworkReachabilityRef reachability;
+@property nw_path_monitor_t pathMonitor;
 
 /**  FCM client identities. */
 @property(nonatomic, readonly) NSString *project;
@@ -96,21 +96,6 @@ static const uint32_t kDefaultConnectDelayMaxSeconds = 10;
 - (void)reachabilityRestored;
 
 @end
-
-#pragma mark SCNetworkReachabilityCallBack
-
-/**  Called when the network state changes. */
-static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags,
-                                void *info) {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    if (flags & kSCNetworkReachabilityFlagsReachable) {
-      SNTSyncFCM *FCMClient = (__bridge SNTSyncFCM *)info;
-      SEL s = @selector(reachabilityRestored);
-      [NSObject cancelPreviousPerformRequestsWithTarget:FCMClient selector:s object:nil];
-      [FCMClient performSelector:s withObject:nil afterDelay:1];
-    }
-  });
-}
 
 @implementation SNTSyncFCM
 
@@ -151,6 +136,17 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     _connectDelayMaxSeconds = connectDelayMax ?: kDefaultConnectDelayMaxSeconds;
     _backoffMaxSeconds = backoffMax ?: kDefaultBackoffMaxSeconds;
     _fatalHTTPStatusCodes = fatalCodes ?: @[ @302, @400, @401, @403, @404 ];
+
+    _pathMonitor = nw_path_monitor_create();
+    nw_path_monitor_set_update_handler(_pathMonitor, ^(nw_path_t path) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        if (nw_path_get_status(path) == nw_path_status_satisfied) {
+          SEL s = @selector(reachabilityRestored);
+          [NSObject cancelPreviousPerformRequestsWithTarget:self selector:s object:nil];
+          [self performSelector:s withObject:nil afterDelay:1];
+        }
+      });
+    });
   }
   return self;
 }
@@ -184,11 +180,6 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
                 messageHandler:messageHandler];
 }
 
-/**  Before this object is released ensure reachability release. */
-- (void)dealloc {
-  [self stopReachability];
-}
-
 #pragma mark property methods
 
 - (BOOL)isConnected {
@@ -212,24 +203,13 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
 
 /**  Start listening for network state changes on a background thread. */
 - (void)startReachability {
-  if (self.reachability) return;
   LOGD(@"Reachability started.");
-  self.reachability =
-    SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, _connectComponents.host.UTF8String);
-  SCNetworkReachabilityContext context = {.info = (__bridge void *)self};
-  if (SCNetworkReachabilitySetCallback(self.reachability, reachabilityHandler, &context)) {
-    SCNetworkReachabilitySetDispatchQueue(
-      self.reachability, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
-  }
+  nw_path_monitor_start(self.pathMonitor);
 }
 
 /**  Stop listening for network state changes. */
 - (void)stopReachability {
-  if (self.reachability) {
-    SCNetworkReachabilitySetDispatchQueue(self.reachability, NULL);
-    if (self.reachability) CFRelease(self.reachability);
-    self.reachability = NULL;
-  }
+  nw_path_monitor_cancel(self.pathMonitor);
 }
 
 #pragma mark message methods
