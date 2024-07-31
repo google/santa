@@ -258,7 +258,7 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
   }
 
   SLOGE(@"Preflight failed, will try again once %@ is reachable",
-       [[SNTConfigurator configurator] syncBaseURL].absoluteString);
+        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
   [self startReachability];
   return SNTSyncStatusTypePreflightFailed;
 }
