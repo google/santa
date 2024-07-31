@@ -14,6 +14,7 @@
 
 #import "Source/santasyncservice/SNTSyncStage.h"
 
+#include <Foundation/Foundation.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
 
 #import "Source/common/SNTCommonEnums.h"
@@ -175,6 +176,11 @@ using santa::NSStringToUTF8String;
     SLOGD(@"Performing request, attempt %d (of %d maximum)...", attempt, maxAttempts);
     data = [self performRequest:request timeout:timeout response:&response error:&requestError];
     if (response.statusCode == 200) break;
+
+    // If the original request failed because of a "No network" error, break out of the loop,
+    // subsequent retries are pointless and the entire sync will be retried once a connection
+    // is established.
+    if (requestError.code == NSURLErrorNotConnectedToInternet) break;
 
     // If the original request failed because of an auth error, attempt to get a new XSRF token and
     // try again. Unfortunately some servers cause NSURLSession to return 'client cert required' or

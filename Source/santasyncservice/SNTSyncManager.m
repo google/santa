@@ -257,7 +257,7 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
     return [self eventUploadWithSyncState:syncState];
   }
 
-  LOGE(@"Preflight failed, will try again once %@ is reachable",
+  SLOGE(@"Preflight failed, will try again once %@ is reachable",
        [[SNTConfigurator configurator] syncBaseURL].absoluteString);
   [self startReachability];
   return SNTSyncStatusTypePreflightFailed;
@@ -386,6 +386,7 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
 - (void)setReachable:(BOOL)reachable {
   _reachable = reachable;
   if (reachable) {
+    LOGD(@"Internet connection has been restored, triggering a new sync.");
     [self stopReachability];
     [self sync];
   }
