@@ -81,21 +81,6 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
     _syncLimiter = dispatch_semaphore_create(kMaxEnqueuedSyncs);
 
     _eventBatchSize = kDefaultEventBatchSize;
-
-    _pathMonitor = nw_path_monitor_create();
-    nw_path_monitor_set_update_handler(_pathMonitor, ^(nw_path_t path) {
-      // Put this check and set on the main thread to ensure serial access.
-      dispatch_async(dispatch_get_main_queue(), ^{
-        // Only call the setter when there is a change. This will filter out the redundant calls to
-        // this callback whenever the network interface states change.
-        int reachable = nw_path_get_status(path) == nw_path_status_satisfied;
-        if (self.reachable != reachable) {
-          self.reachable = reachable;
-        }
-      });
-    });
-    nw_path_monitor_set_queue(self.pathMonitor,
-                              dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
   }
   return self;
 }
@@ -406,13 +391,28 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
   }
 }
 
-// Start listening for network state changes on a background thread
+// Start listening for network state changes.
 - (void)startReachability {
+  self.pathMonitor = nw_path_monitor_create();
+  // Put the callback on the main thread to ensure serial access.
+  nw_path_monitor_set_queue(self.pathMonitor, dispatch_get_main_queue());
+  nw_path_monitor_set_update_handler(self.pathMonitor, ^(nw_path_t path) {
+    // Only call the setter when there is a change. This will filter out the redundant calls to
+    // this callback whenever the network interface states change.
+    int reachable = nw_path_get_status(path) == nw_path_status_satisfied;
+    if (self.reachable != reachable) {
+      self.reachable = reachable;
+    }
+  });
+  nw_path_monitor_set_cancel_handler(self.pathMonitor, ^{
+    self.pathMonitor = nil;
+  });
   nw_path_monitor_start(self.pathMonitor);
 }
 
 // Stop listening for network state changes
 - (void)stopReachability {
+  if (!self.pathMonitor) return;
   nw_path_monitor_cancel(self.pathMonitor);
 }
 

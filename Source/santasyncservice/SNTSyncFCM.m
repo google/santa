@@ -136,17 +136,6 @@ static const uint32_t kDefaultConnectDelayMaxSeconds = 10;
     _connectDelayMaxSeconds = connectDelayMax ?: kDefaultConnectDelayMaxSeconds;
     _backoffMaxSeconds = backoffMax ?: kDefaultBackoffMaxSeconds;
     _fatalHTTPStatusCodes = fatalCodes ?: @[ @302, @400, @401, @403, @404 ];
-
-    _pathMonitor = nw_path_monitor_create();
-    nw_path_monitor_set_update_handler(_pathMonitor, ^(nw_path_t path) {
-      dispatch_async(dispatch_get_main_queue(), ^{
-        if (nw_path_get_status(path) == nw_path_status_satisfied) {
-          SEL s = @selector(reachabilityRestored);
-          [NSObject cancelPreviousPerformRequestsWithTarget:self selector:s object:nil];
-          [self performSelector:s withObject:nil afterDelay:1];
-        }
-      });
-    });
   }
   return self;
 }
@@ -203,12 +192,26 @@ static const uint32_t kDefaultConnectDelayMaxSeconds = 10;
 
 /**  Start listening for network state changes on a background thread. */
 - (void)startReachability {
-  LOGD(@"Reachability started.");
+  if (!self.pathMonitor) return;  
+  self.pathMonitor = nw_path_monitor_create();
+  nw_path_monitor_set_queue(self.pathMonitor, dispatch_get_main_queue());
+  nw_path_monitor_set_update_handler(self.pathMonitor, ^(nw_path_t path) {
+    if (nw_path_get_status(path) == nw_path_status_satisfied) {
+      SEL s = @selector(reachabilityRestored);
+      [NSObject cancelPreviousPerformRequestsWithTarget:self selector:s object:nil];
+      [self performSelector:s withObject:nil afterDelay:1];
+    }
+  });
+  nw_path_monitor_set_cancel_handler(self.pathMonitor, ^{
+    self.pathMonitor = nil;
+  });
   nw_path_monitor_start(self.pathMonitor);
+  LOGD(@"Reachability started.");
 }
 
 /**  Stop listening for network state changes. */
 - (void)stopReachability {
+  if (!self.pathMonitor) return;
   nw_path_monitor_cancel(self.pathMonitor);
 }
 
