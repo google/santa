@@ -393,6 +393,7 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
 
 // Start listening for network state changes.
 - (void)startReachability {
+  if (self.pathMonitor) return;
   self.pathMonitor = nw_path_monitor_create();
   // Put the callback on the main thread to ensure serial access.
   nw_path_monitor_set_queue(self.pathMonitor, dispatch_get_main_queue());

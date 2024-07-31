@@ -192,7 +192,7 @@ static const uint32_t kDefaultConnectDelayMaxSeconds = 10;
 
 /**  Start listening for network state changes on a background thread. */
 - (void)startReachability {
-  if (!self.pathMonitor) return;
+  if (self.pathMonitor) return;
   self.pathMonitor = nw_path_monitor_create();
   nw_path_monitor_set_queue(self.pathMonitor, dispatch_get_main_queue());
   nw_path_monitor_set_update_handler(self.pathMonitor, ^(nw_path_t path) {
