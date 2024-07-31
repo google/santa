@@ -22,7 +22,7 @@ objc_library(
     name = "FCM_lib",
     srcs = ["SNTSyncFCM.m"],
     hdrs = ["SNTSyncFCM.h"],
-    sdk_frameworks = ["SystemConfiguration"],
+    sdk_frameworks = ["Network"],
     deps = [
         "@MOLAuthenticatingURLSession",
     ],
@@ -55,6 +55,7 @@ objc_library(
     ],
     hdrs = ["SNTSyncManager.h"],
     sdk_dylibs = ["libz"],
+    sdk_frameworks = ["Network"],
     deps = [
         ":FCM_lib",
         ":broadcaster_lib",

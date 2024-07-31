@@ -16,7 +16,7 @@
 
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 #import <MOLXPCConnection/MOLXPCConnection.h>
-#import <SystemConfiguration/SystemConfiguration.h>
+#import <Network/Network.h>
 
 #import "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
@@ -35,9 +35,7 @@
 
 static const uint8_t kMaxEnqueuedSyncs = 2;
 
-@interface SNTSyncManager () <SNTPushNotificationsDelegate> {
-  SCNetworkReachabilityRef _reachability;
-}
+@interface SNTSyncManager () <SNTPushNotificationsDelegate>
 
 @property(nonatomic) dispatch_source_t fullSyncTimer;
 @property(nonatomic) dispatch_source_t ruleSyncTimer;
@@ -48,6 +46,7 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
 @property(nonatomic) MOLXPCConnection *daemonConn;
 
 @property(nonatomic) BOOL reachable;
+@property nw_path_monitor_t pathMonitor;
 
 @property SNTPushNotifications *pushNotifications;
 
@@ -57,22 +56,6 @@ static const uint8_t kMaxEnqueuedSyncs = 2;
 @property NSString *xsrfTokenHeader;
 
 @end
-
-// Called when the network state changes
-static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags,
-                                void *info) {
-  // Put this check and set on the main thread to ensure serial access.
-  dispatch_async(dispatch_get_main_queue(), ^{
-    SNTSyncManager *commandSyncManager = (__bridge SNTSyncManager *)info;
-    // Only call the setter when there is a change. This will filter out the redundant calls to this
-    // callback whenever the network interface states change.
-    int reachable =
-      (flags & kSCNetworkReachabilityFlagsReachable) == kSCNetworkReachabilityFlagsReachable;
-    if (commandSyncManager.reachable != reachable) {
-      commandSyncManager.reachable = reachable;
-    }
-  });
-}
 
 @implementation SNTSyncManager
 
@@ -100,11 +83,6 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
     _eventBatchSize = kDefaultEventBatchSize;
   }
   return self;
-}
-
-- (void)dealloc {
-  // Ensure reachability is always stopped
-  [self stopReachability];
 }
 
 #pragma mark SNTSyncServiceXPC methods
@@ -413,34 +391,30 @@ static void reachabilityHandler(SCNetworkReachabilityRef target, SCNetworkReacha
   }
 }
 
-// Start listening for network state changes on a background thread
+// Start listening for network state changes.
 - (void)startReachability {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    if (self->_reachability) return;
-    const char *nodename = [[SNTConfigurator configurator] syncBaseURL].host.UTF8String;
-    self->_reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, nodename);
-    SCNetworkReachabilityContext context = {
-      .info = (__bridge_retained void *)self,
-      .release = (void (*)(const void *))CFBridgingRelease,
-    };
-    if (SCNetworkReachabilitySetCallback(self->_reachability, reachabilityHandler, &context)) {
-      SCNetworkReachabilitySetDispatchQueue(
-        self->_reachability, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0));
-    } else {
-      [self stopReachability];
+  if (self.pathMonitor) return;
+  self.pathMonitor = nw_path_monitor_create();
+  // Put the callback on the main thread to ensure serial access.
+  nw_path_monitor_set_queue(self.pathMonitor, dispatch_get_main_queue());
+  nw_path_monitor_set_update_handler(self.pathMonitor, ^(nw_path_t path) {
+    // Only call the setter when there is a change. This will filter out the redundant calls to
+    // this callback whenever the network interface states change.
+    int reachable = nw_path_get_status(path) == nw_path_status_satisfied;
+    if (self.reachable != reachable) {
+      self.reachable = reachable;
     }
   });
+  nw_path_monitor_set_cancel_handler(self.pathMonitor, ^{
+    self.pathMonitor = nil;
+  });
+  nw_path_monitor_start(self.pathMonitor);
 }
 
 // Stop listening for network state changes
 - (void)stopReachability {
-  dispatch_async(dispatch_get_main_queue(), ^{
-    if (self->_reachability) {
-      SCNetworkReachabilitySetDispatchQueue(self->_reachability, NULL);
-      if (self->_reachability) CFRelease(self->_reachability);
-      self->_reachability = NULL;
-    }
-  });
+  if (!self.pathMonitor) return;
+  nw_path_monitor_cancel(self.pathMonitor);
 }
 
 @end
