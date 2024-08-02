@@ -605,10 +605,15 @@ NSString *SNTMetricMakeStringFromMetricType(SNTMetricType metricType) {
 
 /** Export current state of the SNTMetricSet as an NSDictionary. */
 - (NSDictionary *)export {
-  NSDictionary *exported = nil;
+  NSDictionary *exported;
+
+  NSArray *callbacks;
+  @synchronized(self) {
+    callbacks = [_callbacks mutableCopy];
+  }
 
   // Invoke callbacks to ensure metrics are up to date.
-  for (void (^cb)(void) in _callbacks) {
+  for (void (^cb)(void) in callbacks) {
     cb();
   }
 

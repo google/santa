@@ -87,8 +87,7 @@ The following table expands upon the above logic to list most of the permutation
   req->set_os_version(NSStringToUTF8String([SNTSystemInfo osVersion]));
   req->set_os_build(NSStringToUTF8String([SNTSystemInfo osBuild]));
   req->set_model_identifier(NSStringToUTF8String([SNTSystemInfo modelIdentifier]));
-  req->set_santa_version(
-    NSStringToUTF8String([[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]));
+  req->set_santa_version(NSStringToUTF8String([SNTSystemInfo santaFullVersion]));
   req->set_primary_user(NSStringToUTF8String(self.syncState.machineOwner));
 
   if (self.syncState.pushNotificationsToken) {
