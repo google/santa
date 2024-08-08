@@ -86,7 +86,6 @@ using santa::NSStringToUTF8String;
     return nil;
   }
 
-  SLOGD(@"Request JSON: %s", json.c_str());
   return [self requestWithData:[NSData dataWithBytes:json.data() length:json.size()]
                    contentType:@"application/json"];
 }
