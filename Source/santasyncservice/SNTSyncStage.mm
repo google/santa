@@ -91,7 +91,7 @@ using santa::NSStringToUTF8String;
 }
 
 - (NSMutableURLRequest *)requestWithData:(NSData *)requestBody contentType:(NSString *)contentType {
-  if (contentType.length) contentType = @"application/octet-stream";
+  if (!contentType.length) contentType = @"application/octet-stream";
 
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:[self stageURL]];
   [req setHTTPMethod:@"POST"];
