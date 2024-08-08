@@ -287,6 +287,7 @@
             NSData *gotReqData = [req HTTPBody];
             NSData *expectedReqData = [self dataFromFixture:@"sync_preflight_request.json"];
             XCTAssertEqualObjects(gotReqData, expectedReqData);
+            XCTAssertEqualObjects([req valueForHTTPHeaderField:@"Content-Type"], @"application/json");
             return YES;
           }];
 
