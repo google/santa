@@ -229,8 +229,8 @@ static const NSUInteger kExpectedTeamIDLength = 10;
   self = [super init];
   if (self) {
     _identifier = DECODE(NSString, @"identifier");
-    _state = (SNTRuleState)[DECODE(NSNumber, @"state") intValue];
-    _type = (SNTRuleType)[DECODE(NSNumber, @"type") intValue];
+    _state = static_cast<SNTRuleState>([DECODE(NSNumber, @"state") intValue]);
+    _type = static_cast<SNTRuleType>([DECODE(NSNumber, @"type") intValue]);
     _customMsg = DECODE(NSString, @"custommsg");
     _customURL = DECODE(NSString, @"customurl");
     _timestamp = [DECODE(NSNumber, @"timestamp") unsignedIntegerValue];
@@ -313,7 +313,7 @@ static const NSUInteger kExpectedTeamIDLength = 10;
   NSData *ruleData = [ruleDigestFormat dataUsingEncoding:NSUTF8StringEncoding];
 
   unsigned char digest[CC_SHA256_DIGEST_LENGTH];
-  CC_SHA256(ruleData.bytes, (CC_LONG)ruleData.length, (unsigned char *)&digest);
+  CC_SHA256(ruleData.bytes, static_cast<CC_LONG>(ruleData.length), (unsigned char *)&digest);
 
   return santa::SHA256DigestToNSString(digest);
 }

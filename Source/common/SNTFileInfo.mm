@@ -164,7 +164,7 @@
 - (void)hashSHA1:(NSString **)sha1 SHA256:(NSString **)sha256 {
   const int MAX_CHUNK_SIZE = 256 * 1024;  // 256 KB
   const size_t chunkSize = _fileSize > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : _fileSize;
-  char *chunk = (char *)malloc(chunkSize);
+  char *chunk = static_cast<char *>(malloc(chunkSize));
 
   @try {
     CC_SHA1_CTX c1;
