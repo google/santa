@@ -426,9 +426,12 @@ extern NSString *const NSURLQuarantinePropertiesKey WEAK_IMPORT_ATTRIBUTE;
     // `-[NSDictionary infoDictionary]` is heavily cached, changes to the Info.plist are not
     // realized. Use `CFBundleCopyInfoDictionaryInDirectory` instead, which does not appear to
     // cache.
-    d = CFBridgingRelease(CFBundleCopyInfoDictionaryInDirectory(
-      (__bridge CFURLRef)[NSURL fileURLWithPath:[self bundlePath]]));
-    if (d) {
+    NSString *bundlePath = [self bundlePath];
+    if (bundlePath.length) {
+      d = CFBridgingRelease(CFBundleCopyInfoDictionaryInDirectory(
+        (__bridge CFURLRef)[NSURL fileURLWithPath:bundlePath]));
+    }
+    if (d.count) {
       self.infoDict = d;
       return self.infoDict;
     }
