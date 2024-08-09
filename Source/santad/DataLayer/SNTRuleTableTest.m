@@ -16,6 +16,7 @@
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
+#include "Source/common/SNTCommonEnums.h"
 
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTRule.h"
@@ -511,6 +512,29 @@
 
   r.state = SNTRuleStateRemove;
   XCTAssertEqual(YES, [self.sut addedRulesShouldFlushDecisionCache:@[ r ]]);
+}
+
+- (void)testHashOfHashes {
+  NSArray<SNTRule *> *rules = @[
+    [self _exampleCertRule],
+    [self _exampleBinaryRule],
+    [self _exampleTeamIDRule],
+    [self _exampleSigningIDRuleIsPlatform:NO],
+  ];
+  [self.sut addRules:rules ruleCleanup:SNTRuleCleanupAll error:nil];
+
+  NSString *hash = [self.sut hashOfHashes];
+  XCTAssertEqual(hash.length, 64);
+  XCTAssertEqualObjects(hash, @"395142253ee4b4dc5a55a445b6b2cbffbd4e132480ab8990e84e50577da84b15");
+
+  SNTRule *removeRule = self._exampleBinaryRule;
+  removeRule.state = SNTRuleStateRemove;
+
+  [self.sut addRules:@[ removeRule ] ruleCleanup:SNTRuleCleanupNone error:nil];
+
+  hash = [self.sut hashOfHashes];
+  XCTAssertEqual(hash.length, 64);
+  XCTAssertEqualObjects(hash, @"a172a258906b951b2cec2d7aabfecbe8eb0b5d75e6f9d1e2884eede67903ddd4");
 }
 
 @end
