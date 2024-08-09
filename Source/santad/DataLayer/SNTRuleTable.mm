@@ -601,7 +601,9 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) {
     while ([rs next]) {
       SNTRule *r = [self ruleFromResultSet:rs];
       NSString *digest = r.digest;
-      CC_SHA256_Update(&sha, digest.UTF8String, (CC_LONG)digest.length);
+      CC_SHA256_Update(
+        &sha, digest.UTF8String,
+        static_cast<CC_LONG>([digest lengthOfBytesUsingEncoding:NSUTF8StringEncoding]));
     }
     [rs close];
   }];
