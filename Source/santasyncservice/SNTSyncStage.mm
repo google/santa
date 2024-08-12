@@ -86,13 +86,12 @@ using santa::NSStringToUTF8String;
     return nil;
   }
 
-  SLOGD(@"Request JSON: %s", json.c_str());
   return [self requestWithData:[NSData dataWithBytes:json.data() length:json.size()]
                    contentType:@"application/json"];
 }
 
 - (NSMutableURLRequest *)requestWithData:(NSData *)requestBody contentType:(NSString *)contentType {
-  if (contentType.length) contentType = @"application/octet-stream";
+  if (!contentType.length) contentType = @"application/octet-stream";
 
   NSMutableURLRequest *req = [[NSMutableURLRequest alloc] initWithURL:[self stageURL]];
   [req setHTTPMethod:@"POST"];

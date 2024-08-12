@@ -280,15 +280,17 @@
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_preflight_basic.json"];
-  [self stubRequestBody:respData
-               response:nil
-                  error:nil
-          validateBlock:^BOOL(NSURLRequest *req) {
-            NSData *gotReqData = [req HTTPBody];
-            NSData *expectedReqData = [self dataFromFixture:@"sync_preflight_request.json"];
-            XCTAssertEqualObjects(gotReqData, expectedReqData);
-            return YES;
-          }];
+  [self
+    stubRequestBody:respData
+           response:nil
+              error:nil
+      validateBlock:^BOOL(NSURLRequest *req) {
+        NSData *gotReqData = [req HTTPBody];
+        NSData *expectedReqData = [self dataFromFixture:@"sync_preflight_request.json"];
+        XCTAssertEqualObjects(gotReqData, expectedReqData);
+        XCTAssertEqualObjects([req valueForHTTPHeaderField:@"Content-Type"], @"application/json");
+        return YES;
+      }];
 
   XCTAssertTrue([sut sync]);
   XCTAssertEqual(self.syncState.clientMode, SNTClientModeMonitor);
