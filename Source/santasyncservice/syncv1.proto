@@ -305,8 +305,8 @@ message RuleDownloadResponse {
 }
 
 message PostflightRequest {
-  uint64 rules_received = 1   [json_name="rules_received"];
-  uint64 rules_processed = 2  [json_name="rules_processed"];
+  uint32 rules_received = 1   [json_name="rules_received"];
+  uint32 rules_processed = 2  [json_name="rules_processed"];
   // The UUID of the machine that is sending this postflight.
   string machine_id = 3       [json_name="machine_id"];
 }
