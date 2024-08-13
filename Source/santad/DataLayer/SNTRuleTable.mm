@@ -598,13 +598,11 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) {
       [db executeQuery:@"SELECT identifier, state, type, timestamp FROM rules WHERE type!=?",
                        @(SNTRuleStateAllowTransitive)];
     while ([rs next]) {
-      NSString *digest =
-        [NSString stringWithFormat:@"%@:%d:%d:%u", [rs stringForColumn:@"identifier"],
-                                   [rs intForColumn:@"state"], [rs intForColumn:@"type"],
-                                   [rs intForColumn:@"timestamp"]];
-
-      crc = crc32(crc, reinterpret_cast<const unsigned char *>(digest.UTF8String),
-                  static_cast<uint32_t>(digest.length));
+      char digest[128];
+      uint32_t len = snprintf(
+        digest, 128, "%s:%d:%d:%u", [rs stringForColumn:@"identifier"].UTF8String,
+        [rs intForColumn:@"state"], [rs intForColumn:@"type"], [rs intForColumn:@"timestamp"]);
+      crc = crc32(crc, reinterpret_cast<const unsigned char *>(digest), len);
     }
     [rs close];
   }];
