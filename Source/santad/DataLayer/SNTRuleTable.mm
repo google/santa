@@ -25,7 +25,6 @@
 #import "Source/common/SNTFileInfo.h"
 #import "Source/common/SNTLogging.h"
 #import "Source/common/SNTRule.h"
-#import "Source/common/String.h"
 
 static const uint32_t kRuleTableCurrentVersion = 7;
 

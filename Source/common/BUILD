@@ -128,11 +128,7 @@ objc_library(
 
 objc_library(
     name = "String",
-    sdk_frameworks = [
-        "Foundation",
-        "Security",
-    ],
-    textual_hdrs = ["String.h"],
+    hdrs = ["String.h"],
 )
 
 objc_library(
@@ -274,12 +270,11 @@ objc_library(
 
 objc_library(
     name = "SNTFileInfo",
-    srcs = ["SNTFileInfo.mm"],
+    srcs = ["SNTFileInfo.m"],
     hdrs = ["SNTFileInfo.h"],
     deps = [
         ":SNTLogging",
         ":SantaVnode",
-        ":String",
         "@FMDB",
         "@MOLCodesignChecker",
     ],

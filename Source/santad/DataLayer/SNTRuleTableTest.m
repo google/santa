@@ -524,8 +524,8 @@
   [self.sut addRules:rules ruleCleanup:SNTRuleCleanupAll error:nil];
 
   NSString *hash = [self.sut hashOfHashes];
-  XCTAssertEqual(hash.length, 64);
-  XCTAssertEqualObjects(hash, @"395142253ee4b4dc5a55a445b6b2cbffbd4e132480ab8990e84e50577da84b15");
+  XCTAssertEqual(hash.length, 8);
+  XCTAssertEqualObjects(hash, @"d03a2a03");
 
   SNTRule *removeRule = self._exampleBinaryRule;
   removeRule.state = SNTRuleStateRemove;
@@ -533,8 +533,8 @@
   [self.sut addRules:@[ removeRule ] ruleCleanup:SNTRuleCleanupNone error:nil];
 
   hash = [self.sut hashOfHashes];
-  XCTAssertEqual(hash.length, 64);
-  XCTAssertEqualObjects(hash, @"a172a258906b951b2cec2d7aabfecbe8eb0b5d75e6f9d1e2884eede67903ddd4");
+  XCTAssertEqual(hash.length, 8);
+  XCTAssertEqualObjects(hash, @"99e67481");
 }
 
 @end

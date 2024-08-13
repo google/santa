@@ -23,6 +23,7 @@ objc_library(
     hdrs = ["DataLayer/SNTRuleTable.h"],
     sdk_dylibs = [
         "EndpointSecurity",
+        "libz",
     ],
     deps = [
         ":SNTDatabaseTable",
@@ -34,7 +35,6 @@ objc_library(
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
         "//Source/common:SNTRuleIdentifiers",
-        "//Source/common:String",
         "@MOLCertificate",
         "@MOLCodesignChecker",
     ],
@@ -917,6 +917,7 @@ santa_unit_test(
     ],
     sdk_dylibs = [
         "EndpointSecurity",
+        "libz",
     ],
     deps = [
         "//Source/common:Platform",
@@ -927,7 +928,6 @@ santa_unit_test(
         "//Source/common:SNTLogging",
         "//Source/common:SNTRule",
         "//Source/common:SNTRuleIdentifiers",
-        "//Source/common:String",
         "@FMDB",
         "@MOLCertificate",
         "@MOLCodesignChecker",
