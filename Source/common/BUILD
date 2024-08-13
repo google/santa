@@ -128,12 +128,11 @@ objc_library(
 
 objc_library(
     name = "String",
-    textual_hdrs = ["String.h"],
     sdk_frameworks = [
-        "CommonCrypto",
-        "EndpointSecurity",
         "Foundation",
+        "Security",
     ],
+    textual_hdrs = ["String.h"],
 )
 
 objc_library(
@@ -309,7 +308,7 @@ objc_library(
 
 objc_library(
     name = "SNTRule",
-    srcs = ["SNTRule.mm"],
+    srcs = ["SNTRule.m"],
     hdrs = ["SNTRule.h"],
     sdk_frameworks = [
         "Foundation",
@@ -317,7 +316,6 @@ objc_library(
     deps = [
         ":SNTCommonEnums",
         ":SNTSyncConstants",
-        ":String",
     ],
 )
 

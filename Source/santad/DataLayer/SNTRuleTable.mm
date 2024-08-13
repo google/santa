@@ -14,10 +14,10 @@
 
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 
-#import <CommonCrypto/CommonDigest.h>
 #import <EndpointSecurity/EndpointSecurity.h>
 #import <MOLCertificate/MOLCertificate.h>
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
+#include <zlib.h>
 
 #import "Source/common/Platform.h"
 #import "Source/common/SNTCachedDecision.h"
@@ -592,26 +592,23 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) {
 }
 
 - (NSString *)hashOfHashes {
-  __block CC_SHA256_CTX sha;
-  CC_SHA256_Init(&sha);
-
+  __block uint64_t crc = 0LL;
   [self inDatabase:^(FMDatabase *db) {
     FMResultSet *rs =
-      [db executeQuery:@"SELECT * FROM rules WHERE type!=?", @(SNTRuleStateAllowTransitive)];
+      [db executeQuery:@"SELECT identifier, state, type, timestamp FROM rules WHERE type!=?",
+                       @(SNTRuleStateAllowTransitive)];
     while ([rs next]) {
-      SNTRule *r = [self ruleFromResultSet:rs];
-      NSString *digest = r.digest;
-      CC_SHA256_Update(
-        &sha, digest.UTF8String,
-        static_cast<CC_LONG>([digest lengthOfBytesUsingEncoding:NSUTF8StringEncoding]));
+      NSString *digest =
+        [NSString stringWithFormat:@"%@:%d:%d:%u", [rs stringForColumn:@"identifier"],
+                                   [rs intForColumn:@"state"], [rs intForColumn:@"type"],
+                                   [rs intForColumn:@"timestamp"]];
+
+      crc = crc32(crc, reinterpret_cast<const unsigned char *>(digest.UTF8String),
+                  static_cast<uint32_t>(digest.length));
     }
     [rs close];
   }];
-
-  unsigned char digest[CC_SHA256_DIGEST_LENGTH];
-  CC_SHA256_Final(digest, &sha);
-
-  return santa::SHA256DigestToNSString(digest);
+  return [NSString stringWithFormat:@"%llx", crc];
 }
 
 @end
