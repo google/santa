@@ -16,8 +16,8 @@
 #import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <OCMock/OCMock.h>
 #import <XCTest/XCTest.h>
-#include "Source/common/SNTCommonEnums.h"
 
+#include "Source/common/SNTCommonEnums.h"
 #import "Source/common/SNTConfigurator.h"
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTRuleIdentifiers.h"

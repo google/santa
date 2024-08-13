@@ -310,11 +310,12 @@ static void addPathsFromDefaultMuteSet(NSMutableSet *criticalPaths) {
 }
 
 - (SNTRule *)ruleFromResultSet:(FMResultSet *)rs {
-  SNTRule *r = [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
-                                             state:(SNTRuleState)[rs intForColumn:@"state"]
-                                              type:(SNTRuleType)[rs intForColumn:@"type"]
-                                         customMsg:[rs stringForColumn:@"custommsg"]
-                                         timestamp:[rs intForColumn:@"timestamp"]];
+  SNTRule *r =
+    [[SNTRule alloc] initWithIdentifier:[rs stringForColumn:@"identifier"]
+                                  state:static_cast<SNTRuleState>([rs intForColumn:@"state"])
+                                   type:static_cast<SNTRuleType>([rs intForColumn:@"type"])
+                              customMsg:[rs stringForColumn:@"custommsg"]
+                              timestamp:[rs intForColumn:@"timestamp"]];
   r.customURL = [rs stringForColumn:@"customurl"];
   return r;
 }
