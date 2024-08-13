@@ -128,8 +128,12 @@ objc_library(
 
 objc_library(
     name = "String",
-    hdrs = ["String.h"],
-    sdk_frameworks = ["Security"],
+    textual_hdrs = ["String.h"],
+    sdk_frameworks = [
+        "CommonCrypto",
+        "EndpointSecurity",
+        "Foundation",
+    ],
 )
 
 objc_library(
