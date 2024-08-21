@@ -688,7 +688,7 @@ bool ShouldMessageTTY(const std::shared_ptr<WatchItemPolicy> &policy, const Mess
 
     // Notify users on block decisions
     if (ShouldNotifyUserDecision(policyDecision) &&
-        (!policy->silent || (!policy->silent_tty && msg->process->tty->path.length > 0))) {
+        (!policy->silent || (!policy->silent_tty && TTYWriter::CanWrite(msg->process)))) {
       SNTCachedDecision *cd =
         [self.decisionCache cachedDecisionForFile:msg->process->executable->stat];
 
