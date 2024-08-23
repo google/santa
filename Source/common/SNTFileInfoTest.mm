@@ -12,11 +12,7 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
-#include <Foundation/Foundation.h>
-#include <Foundation/NSObjCRuntime.h>
-#import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <XCTest/XCTest.h>
-#include <objc/objc.h>
 #include <sys/stat.h>
 #include "Source/common/TestUtils.h"
 
