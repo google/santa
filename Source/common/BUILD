@@ -459,7 +459,10 @@ santa_unit_test(
         "testdata/BundleExample.app/**",
         "testdata/DirectoryBundle/**",
     ]),
-    deps = [":SNTFileInfo", ":TestUtils"],
+    deps = [
+        ":SNTFileInfo",
+        ":TestUtils",
+    ],
 )
 
 santa_unit_test(
