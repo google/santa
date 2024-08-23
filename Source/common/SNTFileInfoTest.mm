@@ -12,7 +12,13 @@
 ///    See the License for the specific language governing permissions and
 ///    limitations under the License.
 
+#include <Foundation/Foundation.h>
+#include <Foundation/NSObjCRuntime.h>
+#import <MOLCodesignChecker/MOLCodesignChecker.h>
 #import <XCTest/XCTest.h>
+#include <objc/objc.h>
+#include <sys/stat.h>
+#include "Source/common/TestUtils.h"
 
 #import "Source/common/SNTFileInfo.h"
 
@@ -248,6 +254,23 @@
   // it should be available..
   sut = [[SNTFileInfo alloc] initWithPath:@"/usr/bin/csreq"];
   XCTAssertNotNil([sut infoPlist]);
+}
+
+- (void)testWithEndpointSecurityFile {
+  struct stat sb;
+  XCTAssertEqual(stat("/usr/bin/yes", &sb), 0);
+  es_file_t file = MakeESFile("/usr/bin/yes", sb);
+  NSError *error;
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithEndpointSecurityFile:&file error:&error];
+  XCTAssertNotNil(sut);
+}
+
+- (void)testWithEndpointSecurityFileError {
+  // The constructed ES stat will not match `/usr/bin/yes` on disk stat values.
+  es_file_t file = MakeESFile("/usr/bin/yes");
+  NSError *error;
+  SNTFileInfo *sut = [[SNTFileInfo alloc] initWithEndpointSecurityFile:&file error:&error];
+  XCTAssertNil(sut);
 }
 
 @end
