@@ -138,7 +138,7 @@ The following table demonstrates which rule will be applied for operations on a 
 
 Configured path globs represent a point in time. That is, path globs are expanded when a configuration is applied to generate the set of monitored paths. This is not a "live" representation of the filesystem. For instance, if a new file or directory is added that would match a glob after the configuration is applied, it is not immediately monitored.
 
-Within the main Santa configuration, the `FileAccessPolicyUpdateIntervalSec` key controls how often any changes to the configuration are applied as well as re-evaluating configured path globs to match the current state of the filesystem.
+Within the main Santa configuration, the `FileAccessPolicyUpdateIntervalSec` key controls how often any changes to the configuration are applied as well as re-evaluating configured path globs to match the current state of the filesystem. This has a minimum value of 15 seconds.
 
 ### Prefix and Glob Path Evaluation
 
