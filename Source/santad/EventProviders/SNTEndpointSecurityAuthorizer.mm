@@ -101,6 +101,7 @@ using santa::Message;
                               }];
 }
 
+// Entry point not async
 - (void)handleMessage:(Message &&)esMsg
    recordEventMetrics:(void (^)(EventDisposition))recordEventMetrics {
   if (unlikely(esMsg->event_type != ES_EVENT_TYPE_AUTH_EXEC)) {
@@ -115,7 +116,7 @@ using santa::Message;
     recordEventMetrics(EventDisposition::kDropped);
     return;
   }
-
+  // goes async
   [self processMessage:std::move(esMsg)
                handler:^(const Message &msg) {
                  [self processMessage:msg];
