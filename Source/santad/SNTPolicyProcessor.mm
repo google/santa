@@ -30,6 +30,12 @@
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "absl/container/flat_hash_map.h"
 
+enum class PlatformBinaryState {
+  kRuntimeTrue = 0,
+  kRuntimeFalse,
+  kStaticCheck,
+};
+
 @interface SNTPolicyProcessor ()
 @property SNTRuleTable *ruleTable;
 @property SNTConfigurator *configurator;
@@ -130,7 +136,8 @@
 
 static void UpdateCachedDecisionSigningInfo(
   SNTCachedDecision *cd, MOLCodesignChecker *csInfo,
-  NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements)) {
+  NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements),
+  PlatformBinaryState platformBinaryState) {
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.certChain = csInfo.certificates;
@@ -144,8 +151,21 @@ static void UpdateCachedDecisionSigningInfo(
     cd.signingID = FormatSigningID(csInfo);
   }
 
-  // Ensure that if no teamID exists that the signing info confirms it is a
-  // platform binary. If not, remove the signingID.
+  // Ensure that if no teamID exists but a signingID does exist, that the binary
+  // is a platform binary. If not, remove the signingID.
+  if (!cd.teamID && cd.signingID) {
+    switch (platformBinaryState) {
+      case PlatformBinaryState::kRuntimeTrue: break;
+      case PlatformBinaryState::kStaticCheck:
+        if (!csInfo.platformBinary) {
+          cd.signingID = nil;
+        }
+        break;
+      case PlatformBinaryState::kRuntimeFalse: OS_FALLTHROUGH;
+      default: cd.signingID = nil; break;
+    }
+  }
+
   if (!cd.teamID && cd.signingID) {
     if (!csInfo.platformBinary) {
       cd.signingID = nil;
@@ -163,17 +183,18 @@ static void UpdateCachedDecisionSigningInfo(
   }
 }
 
-- (nonnull SNTCachedDecision *)
-         decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                      cdhash:(nullable NSString *)cdhash
-                  fileSHA256:(nullable NSString *)fileSHA256
-           certificateSHA256:(nullable NSString *)certificateSHA256
-                      teamID:(nullable NSString *)teamID
-                   signingID:(nullable NSString *)signingID
-        isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
-  entitlementsFilterCallback:(NSDictionary *_Nullable (^_Nullable)(
-                               NSDictionary *_Nullable entitlements))entitlementsFilterCallback
-    preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback {
+- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                                            cdhash:(nullable NSString *)cdhash
+                                        fileSHA256:(nullable NSString *)fileSHA256
+                                 certificateSHA256:(nullable NSString *)certificateSHA256
+                                            teamID:(nullable NSString *)teamID
+                                         signingID:(nullable NSString *)signingID
+                              isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
+                        entitlementsFilterCallback:
+                          (NSDictionary *_Nullable (^_Nullable)(
+                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback
+                          preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback
+                               platformBinaryState:(PlatformBinaryState)platformBinaryState {
   // Check the hash before allocating a SNTCachedDecision.
   NSString *fileHash = fileSHA256 ?: fileInfo.SHA256;
   SNTClientMode mode = [self.configurator clientMode];
@@ -215,7 +236,7 @@ static void UpdateCachedDecisionSigningInfo(
       cd.signingID = nil;
       cd.cdhash = nil;
     } else {
-      UpdateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback);
+      UpdateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback, platformBinaryState);
     }
   }
 
@@ -278,18 +299,6 @@ static void UpdateCachedDecisionSigningInfo(
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                      targetProcess:(nonnull const es_process_t *)targetProc
-                        entitlementsFilterCallback:
-                          (NSDictionary *_Nullable (^_Nonnull)(
-                            const char *_Nullable teamID,
-                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
-  return [self decisionForFileInfo:fileInfo
-                     targetProcess:targetProc
-          preCodesignCheckCallback:nil
-        entitlementsFilterCallback:entitlementsFilterCallback];
-}
-
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                     targetProcess:(nonnull const es_process_t *)targetProc
                           preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback
                         entitlementsFilterCallback:
                           (NSDictionary *_Nullable (^_Nonnull)(
@@ -344,7 +353,9 @@ static void UpdateCachedDecisionSigningInfo(
     entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
       return entitlementsFilterCallback(entitlementsFilterTeamID, entitlements);
     }
-    preCodesignCheckCallback:preCodesignCheckCallback];
+    preCodesignCheckCallback:preCodesignCheckCallback
+    platformBinaryState:(targetProc->is_platform_binary ? PlatformBinaryState::kRuntimeTrue
+                                                        : PlatformBinaryState::kRuntimeFalse)];
 }
 
 // Used by `$ santactl fileinfo`.
@@ -382,7 +393,8 @@ static void UpdateCachedDecisionSigningInfo(
                 }
               }
         entitlementsFilterCallback:nil
-          preCodesignCheckCallback:nil];
+          preCodesignCheckCallback:nil
+               platformBinaryState:PlatformBinaryState::kStaticCheck];
 }
 
 ///
