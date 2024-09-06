@@ -135,9 +135,8 @@ enum class PlatformBinaryState {
 }
 
 static void UpdateCachedDecisionSigningInfo(
-  SNTCachedDecision *cd, MOLCodesignChecker *csInfo,
-  NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements),
-  PlatformBinaryState platformBinaryState) {
+  SNTCachedDecision *cd, MOLCodesignChecker *csInfo, PlatformBinaryState platformBinaryState,
+  NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements)) {
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
   cd.certCommonName = csInfo.leafCertificate.commonName;
   cd.certChain = csInfo.certificates;
@@ -166,12 +165,6 @@ static void UpdateCachedDecisionSigningInfo(
     }
   }
 
-  if (!cd.teamID && cd.signingID) {
-    if (!csInfo.platformBinary) {
-      cd.signingID = nil;
-    }
-  }
-
   NSDictionary *entitlements = csInfo.entitlements;
 
   if (entitlementsFilterCallback) {
@@ -183,18 +176,18 @@ static void UpdateCachedDecisionSigningInfo(
   }
 }
 
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                            cdhash:(nullable NSString *)cdhash
-                                        fileSHA256:(nullable NSString *)fileSHA256
-                                 certificateSHA256:(nullable NSString *)certificateSHA256
-                                            teamID:(nullable NSString *)teamID
-                                         signingID:(nullable NSString *)signingID
-                              isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
-                        entitlementsFilterCallback:
-                          (NSDictionary *_Nullable (^_Nullable)(
-                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback
-                          preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback
-                               platformBinaryState:(PlatformBinaryState)platformBinaryState {
+- (nonnull SNTCachedDecision *)
+         decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
+                      cdhash:(nullable NSString *)cdhash
+                  fileSHA256:(nullable NSString *)fileSHA256
+           certificateSHA256:(nullable NSString *)certificateSHA256
+                      teamID:(nullable NSString *)teamID
+                   signingID:(nullable NSString *)signingID
+         platformBinaryState:(PlatformBinaryState)platformBinaryState
+        isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
+  entitlementsFilterCallback:(NSDictionary *_Nullable (^_Nullable)(
+                               NSDictionary *_Nullable entitlements))entitlementsFilterCallback
+    preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback {
   // Check the hash before allocating a SNTCachedDecision.
   NSString *fileHash = fileSHA256 ?: fileInfo.SHA256;
   SNTClientMode mode = [self.configurator clientMode];
@@ -236,7 +229,7 @@ static void UpdateCachedDecisionSigningInfo(
       cd.signingID = nil;
       cd.cdhash = nil;
     } else {
-      UpdateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback, platformBinaryState);
+      UpdateCachedDecisionSigningInfo(cd, csInfo, platformBinaryState, entitlementsFilterCallback);
     }
   }
 
@@ -347,15 +340,15 @@ static void UpdateCachedDecisionSigningInfo(
     certificateSHA256:nil
     teamID:teamID
     signingID:signingID
-    isProdSignedCallback:^BOOL {
+    platformBinaryState:(targetProc->is_platform_binary
+                           ? PlatformBinaryState::kRuntimeTrue
+                           : PlatformBinaryState::kRuntimeFalse)isProdSignedCallback:^BOOL {
       return ((targetProc->codesigning_flags & CS_DEV_CODE) == 0);
     }
     entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
       return entitlementsFilterCallback(entitlementsFilterTeamID, entitlements);
     }
-    preCodesignCheckCallback:preCodesignCheckCallback
-    platformBinaryState:(targetProc->is_platform_binary ? PlatformBinaryState::kRuntimeTrue
-                                                        : PlatformBinaryState::kRuntimeFalse)];
+    preCodesignCheckCallback:preCodesignCheckCallback];
 }
 
 // Used by `$ santactl fileinfo`.
@@ -380,6 +373,7 @@ static void UpdateCachedDecisionSigningInfo(
                  certificateSHA256:identifiers.certificateSHA256
                             teamID:identifiers.teamID
                          signingID:identifiers.signingID
+               platformBinaryState:PlatformBinaryState::kStaticCheck
               isProdSignedCallback:^BOOL {
                 if (csInfo) {
                   // Development OID values defined by Apple and used by the Security Framework
@@ -393,8 +387,7 @@ static void UpdateCachedDecisionSigningInfo(
                 }
               }
         entitlementsFilterCallback:nil
-          preCodesignCheckCallback:nil
-               platformBinaryState:PlatformBinaryState::kStaticCheck];
+          preCodesignCheckCallback:nil];
 }
 
 ///
