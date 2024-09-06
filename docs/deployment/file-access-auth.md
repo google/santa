@@ -102,6 +102,12 @@ This is an example configuration conforming to the specification outlined above:
 					<key>TeamID</key>
 					<string>ABCDEF1234</string>
 				</dict>
+		                <dict>
+		                    <key>PlatformBinary</key>
+							<true/>
+		                    <key>SigningID</key>
+		                    <string>com.apple.ls</string>
+		                </dict>
 			</array>
 		</dict>
 	</dict>
