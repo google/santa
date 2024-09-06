@@ -39,7 +39,7 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa confi
 | `TeamID`                  | `Processes`  | String     | No       | v2023.1+      | Team ID of the instigating process. |
 | `CertificateSha256`       | `Processes`  | String     | No       | v2023.1+      | SHA256 of the leaf certificate of the instigating process. |
 | `CDHash`                  | `Processes`  | String     | No       | v2023.1+      | CDHash of the instigating process. |
-| `SigningID`               | `Processes`  | String     | No       | v2023.1+      | Signing ID of the instigating process. |
+| `SigningID`               | `Processes`  | String     | No       | v2023.1+      | Signing ID of the instigating process. Note that unlike in binary authorization, the Signing ID for file access authorization is specified separately from the Team ID; see the example below. |
 | `PlatformBinary`          | `Processes`  | Boolean    | No       | v2023.2+      | Whether or not the instigating process is a platform binary. |
 
 ### EventDetailURL
@@ -77,7 +77,10 @@ This is an example configuration conforming to the specification outlined above:
 		<dict>
 			<key>Paths</key>
 			<array>
+				<!-- restrict access to foo in all user directories -->
 				<string>/Users/*/foo</string>
+
+				<!-- restrict access to ~/tmp/foo, ~/tmp/foo2, ~/tmp/foo/bar, for all user directories -->
 				<dict>
 					<key>Path</key>
 					<string>/Users/*/tmp/foo</string>
@@ -96,18 +99,32 @@ This is an example configuration conforming to the specification outlined above:
 			</dict>
 			<key>Processes</key>
 			<array>
+		                <dict>
+					<!-- Platform binaries use a separate key that, rather than the `platform:com.apple.ls` format used in binary authorization rules -->
+					<key>PlatformBinary</key>
+					<true/>
+					<key>SigningID</key>
+					<string>com.apple.ls</string>
+		                </dict>
+		                <dict>
+					<!-- Signing IDs are specified differently than in binary authorization rules, note the separate TeamID key -->
+					<key>TeamID</key>
+					<string>EQHXZ8M8AV</string>
+					<key>SigningID</key>
+					<string>com.google.Chrome</string>
+		                </dict>
+		                <dict>
+					<!-- Allow the Slack Team ID -->
+					<key>TeamID</key>
+					<string>BQR82RBBHL</string>
+				</dict>
 				<dict>
+					<!-- Allow the binary at the path, AND require the TeamID specified -->
 					<key>BinaryPath</key>
 					<string>/usr/local/bin/my_foo_writer</string>
 					<key>TeamID</key>
 					<string>ABCDEF1234</string>
 				</dict>
-		                <dict>
-		                    <key>PlatformBinary</key>
-							<true/>
-		                    <key>SigningID</key>
-		                    <string>com.apple.ls</string>
-		                </dict>
 			</array>
 		</dict>
 	</dict>
