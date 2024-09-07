@@ -340,9 +340,9 @@ static void UpdateCachedDecisionSigningInfo(
     certificateSHA256:nil
     teamID:teamID
     signingID:signingID
-    platformBinaryState:(targetProc->is_platform_binary
-                           ? PlatformBinaryState::kRuntimeTrue
-                           : PlatformBinaryState::kRuntimeFalse)isProdSignedCallback:^BOOL {
+    platformBinaryState:targetProc->is_platform_binary ? PlatformBinaryState::kRuntimeTrue
+                                                       : PlatformBinaryState::kRuntimeFalse
+    isProdSignedCallback:^BOOL {
       return ((targetProc->codesigning_flags & CS_DEV_CODE) == 0);
     }
     entitlementsFilterCallback:^NSDictionary *(NSDictionary *entitlements) {
