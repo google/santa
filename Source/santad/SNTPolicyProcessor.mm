@@ -30,6 +30,12 @@
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "absl/container/flat_hash_map.h"
 
+enum class PlatformBinaryState {
+  kRuntimeTrue = 0,
+  kRuntimeFalse,
+  kStaticCheck,
+};
+
 @interface SNTPolicyProcessor ()
 @property SNTRuleTable *ruleTable;
 @property SNTConfigurator *configurator;
@@ -129,7 +135,7 @@
 }
 
 static void UpdateCachedDecisionSigningInfo(
-  SNTCachedDecision *cd, MOLCodesignChecker *csInfo,
+  SNTCachedDecision *cd, MOLCodesignChecker *csInfo, PlatformBinaryState platformBinaryState,
   NSDictionary *_Nullable (^entitlementsFilterCallback)(NSDictionary *_Nullable entitlements)) {
   cd.certSHA256 = csInfo.leafCertificate.SHA256;
   cd.certCommonName = csInfo.leafCertificate.commonName;
@@ -144,11 +150,18 @@ static void UpdateCachedDecisionSigningInfo(
     cd.signingID = FormatSigningID(csInfo);
   }
 
-  // Ensure that if no teamID exists that the signing info confirms it is a
-  // platform binary. If not, remove the signingID.
+  // Ensure that if no teamID exists but a signingID does exist, that the binary
+  // is a platform binary. If not, remove the signingID.
   if (!cd.teamID && cd.signingID) {
-    if (!csInfo.platformBinary) {
-      cd.signingID = nil;
+    switch (platformBinaryState) {
+      case PlatformBinaryState::kRuntimeTrue: break;
+      case PlatformBinaryState::kStaticCheck:
+        if (!csInfo.platformBinary) {
+          cd.signingID = nil;
+        }
+        break;
+      case PlatformBinaryState::kRuntimeFalse: OS_FALLTHROUGH;
+      default: cd.signingID = nil; break;
     }
   }
 
@@ -170,6 +183,7 @@ static void UpdateCachedDecisionSigningInfo(
            certificateSHA256:(nullable NSString *)certificateSHA256
                       teamID:(nullable NSString *)teamID
                    signingID:(nullable NSString *)signingID
+         platformBinaryState:(PlatformBinaryState)platformBinaryState
         isProdSignedCallback:(BOOL (^_Nonnull)())isProdSignedCallback
   entitlementsFilterCallback:(NSDictionary *_Nullable (^_Nullable)(
                                NSDictionary *_Nullable entitlements))entitlementsFilterCallback
@@ -215,7 +229,7 @@ static void UpdateCachedDecisionSigningInfo(
       cd.signingID = nil;
       cd.cdhash = nil;
     } else {
-      UpdateCachedDecisionSigningInfo(cd, csInfo, entitlementsFilterCallback);
+      UpdateCachedDecisionSigningInfo(cd, csInfo, platformBinaryState, entitlementsFilterCallback);
     }
   }
 
@@ -278,18 +292,6 @@ static void UpdateCachedDecisionSigningInfo(
 
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                      targetProcess:(nonnull const es_process_t *)targetProc
-                        entitlementsFilterCallback:
-                          (NSDictionary *_Nullable (^_Nonnull)(
-                            const char *_Nullable teamID,
-                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback {
-  return [self decisionForFileInfo:fileInfo
-                     targetProcess:targetProc
-          preCodesignCheckCallback:nil
-        entitlementsFilterCallback:entitlementsFilterCallback];
-}
-
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                     targetProcess:(nonnull const es_process_t *)targetProc
                           preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback
                         entitlementsFilterCallback:
                           (NSDictionary *_Nullable (^_Nonnull)(
@@ -338,6 +340,8 @@ static void UpdateCachedDecisionSigningInfo(
     certificateSHA256:nil
     teamID:teamID
     signingID:signingID
+    platformBinaryState:targetProc->is_platform_binary ? PlatformBinaryState::kRuntimeTrue
+                                                       : PlatformBinaryState::kRuntimeFalse
     isProdSignedCallback:^BOOL {
       return ((targetProc->codesigning_flags & CS_DEV_CODE) == 0);
     }
@@ -369,6 +373,7 @@ static void UpdateCachedDecisionSigningInfo(
                  certificateSHA256:identifiers.certificateSHA256
                             teamID:identifiers.teamID
                          signingID:identifiers.signingID
+               platformBinaryState:PlatformBinaryState::kStaticCheck
               isProdSignedCallback:^BOOL {
                 if (csInfo) {
                   // Development OID values defined by Apple and used by the Security Framework

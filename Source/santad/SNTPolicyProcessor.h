@@ -47,12 +47,6 @@
 ///
 - (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
                                      targetProcess:(nonnull const es_process_t *)targetProc
-                        entitlementsFilterCallback:
-                          (NSDictionary *_Nullable (^_Nonnull)(
-                            const char *_Nullable teamID,
-                            NSDictionary *_Nullable entitlements))entitlementsFilterCallback;
-- (nonnull SNTCachedDecision *)decisionForFileInfo:(nonnull SNTFileInfo *)fileInfo
-                                     targetProcess:(nonnull const es_process_t *)targetProc
                           preCodesignCheckCallback:(void (^_Nullable)(void))preCodesignCheckCallback
                         entitlementsFilterCallback:
                           (NSDictionary *_Nullable (^_Nonnull)(
