@@ -163,6 +163,8 @@ Configured path globs represent a point in time. That is, path globs are expande
 
 Within the main Santa configuration, the `FileAccessPolicyUpdateIntervalSec` key controls how often any changes to the configuration are applied as well as re-evaluating configured path globs to match the current state of the filesystem. This has a minimum value of 15 seconds.
 
+`**` syntax is not supported, only `*` is supported for wildcards.
+
 ### Prefix and Glob Path Evaluation
 
 Combining path globs and the `IsPrefix` key in a configuration gives greater control over the paths that rules should match. Consider the configured path globs:
