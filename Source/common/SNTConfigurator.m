@@ -368,7 +368,12 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingStaticRules {
-  return [self configStateSet];
+  static NSSet *set;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    set = [NSSet setWithObject:NSStringFromSelector(@selector(cachedStaticRules))];
+  });
+  return set;
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncBaseURL {

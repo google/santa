@@ -38,8 +38,8 @@ using santa::NSStringToUTF8String;
   google::protobuf::Arena arena;
   auto req = google::protobuf::Arena::Create<::pbv1::PostflightRequest>(&arena);
   req->set_machine_id(NSStringToUTF8String(self.syncState.machineID));
-  req->set_rules_received(self.syncState.rulesReceived);
-  req->set_rules_processed(self.syncState.rulesProcessed);
+  req->set_rules_received(static_cast<uint32_t>(self.syncState.rulesReceived));
+  req->set_rules_processed(static_cast<uint32_t>(self.syncState.rulesProcessed));
 
   ::pbv1::PostflightResponse response;
   [self performRequest:[self requestWithMessage:req] intoMessage:&response timeout:30];
