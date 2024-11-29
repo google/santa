@@ -315,12 +315,9 @@ void SantadMain(std::shared_ptr<EndpointSecurityAPI> esapi, std::shared_ptr<Logg
                                  }],
     [[SNTKVOManager alloc] initWithObject:configurator
                                  selector:@selector(staticRules)
-                                     type:[NSArray class]
-                                 callback:^(NSArray *oldValue, NSArray *newValue) {
-                                   NSSet *oldValueSet = [NSSet setWithArray:oldValue ?: @[]];
-                                   NSSet *newValueSet = [NSSet setWithArray:newValue ?: @[]];
-
-                                   if ([oldValueSet isEqualToSet:newValueSet]) {
+                                     type:[NSDictionary class]
+                                 callback:^(NSDictionary *oldValue, NSDictionary *newValue) {
+                                   if ([oldValue isEqualToDictionary:newValue]) {
                                      return;
                                    }
 

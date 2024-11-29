@@ -13,6 +13,7 @@
                 <outlet property="foundFileCountLabel" destination="LHV-gV-vyf" id="Sr0-T2-xGx"/>
                 <outlet property="hashingIndicator" destination="VyY-Yg-JOe" id="Yq4-tZ-9ep"/>
                 <outlet property="openEventButton" destination="7ua-5a-uSd" id="9s4-ZA-Vlo"/>
+                <outlet property="dismissEventButton" destination="BbV-3h-mmL" id="5s4-ZB-xlo"/>
                 <outlet property="window" destination="9Bq-yh-54f" id="Uhs-WF-TV9"/>
             </connections>
         </customObject>
@@ -286,7 +287,7 @@ DQ
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BbV-3h-mmL" userLabel="Dismiss Button">
                         <rect key="frame" x="271" y="28" width="124" height="34"/>
-                        <buttonCell key="cell" type="push" title="Ignore" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="XR6-Xa-gP4">
+                        <buttonCell key="cell" type="push" title="Dismiss" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="XR6-Xa-gP4">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                             <string key="keyEquivalent" base64-UTF8="YES">

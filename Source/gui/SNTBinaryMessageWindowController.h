@@ -55,6 +55,11 @@
 @property(weak) IBOutlet NSButton *openEventButton;
 
 ///
+///   Reference to the "Dismiss Event" button in the XIB. Used to update its title.
+///
+@property(weak) IBOutlet NSButton *dismissEventButton;
+
+///
 ///  The execution event that this window is for
 ///
 @property(readonly) SNTStoredEvent *event;

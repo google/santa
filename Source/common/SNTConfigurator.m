@@ -97,6 +97,7 @@ static NSString *const kAboutTextKey = @"AboutText";
 static NSString *const kMoreInfoURLKey = @"MoreInfoURL";
 static NSString *const kEventDetailURLKey = @"EventDetailURL";
 static NSString *const kEventDetailTextKey = @"EventDetailText";
+static NSString *const kDismissTextKey = @"DismissText";
 static NSString *const kUnknownBlockMessage = @"UnknownBlockMessage";
 static NSString *const kBannedBlockMessage = @"BannedBlockMessage";
 static NSString *const kBannedUSBBlockMessage = @"BannedUSBBlockMessage";
@@ -227,6 +228,7 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
       kMoreInfoURLKey : string,
       kEventDetailURLKey : string,
       kEventDetailTextKey : string,
+      kDismissTextKey : string,
       kUnknownBlockMessage : string,
       kBannedBlockMessage : string,
       kBannedUSBBlockMessage : string,
@@ -366,7 +368,12 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingStaticRules {
-  return [self configStateSet];
+  static NSSet *set;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    set = [NSSet setWithObject:NSStringFromSelector(@selector(cachedStaticRules))];
+  });
+  return set;
 }
 
 + (NSSet *)keyPathsForValuesAffectingSyncBaseURL {
@@ -406,6 +413,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
 }
 
 + (NSSet *)keyPathsForValuesAffectingEventDetailText {
+  return [self configStateSet];
+}
+
++ (NSSet *)keyPathsForValuesAffectingDismissText {
   return [self configStateSet];
 }
 
@@ -774,6 +785,10 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
   return self.configState[kEventDetailTextKey];
 }
 
+- (NSString *)dismissText {
+  return self.configState[kDismissTextKey];
+}
+
 - (NSString *)unknownBlockMessage {
   return self.configState[kUnknownBlockMessage];
 }
@@ -1059,7 +1074,8 @@ static NSString *const kSyncTypeRequired = @"SyncTypeRequired";
     }
   }
 
-  if ([action isEqualToString:@"auditonly"]) {
+  // Note: `auditonly` without an underscore is a deprecated, but still accepted form.
+  if ([action isEqualToString:@"audit_only"] || [action isEqualToString:@"auditonly"]) {
     return SNTOverrideFileAccessActionAuditOnly;
   } else if ([action isEqualToString:@"disable"]) {
     return SNTOverrideFileAccessActionDiable;

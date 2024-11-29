@@ -39,6 +39,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | MoreInfoURL                        | String     | The URL to open when the user clicks "More Info..." when opening Santa.app.  If unset, the button will not be displayed. |
 | EventDetailURL                     | String     | See the [EventDetailURL](#eventdetailurl) section below. |
 | EventDetailText                    | String     | Related to the above property, this string represents the text to show on the button. |
+| DismissText                        | String     | The text to display on the button that dismisses the binary block dialog. The default text is "Dismiss". |
 | UnknownBlockMessage                | String     | In Lockdown mode this is the message shown to the user when an unknown binary is blocked. If this message is not configured a reasonable default is provided. |
 | BannedBlockMessage                 | String     | This is the message shown to the user when a binary is blocked because of a rule if that rule doesn't provide a custom message. If this is not configured a reasonable default is provided. |
 | ModeNotificationMonitor            | String     | The notification text to display when the client goes into Monitor mode. Defaults to "Switching into Monitor mode". |
@@ -82,7 +83,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | FileAccessPolicy                   | Dictionary | A complete file access configuration policy embedded in the main Santa config. If set, `FileAccessPolicyPlist` will be ignored. |
 | FileAccessPolicyUpdateIntervalSec  | Integer    | Number of seconds between re-reading the file access policy config and policies/monitored paths updated. |
 | FileAccessBlockMessage             | String     | This is the message shown to the user when a access to a file is blocked because of a rule defined by `FileAccessPolicy` if that rule doesn't provide a custom message. If this is not configured a reasonable default is provided. |
-| OverrideFileAccessAction           | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `auditonly` (no access will be blocked, only logged), `disabled` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `none`. |
+| OverrideFileAccessAction           | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `AUDIT_ONLY` (no access will be blocked, only logged), `DISABLE` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `NONE`. Note: `AUDITONLY` without an underscore is deprecated. |
 | SyncClientContentEncoding          | String     | Sets the Content-Encoding header for requests sent to the sync service. Acceptable values are "deflate", "gzip", "none". Defaults to deflate. |
 | SyncExtraHeaders                   | Dictionary | Dictionary of additional headers to include in all requests made to the sync server. System managed headers such as Content-Length, Host, WWW-Authenticate etc will be ignored. |
 | EnableDebugLogging                 | Bool       | If true, the client will log additional debug messages to the Apple Unified Log.  For example, transitive rule creation logs can be viewed with `log stream --predicate 'sender=="com.google.santa.daemon"'`. Defaults to false. |
@@ -258,24 +259,31 @@ ways to install configuration profiles:
 
 ## Sync Server Provided Configuration
 
+The following configuration keys can be set by the sync server and override the
+local configuration value. Unless otherwise noted to be held only in memory, the
+values set by the sync server are persisted across restarted of the Santa
+daemon. For additional information regarding default values and action taken
+by the daemon if the key is not set, please refer to the
+[Sync Protocol Preflight Response](../development/sync-protocol.md#preflight-response)
+documentation.
+
 | Key                                 | Value Type | Description                              |
 | ----------------------------------- | ---------- | ---------------------------------------- |
-| client\_mode                        | String     | MONITOR or LOCKDOWN, defaults to MONITOR. |
-| clean\_sync\*\*                     | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync server. Defaults to `False`. |
-| batch\_size                         | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. Defaults to 50. |
-| upload\_logs\_url\*\*               | String     | If set, the endpoint to send Santa's current logs. No default. |
-| allowed\_path\_regex                | String     | Same as the "Local Configuration" AllowedPathRegex. No default. |
-| blocked\_path\_regex                | String     | Same as the "Local Configuration" BlockedPathRegex. No default. |
-| full\_sync\_interval\*              | Integer    | The max time to wait before performing a full sync with the server. Defaults to 600 secs (10 minutes) if not set. |
+| client\_mode                        | String     | MONITOR or LOCKDOWN. |
+| clean\_sync\*\*                     | Bool       | If set to `True` Santa will clear all local rules and download a fresh copy from the sync server. |
+| batch\_size                         | Integer    | The number of rules to download or events to upload per request. Multiple requests will be made if there is more work than can fit in single request. |
+| allowed\_path\_regex                | String     | Same as the "Local Configuration" AllowedPathRegex. |
+| blocked\_path\_regex                | String     | Same as the "Local Configuration" BlockedPathRegex. |
+| full\_sync\_interval\*              | Integer    | The max time to wait before performing a full sync with the server. |
 | fcm\_token\*†                       | String     | The FCM token used by Santa to listen for FCM messages. Unique for every machine. No default. |
 | fcm\_full\_sync\_interval\*†        | Integer    | The full sync interval if a fcm\_token is set. Defaults to  14400 secs (4 hours). |
 | fcm\_global\_rule\_sync\_deadline\*†| Integer    | The max time to wait before performing a rule sync when a global rule sync FCM message is received. This allows syncing to be staggered for global events to avoid spikes in server load. Defaults to 600 secs (10 min). |
-| enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. Defaults to `False`. |
-| enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. Defaults to `False`. |
+| enable\_bundles\*                   | Bool       | If set to `True` the bundle scanning feature is enabled. |
+| enable\_transitive\_rules           | Bool       | If set to `True` the transitive rule feature is enabled. |
 | enable\_all\_event\_upload          | Bool       | If set to `True` the client will upload events for all executions, including those that are explicitly allowed. |
-| block\_usb\_mount                   | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. Defaults to `False`. |
-| remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. No default. |
-| override\_file\_access\_action      | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `auditonly` (no access will be blocked, only logged), `disabled` (no access will be blocked or logged), `none` (enforce policy as defined in each rule). Defaults to `none`. |
+| block\_usb\_mount                   | Bool       | If set to 'True' blocking USB Mass storage feature is enabled. |
+| remount\_usb\_mode                  | Array      | Array of strings for arguments to pass to mount -o (any of "rdonly", "noexec", "nosuid", "nobrowse", "noowners", "nodev", "async", "-j"). when forcibly remounting devices. |
+| override\_file\_access\_action      | String     | Defines a global override policy that applies to the enforcement of all `FileAccessPolicy` rules. Allowed values are: `AUDIT_ONLY` (no access will be blocked, only logged), `DISABLE` (no access will be blocked or logged), `NONE` (enforce policy as defined in each rule). |
 
 
 *Held only in memory. Not persistent upon process restart.

@@ -22,6 +22,7 @@
 #import "Source/common/SNTRule.h"
 #import "Source/common/SNTStoredEvent.h"
 #import "Source/common/SNTSyncConstants.h"
+#import "Source/common/SNTSystemInfo.h"
 #import "Source/common/SNTXPCControlInterface.h"
 #import "Source/santasyncservice/SNTSyncEventUpload.h"
 #import "Source/santasyncservice/SNTSyncPostflight.h"
@@ -60,11 +61,19 @@
   OCMStub([self.syncState.daemonConn remoteObjectProxy]).andReturn(self.daemonConnRop);
   OCMStub([self.syncState.daemonConn synchronousRemoteObjectProxy]).andReturn(self.daemonConnRop);
 
+  id siMock = OCMClassMock([SNTSystemInfo class]);
+  OCMStub([siMock serialNumber]).andReturn(@"QYGF4QM373");
+  OCMStub([siMock longHostname]).andReturn(@"full-hostname.example.com");
+  OCMStub([siMock osVersion]).andReturn(@"14.5");
+  OCMStub([siMock osBuild]).andReturn(@"23F79");
+  OCMStub([siMock modelIdentifier]).andReturn(@"MacBookPro18,3");
+  OCMStub([siMock santaFullVersion]).andReturn(@"2024.6.655965194");
+
   self.syncState.session = OCMClassMock([NSURLSession class]);
 
   self.syncState.syncBaseURL = [NSURL URLWithString:@"https://myserver.local/"];
-  self.syncState.machineID = [[NSUUID UUID] UUIDString];
-  self.syncState.machineOwner = NSUserName();
+  self.syncState.machineID = @"50C7E1EB-2EF5-42D4-A084-A7966FC45A95";
+  self.syncState.machineOwner = @"username1";
 }
 
 #pragma mark Test Helpers
@@ -271,7 +280,17 @@
   SNTSyncPreflight *sut = [[SNTSyncPreflight alloc] initWithState:self.syncState];
 
   NSData *respData = [self dataFromFixture:@"sync_preflight_basic.json"];
-  [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
+  [self
+    stubRequestBody:respData
+           response:nil
+              error:nil
+      validateBlock:^BOOL(NSURLRequest *req) {
+        NSData *gotReqData = [req HTTPBody];
+        NSData *expectedReqData = [self dataFromFixture:@"sync_preflight_request.json"];
+        XCTAssertEqualObjects(gotReqData, expectedReqData);
+        XCTAssertEqualObjects([req valueForHTTPHeaderField:@"Content-Type"], @"application/json");
+        return YES;
+      }];
 
   XCTAssertTrue([sut sync]);
   XCTAssertEqual(self.syncState.clientMode, SNTClientModeMonitor);
@@ -326,7 +345,7 @@
   [self stubRequestBody:respData response:nil error:nil validateBlock:nil];
 
   XCTAssertTrue([sut sync]);
-  XCTAssertEqualObjects(self.syncState.overrideFileAccessAction, @"AuditOnly");
+  XCTAssertEqualObjects(self.syncState.overrideFileAccessAction, @"AUDIT_ONLY");
 }
 
 - (void)testPreflightOverrideFileAccessActionAbsent {
@@ -418,25 +437,46 @@
                                   response:@{}];
 }
 
-- (void)testPreflightStateNormalRequestEmptyResponseNormal {
+- (void)testPreflightStateNormalRequestEmptyResponseNormalDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
                     expectcleanSyncRequest:NO
                           expectedSyncType:SNTSyncTypeNormal
                                   response:@{kSyncType : @"normal"}];
 }
 
-- (void)testPreflightStateNormalRequestEmptyResponseClean {
+- (void)testPreflightStateNormalRequestEmptyResponseNormal {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"NORMAL"}];
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseCleanDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
                     expectcleanSyncRequest:NO
                           expectedSyncType:SNTSyncTypeClean
                                   response:@{kSyncType : @"clean"}];
 }
 
-- (void)testPreflightStateNormalRequestEmptyResponseCleanAll {
+- (void)testPreflightStateNormalRequestEmptyResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kSyncType : @"CLEAN"}];
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseCleanAllDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
                     expectcleanSyncRequest:NO
                           expectedSyncType:SNTSyncTypeCleanAll
                                   response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateNormalRequestEmptyResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"CLEAN_ALL"}];
 }
 
 - (void)testPreflightStateNormalRequestEmptyResponseCleanDep {
@@ -453,25 +493,46 @@
                                   response:@{}];
 }
 
-- (void)testPreflightStateCleanRequestCleanResponseNormal {
+- (void)testPreflightStateCleanRequestCleanResponseNormalDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeNormal
                                   response:@{kSyncType : @"normal"}];
 }
 
-- (void)testPreflightStateCleanRequestCleanResponseClean {
+- (void)testPreflightStateCleanRequestCleanResponseNormal {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"NORMAL"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseCleanDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeClean
                                   response:@{kSyncType : @"clean"}];
 }
 
-- (void)testPreflightStateCleanRequestCleanResponseCleanAll {
+- (void)testPreflightStateCleanRequestCleanResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeClean
+                                  response:@{kSyncType : @"CLEAN"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseCleanAllDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeCleanAll
                                   response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateCleanRequestCleanResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeClean
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"CLEAN_ALL"}];
 }
 
 - (void)testPreflightStateCleanRequestCleanResponseCleanDep {
@@ -488,25 +549,46 @@
                                   response:@{}];
 }
 
-- (void)testPreflightStateCleanAllRequestCleanResponseNormal {
+- (void)testPreflightStateCleanAllRequestCleanResponseNormalDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeNormal
                                   response:@{kSyncType : @"normal"}];
 }
 
-- (void)testPreflightStateCleanAllRequestCleanResponseClean {
+- (void)testPreflightStateCleanAllRequestCleanResponseNormal {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kSyncType : @"NORMAL"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseCleanDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeCleanAll
                                   response:@{kSyncType : @"clean"}];
 }
 
-- (void)testPreflightStateCleanAllRequestCleanResponseCleanAll {
+- (void)testPreflightStateCleanAllRequestCleanResponseClean {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"CLEAN"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseCleanAllDeprecated {
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeCleanAll
                                   response:@{kSyncType : @"clean_all"}];
+}
+
+- (void)testPreflightStateCleanAllRequestCleanResponseCleanAll {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
+                    expectcleanSyncRequest:YES
+                          expectedSyncType:SNTSyncTypeCleanAll
+                                  response:@{kSyncType : @"CLEAN_ALL"}];
 }
 
 - (void)testPreflightStateCleanAllRequestCleanResponseCleanDep {
@@ -514,6 +596,13 @@
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeCleanAll
                                   response:@{kCleanSyncDeprecated : @YES}];
+}
+
+- (void)testPreflightStateNormalRequestNormalResponseCleanDep {
+  [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeNormal
+                    expectcleanSyncRequest:NO
+                          expectedSyncType:SNTSyncTypeNormal
+                                  response:@{kCleanSyncDeprecated : @NO}];
 }
 
 - (void)testPreflightStateCleanAllRequestCleanResponseUnknown {
@@ -528,7 +617,7 @@
   [self cleanSyncPreflightRequiredSyncType:SNTSyncTypeCleanAll
                     expectcleanSyncRequest:YES
                           expectedSyncType:SNTSyncTypeNormal
-                                  response:@{kSyncType : @"normal", kCleanSyncDeprecated : @YES}];
+                                  response:@{kSyncType : @"NORMAL", kCleanSyncDeprecated : @YES}];
 }
 
 - (void)testPreflightLockdown {
@@ -549,8 +638,15 @@
   SNTSyncEventUpload *sut = [[SNTSyncEventUpload alloc] initWithState:self.syncState];
   self.syncState.eventBatchSize = 50;
 
+  NSSet *allowedClasses = [NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil];
+
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_basic.plist"];
-  NSArray *events = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
+
+  NSError *err;
+  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses
+                                                        fromData:eventData
+                                                           error:&err];
+  XCTAssertNil(err);
 
   OCMStub([self.daemonConnRop databaseEventsPending:([OCMArg invokeBlockWithArgs:events, nil])]);
 
@@ -611,8 +707,16 @@
   SNTSyncEventUpload *sut = [[SNTSyncEventUpload alloc] initWithState:self.syncState];
   sut = OCMPartialMock(sut);
 
+  NSSet *allowedClasses = [NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil];
+
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_quarantine.plist"];
-  NSArray *events = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
+
+  NSError *err;
+  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses
+                                                        fromData:eventData
+                                                           error:&err];
+  XCTAssertNil(err);
+
   OCMStub([self.daemonConnRop databaseEventsPending:([OCMArg invokeBlockWithArgs:events, nil])]);
 
   [self stubRequestBody:nil
@@ -647,8 +751,16 @@
   self.syncState.eventBatchSize = 1;
   sut = OCMPartialMock(sut);
 
+  NSSet *allowedClasses = [NSSet setWithObjects:[NSArray class], [SNTStoredEvent class], nil];
+
   NSData *eventData = [self dataFromFixture:@"sync_eventupload_input_basic.plist"];
-  NSArray *events = [NSKeyedUnarchiver unarchiveObjectWithData:eventData];
+
+  NSError *err;
+  NSArray *events = [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses
+                                                        fromData:eventData
+                                                           error:&err];
+  XCTAssertNil(err);
+
   OCMStub([self.daemonConnRop databaseEventsPending:([OCMArg invokeBlockWithArgs:events, nil])]);
 
   __block int requestCount = 0;

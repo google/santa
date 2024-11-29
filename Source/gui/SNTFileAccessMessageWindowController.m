@@ -66,16 +66,7 @@
 
   self.window.delegate = self;
 
-  // Make sure app doesn't appear in Cmd+Tab or Dock.
-  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
-
   [super showWindow:sender];
-}
-
-- (void)windowWillClose:(NSNotification *)notification {
-  // Remove app from Cmd+Tab and Dock.
-  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
-  [super windowWillClose:notification];
 }
 
 - (NSAttributedString *)attributedCustomMessage {

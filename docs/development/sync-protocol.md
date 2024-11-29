@@ -128,23 +128,26 @@ The request consists of the following JSON keys:
 
 ### `preflight` Response
 
-If all of the data is well formed, the server responds with an HTTP status code of 200 and provides a JSON response.
+If all of the data is well formed, the server responds with an HTTP status code
+of 200 and provides a JSON response. While none of the preflight response keys
+are required, if not set it will result in the listed action being taken by the
+client.
 
 The JSON object has the following keys:
 
-| Key | Required | Type | Meaning | Example Value |
-|---|---|---|---|---|
-| enable_bundles | NO | boolean | Enable bundle scanning  | true |
-| enable_transitive_rules | NO | boolean | Whether or not to enable transitive allowlisting | true |
-| batch_size | YES | integer | Number of events to upload at a time | 128 |
-| full_sync_interval | YES | integer | Number of seconds between full syncs | 600 |
-| client_mode | YES | string | Operating mode to set for the client | either "MONITOR" or "LOCKDOWN" |
-| allowed_path_regex | NO | string | Regular expression to allow a binary to execute from a path | "/Users/markowsk/foo/.\*" |
-| blocked_path_regex | NO | string | Regular expression to block a binary from executing by path | "/tmp/" |
-| block_usb_mount | NO | boolean | Block USB mass storage devices | true |
-| remount_usb_mode | NO | string | Force USB mass storage devices to be remounted with the following permissions (see [configuration](../deployment/configuration.md)) |  |
-| sync_type | NO | string | If set, the type of sync that the client should perform. Must be one of:<br />1.) `normal` (or not set) The server intends only to send new rules. The client will not drop any existing rules.<br />2.) `clean` Instructs the client to drop all non-transitive rules. The server intends to entirely sync all rules.<br />3.) `clean_all` Instructs the client to drop all rules. The server intends to entirely sync all rules.<br />See [Clean Syncs](#clean-syncs) for more info.  | `normal`, `clean` or `clean_all` |
-| override_file_access_action | NO | string | Override file access config policy action. Must be:<br />1.) "Disable" to not log or block any rule violations.<br />2.) "AuditOnly" to only log violations, not block anything.<br />3.) "" (empty string) or "None" to not override the config | "Disable", or "AuditOnly", or "" (empty string) |
+| Key                         | If Not Set                                  | Type    | Meaning | Example Value                        |
+| --------------------------- | ------------------------------------------- | ------- | ------- | ------------------------------------ |
+| enable_bundles              | Use previous setting                        | boolean | Enable bundle scanning | true |
+| enable_transitive_rules     | Use previous setting                        | boolean | Whether or not to enable transitive allowlisting | true |
+| batch_size                  | Use a Santa-defined default value           | integer | Number of events to upload at a time | 128 |
+| full_sync_interval          | Defaults to 600 seconds                     | uint32 | Number of seconds between full syncs. Note: Santa enforces a minimum value of 60. The default value will be used if a smaller value is provided. | 600 |
+| client_mode                 | Use previous setting                        | string  | Operating mode to set for the client | either `MONITOR` or `LOCKDOWN` |
+| allowed_path_regex          | Use previous setting                        | string  | Regular expression to allow a binary to execute from a path | "/Users/markowsk/foo/.\*" |
+| blocked_path_regex          | Use previous setting                        | string  | Regular expression to block a binary from executing by path | "/tmp/" |
+| block_usb_mount             | Use previous setting                        | boolean | Block USB mass storage devices | true |
+| remount_usb_mode            | No attempt to mount with flags will be made | string  | Force USB mass storage devices to be remounted with the given permissions (see [configuration](../deployment/configuration.md)). Note that `block_usb_mount` field must also be set for Santa to use this field. | `noexec,rdonly` |
+| sync_type                   | A `NORMAL` sync is assumed                  | string  | If set, the type of sync that the client should perform. Must be one of:<br />1.) `NORMAL` (or not set) The server intends only to send new rules. The client will not drop any existing rules.<br />2.) `CLEAN` Instructs the client to drop all non-transitive rules. The server intends to entirely sync all rules.<br />3.) `CLEAN_ALL` Instructs the client to drop all rules. The server intends to entirely sync all rules.<br />See [Clean Syncs](#clean-syncs) for more info. | `NORMAL`, `CLEAN` or `CLEAN_ALL` |
+| override_file_access_action | Use previous setting                        | string  | Override file access config policy action. Must be:<br />1.) `DISABLE` to not log or block any rule violations.<br />2.) `AUDIT_ONLY` to only log violations, not block anything.<br />3.) `NONE` to not override the config | `DISABLE`, `AUDIT_ONLY`, or `NONE` |
 
 
 #### Example Preflight Response Payload
@@ -165,18 +168,18 @@ The JSON object has the following keys:
 
 Clean syncs will result in rules being deleted from the host before applying the newly synced rule set from the server. When the server indicates it is performing a clean sync, it means it intends to sync all current rules to the client.
 
-The client maintains a "sync type state" that controls the type of sync it wants to perform (i.e. `normal`, `clean` or `clean_all`). This is typically set by using `santactl sync`, `santactl sync --clean`, or `santactl sync --clean-all` respectively. Either clean sync type state being set will result in the `request_clean_sync` key being set to true in the [Preflight Request](#preflight-request).
+The client maintains a "sync type state" that controls the type of sync it wants to perform (i.e. `NORMAL`, `CLEAN` or `CLEAN_ALL`). This is typically set by using `santactl sync`, `santactl sync --clean`, or `santactl sync --clean-all` respectively. Either clean sync type state being set will result in the `request_clean_sync` key being set to true in the [Preflight Request](#preflight-request).
 
-There are three types of syncs the server can set: `normal`, `clean`, and `clean_all`. The server indicates the type of sync it wants to perform by setting the `sync_type` key in the [Preflight Response](#preflight-response). When a sever performs a normal sync, it only intends to send new rules to the client. When a server performs either a `clean` or `clean_all` sync, it intends to send all rules and the client should delete appropriate rules (non-transitive, or all). The server should try to honor the `request_clean_sync` key if set to true in the [Preflight Request](#preflight-request) by setting the `sync_type` to `clean` (or possibly `clean_all` if desired).
+There are three types of syncs the server can set: `NORMAL`, `CLEAN`, and `CLEAN_ALL`. The server indicates the type of sync it wants to perform by setting the `sync_type` key in the [Preflight Response](#preflight-response). When a sever performs a `NORMAL` sync, it only intends to send new rules to the client. When a server performs either a `CLEAN` or `CLEAN_ALL` sync, it intends to send all rules and the client should delete appropriate rules (non-transitive, or all). The server should try to honor the `request_clean_sync` key if set to true in the [Preflight Request](#preflight-request) by setting the `sync_type` to `CLEAN` (or possibly `CLEAN_ALL` if desired).
 
 The rules for resolving the type of sync that will be performed are as follows:
-1. If the server responds with a `sync_type` of `clean`, a clean sync is performed (regardless of whether or not it was requested by the client), unless the client sync type state was `clean_all`, in which case a `clean_all` sync type is performed.
-2. If the server responded that it is performing a `clean_all` sync, a `clean all` is performed (regardless of whether or not it was requested by the client)
+1. If the server responds with a `sync_type` of `CLEAN`, a clean sync is performed (regardless of whether or not it was requested by the client), unless the client sync type state was `CLEAN_ALL`, in which case a `CLEAN_ALL` sync type is performed.
+2. If the server responded that it is performing a `CLEAN_ALL` sync, a `CLEAN_ALL` is performed (regardless of whether or not it was requested by the client)
 3. Otherwise, a normal sync is performed
 
-A client that has a `clean` or `clean_all` sync type state set will continue to request a clean sync until it is satisfied by the server. If a client has requested a clean sync, but the server has not responded that it will perform a clean sync, then the client will not delete any rules before applying the new rules received from the server.
+A client that has a `CLEAN` or `CLEAN_ALL` sync type state set will continue to request a clean sync until it is satisfied by the server. If a client has requested a clean sync, but the server has not responded that it will perform a clean sync, then the client will not delete any rules before applying the new rules received from the server.
 
-If the deprecated [Preflight Response](#preflight-response) key `clean_sync` is set, it is treated as if the `sync_type` key were set to `clean`. This is a change in behavior to what was previously performed in that not all rules are dropped anymore, only non-transitive rules. Servers should stop using the `clean_sync` key and migrate to using the `sync_type` key.
+If the deprecated [Preflight Response](#preflight-response) key `clean_sync` is set, it is treated as if the `sync_type` key were set to `CLEAN`. This is a change in behavior to what was previously performed in that not all rules are dropped anymore, only non-transitive rules. Servers should stop using the `clean_sync` key and migrate to using the `sync_type` key.
 
 ## EventUpload
 
@@ -220,8 +223,8 @@ sequenceDiagram
 | file_bundle_version | NO | string | The bundle version string | "9999.1.1" |
 | file_bundle_version_string | NO | string | Bundle short version string | "2.3.4" |
 | file_bundle_hash | NO | string | SHA256 hash of all executables in the bundle | "7466e3687f540bcb7792c6d14d5a186667dbe18a85021857b42effe9f0370805" |
-| file_bundle_hash_millis | NO | float64 | The time in milliseconds it took to find all of the binaries, hash and produce the bundle_hash | 1234775 |
-| file_bundle_binary_count | NO | integer | The number of binaries in a bundle | 13 |
+| file_bundle_hash_millis | NO | uint32 | The time in milliseconds it took to find all of the binaries, hash and produce the bundle_hash | 1234775 |
+| file_bundle_binary_count | NO | uint32 | The number of binaries in a bundle | 13 |
 | pid | NO | int | Process id of the executable that was blocked | 1234 |
 | ppid | NO | int | Parent process id of the executable that was blocked | 456 |
 | parent_name | NO | Parent process short command name of the executable that was blocked | "bar" |

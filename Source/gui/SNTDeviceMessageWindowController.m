@@ -50,16 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
                                               customMsg:self.attributedCustomMessage];
   self.window.delegate = self;
 
-  // Add app to Cmd+Tab and Dock.
-  NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
-
   [super showWindow:sender];
-}
-
-- (void)windowWillClose:(NSNotification *)notification {
-  // Remove app from Cmd+Tab and Dock.
-  NSApp.activationPolicy = NSApplicationActivationPolicyAccessory;
-  [super windowWillClose:notification];
 }
 
 - (NSAttributedString *)attributedCustomMessage {

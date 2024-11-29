@@ -145,6 +145,7 @@ SNTRuleCleanup SyncTypeToRuleCleanup(SNTSyncType syncType) {
 
   r.identifier = StringToNSString(rule.identifier());
   if (!r.identifier.length) r.identifier = StringToNSString(rule.deprecated_sha256());
+  if (!r.identifier.length) return nil;
 
   SNTRuleState state;
   switch (rule.policy()) {
