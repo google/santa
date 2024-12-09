@@ -134,7 +134,7 @@ absl::StatusOr<Process> LoadPID(pid_t pid) {
                    .executable = path,
                    .arguments = args,
                  }),
-                 nullptr);
+                 nullptr, 0);
 }
 
 absl::Status ProcessTree::Backfill() {

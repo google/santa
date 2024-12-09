@@ -43,6 +43,11 @@ class ProcessTree {
   // Initialize the tree with the processes currently running on the system.
   absl::Status Backfill();
 
+  // Returns a vector containing the parent of the process, the parent of the
+  // parent of the process, etc. up to the root process.
+  std::vector<std::shared_ptr<const Process>> GetAncestors(
+      const Process &process);
+
   // Inform the tree of a fork event, in which the parent process spawns a child
   // with the only difference between the two being the pid.
   void HandleFork(uint64_t timestamp, const Process &parent,
@@ -102,6 +107,10 @@ class ProcessTree {
   // Traverse the tree from the given Process to its parent.
   std::shared_ptr<const Process> GetParent(const Process &p) const;
 
+  void BackfillInsertChildren(
+      absl::flat_hash_map<pid_t, std::vector<Process>> &parent_map,
+      std::shared_ptr<Process> parent, const Process &unlinked_proc);
+
 #if SANTA_PROCESS_TREE_DEBUG
   // Dump the tree in a human readable form to the given ostream.
   void DebugDump(std::ostream &stream) const;
@@ -109,10 +118,6 @@ class ProcessTree {
 
  private:
   friend class ProcessTreeTestPeer;
-  void BackfillInsertChildren(
-      absl::flat_hash_map<pid_t, std::vector<Process>> &parent_map,
-      std::shared_ptr<Process> parent, const Process &unlinked_proc);
-
   // Mark that an event with the given timestamp is being processed.
   // Returns whether the given timestamp is "novel", and the tree should be
   // updated with the results of the event.

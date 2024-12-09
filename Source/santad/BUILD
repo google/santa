@@ -802,6 +802,7 @@ objc_library(
         "//Source/common:Unit",
         "//Source/santad/ProcessTree:process_tree",
         "//Source/santad/ProcessTree/annotations:originator",
+        "//Source/santad/ProcessTree/annotations:ancestry",
         "@MOLXPCConnection",
     ],
 )
@@ -840,7 +841,6 @@ macos_bundle(
     ],
     entitlements = select({
         "//:adhoc_build": "com.google.santa.daemon.systemextension-adhoc.entitlements",
-        # Non-adhoc builds get their entitlements from the provisioning profile.
         "//conditions:default": None,
     }),
     infoplists = ["Info.plist"],
@@ -1451,6 +1451,7 @@ test_suite(
         "//Source/santad/Logs/EndpointSecurity/Writers/FSSpool:fsspool_test",
         "//Source/santad/ProcessTree:process_tree_test",
         "//Source/santad/ProcessTree/annotations:originator_test",
+        "//Source/santad/ProcessTree/annotations:ancestry_test",
     ],
     visibility = ["//:santa_package_group"],
 )

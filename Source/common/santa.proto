@@ -129,13 +129,13 @@ message FileDescriptor {
 // Process information
 message ProcessInfo {
   // Process ID of the process
-  optional ProcessID id = 1;
+  optional santa.pb.v1.ProcessID id = 1;
 
   // Process ID of the parent process
-  optional ProcessID parent_id = 2;
+  optional santa.pb.v1.ProcessID parent_id = 2;
 
   // Process ID of the process responsible for this one
-  optional ProcessID responsible_id = 3;
+  optional santa.pb.v1.ProcessID responsible_id = 3;
 
   // Original parent ID, remains stable in the event a process is reparented
   optional int32 original_parent_pid = 4;
@@ -181,10 +181,10 @@ message ProcessInfo {
 // Light variant of ProcessInfo message to help minimize on-disk/on-wire sizes
 message ProcessInfoLight {
   // Process ID of the process
-  optional ProcessID id = 1;
+  optional santa.pb.v1.ProcessID id = 1;
 
   // Process ID of the parent process
-  optional ProcessID parent_id = 2;
+  optional santa.pb.v1.ProcessID parent_id = 2;
 
   // Original parent ID, remains stable in the event a process is reparented
   optional int32 original_parent_pid = 3;

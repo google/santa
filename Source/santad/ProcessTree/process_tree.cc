@@ -45,7 +45,7 @@ void ProcessTree::BackfillInsertChildren(
       (parent && *(unlinked_proc.program_) == *(parent->program_))
           ? parent->program_
           : unlinked_proc.program_,
-      parent);
+      parent, 0);
   {
     absl::MutexLock lock(&mtx_);
     map_.emplace(unlinked_proc.pid_, proc);
@@ -67,6 +67,31 @@ void ProcessTree::BackfillInsertChildren(
   }
 }
 
+std::vector<std::shared_ptr<const Process>> ProcessTree::GetAncestors(
+    const Process &process) {
+  std::vector<std::shared_ptr<const Process>> ancestors;
+  if (!process.parent_) {
+    return ancestors;
+  }
+  {
+    absl::MutexLock lock(&mtx_);
+    std::optional<std::shared_ptr<Process>> ancestor =
+        GetLocked(process.parent_->pid_);
+    while (ancestor != std::nullopt) {
+      // ::santa::pb::v1::process_tree::AncestryProcessID process_id;
+      // process_id.set_pid((*ancestor)->pid_.pid);
+      // process_id.set_secondary_id((*ancestor)->creation_timestamp);
+      ancestors.push_back(*ancestor);
+      if ((*ancestor)->parent_) {
+        ancestor = GetLocked((*ancestor)->parent_->pid_);
+      } else {
+        ancestor = std::nullopt;
+      }
+    }
+  }
+  return ancestors;
+}
+
 void ProcessTree::HandleFork(uint64_t timestamp, const Process &parent,
                              const Pid new_pid) {
   if (Step(timestamp)) {
@@ -74,7 +99,8 @@ void ProcessTree::HandleFork(uint64_t timestamp, const Process &parent,
     {
       absl::MutexLock lock(&mtx_);
       child = std::make_shared<Process>(new_pid, parent.effective_cred_,
-                                        parent.program_, map_[parent.pid_]);
+                                        parent.program_, map_[parent.pid_],
+                                        timestamp);
       map_.emplace(new_pid, child);
     }
     for (const auto &annotator : annotators_) {
@@ -92,7 +118,8 @@ void ProcessTree::HandleExec(uint64_t timestamp, const Process &p,
     assert(new_pid.pid == p.pid_.pid);
 
     auto new_proc = std::make_shared<Process>(
-        new_pid, c, std::make_shared<const Program>(prog), p.parent_);
+        new_pid, c, std::make_shared<const Program>(prog), p.parent_,
+        timestamp);
     {
       absl::MutexLock lock(&mtx_);
       remove_at_.push_back({timestamp, p.pid_});

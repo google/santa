@@ -75,10 +75,12 @@ class Process {
  public:
   explicit Process(const Pid pid, const Cred cred,
                    std::shared_ptr<const Program> program,
-                   std::shared_ptr<const Process> parent)
+                   std::shared_ptr<const Process> parent,
+                   const uint64_t creation_timestamp)
       : pid_(pid),
         effective_cred_(cred),
         program_(program),
+        creation_timestamp(creation_timestamp),
         annotations_(),
         parent_(parent),
         refcnt_(0),
@@ -92,6 +94,7 @@ class Process {
   const struct Pid pid_;
   const struct Cred effective_cred_;
   const std::shared_ptr<const Program> program_;
+  const uint64_t creation_timestamp;
 
  private:
   // This is not API.

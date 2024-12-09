@@ -243,4 +243,25 @@ using namespace santa::santad::process_tree;
   }
 }
 
+- (void)testGetAncestors {
+  // PID 1.1: fork() -> PID 1.1
+  //                 -> PID 2.2 fork() -> PID 2.2
+  //                                   -> PID 3.3
+  uint64_t event_id = 1;
+  const struct Pid child_pid = {.pid = 2, .pidversion = 2};
+  const struct Pid grandchild_pid = {.pid = 3, .pidversion = 3};
+  self.tree->HandleFork(event_id++, *self.initProc, child_pid);
+  auto child = *self.tree->Get(child_pid);
+  self.tree->HandleFork(event_id++, *child, grandchild_pid);
+  auto grandchild = *self.tree->Get(grandchild_pid);
+
+  auto ancestors = self.tree->GetAncestors(*grandchild);
+
+  XCTAssertEqual(ancestors.size(), 2);
+  XCTAssertEqual(ancestors[0]->pid_.pid, 2);
+  XCTAssertEqual(ancestors[0]->creation_timestamp, 1);
+  XCTAssertEqual(ancestors[1]->pid_.pid, 1);
+  XCTAssertEqual(ancestors[1]->creation_timestamp, 0);
+}
+
 @end
