@@ -3,9 +3,10 @@ title: Home
 nav_order: 1
 ---
 
-> **As of 2025, Santa is no longer maintained by Google.**  We encourage
-> existing users to migrate to an actively maintained fork of Santa, such as
-> https://github.com/northpolesec/santa.
+{: .important }
+**As of 2025, Santa is no longer maintained by Google.**  We encourage existing
+users to migrate to an actively maintained fork of Santa, such as
+[https://github.com/northpolesec/santa](https://github.com/northpolesec/santa).
 
 # Welcome to the Santa documentation
 
