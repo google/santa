@@ -3,6 +3,10 @@ title: Home
 nav_order: 1
 ---
 
+> **As of 2025, Santa is no longer maintained by Google.**  We encourage
+> existing users to migrate to an actively maintained fork of Santa, such as
+> https://github.com/northpolesec/santa.
+
 # Welcome to the Santa documentation
 
 Santa is a binary and file access authorization system for macOS. It consists of a system extension that allows or denies attempted executions using a set of rules stored in a local database, a GUI agent that notifies the user in case of a block decision, a sync daemon responsible for syncing the database, and a server, and a command-line utility for managing the system.
