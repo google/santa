@@ -14,3 +14,7 @@ gh_edit_branch: "main"
 plugins:
     - jekyll-redirect-from
 
+callouts:
+  important:
+    title: Important
+    color: blue
