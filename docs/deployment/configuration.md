@@ -27,7 +27,7 @@ also known as mobileconfig files, which are in an Apple-specific XML format.
 | FileChangesRegex\*                 | String     | The regex of paths to log file changes. Regexes are specified in ICU format. |
 | AllowedPathRegex\*                 | String     | A regex to allow if the binary, certificate, or Team ID scopes did not allow/block execution.  Regexes are specified in ICU format. |
 | BlockedPathRegex\*                 | String     | A regex to block if the binary, certificate, or Team ID scopes did not allow/block an execution.  Regexes are specified in ICU format. |
-| FileChangesPrefixFilters           | Array      | Array of path prefix strings. When an event is logged, if the target path (e.g. the file being written/removed/etc ) matches a prefix it will not be loggged. |
+| FileChangesPrefixFilters           | Array      | Array of path prefix strings. When an event is logged, if the target path (e.g. the file being written/removed/etc ) matches a prefix it will not be logged. |
 | EnableBadSignatureProtection       | Bool       | If true, binaries with a bad signing chain will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. Defaults to false. |
 | EnablePageZeroProtection           | Bool       | If true, 32-bit binaries that are missing the `__PAGEZERO` segment will be blocked even in MONITOR mode, **unless** the binary is allowed by an explicit rule. Defaults to true. |
 | EnableSilentMode                   | Bool       | If true, Santa will not post any GUI notifications. This can be a very confusing experience for users, use with caution. Defaults to false. |

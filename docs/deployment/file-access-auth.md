@@ -30,8 +30,8 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa confi
 | `AllowReadAccess`         | `Options`    | Boolean    | No       | v2023.1+      | If true, indicates the rule will **not** be applied to actions that are read-only access (e.g., opening a watched path for reading, or cloning a watched path). If false, the rule will apply both to read-only access and access that could modify the watched path. (Default = `false`) |
 | `AuditOnly`               | `Options`    | Boolean    | No       | v2023.1+      | If true, operations violating the rule will only be logged. If false, operations violating the rule will be denied and logged. (Default = `true`) |
 | `InvertProcessExceptions` | `Options`    | Boolean    | No       | v2023.5+      | If true, logic is inverted for the list of processes defined by the `Processes` key such that the list becomes the set of processes that will be denied or allowed but audited. (Default = `false`) |
-| `EnableSilentMode`        | `Options`    | String     | No       | v2023.7+      | If true, Santa will not display a GUI dialog when this rule is violated. |
-| `EnableSilentTTYMode`     | `Options`    | String     | No       | v2023.7+      | If true, Santa will not post a message to the controlling TTY when this rule is violated. |
+| `EnableSilentMode`        | `Options`    | Boolean    | No       | v2023.7+      | If true, Santa will not display a GUI dialog when this rule is violated. |
+| `EnableSilentTTYMode`     | `Options`    | Boolean    | No       | v2023.7+      | If true, Santa will not post a message to the controlling TTY when this rule is violated. |
 | `EventDetailURL`          | `Options`    | String     | No       | v2023.8+      | Rule-specific URL that overrides the top-level `EventDetailURL`. |
 | `EventDetailText`         | `Options`    | String     | No       | v2023.8+      | Rule-specific button text that overrides the top-level `EventDetailText`. |
 | `Processes`               | `<Name>`     | Array      | No       | v2023.1+      | A list of dictionaries defining processes that are allowed to access paths matching the globs defined with the `Paths` key. For a process performing the operation to be considered a match, it must match all defined attributes of at least one entry in the list. |
@@ -39,7 +39,7 @@ To enable this feature, the `FileAccessPolicyPlist` key in the main [Santa confi
 | `TeamID`                  | `Processes`  | String     | No       | v2023.1+      | Team ID of the instigating process. |
 | `CertificateSha256`       | `Processes`  | String     | No       | v2023.1+      | SHA256 of the leaf certificate of the instigating process. |
 | `CDHash`                  | `Processes`  | String     | No       | v2023.1+      | CDHash of the instigating process. |
-| `SigningID`               | `Processes`  | String     | No       | v2023.1+      | Signing ID of the instigating process. |
+| `SigningID`               | `Processes`  | String     | No       | v2023.1+      | Signing ID of the instigating process. Note that unlike in binary authorization, the Signing ID for file access authorization is specified separately from the Team ID; see the example below. |
 | `PlatformBinary`          | `Processes`  | Boolean    | No       | v2023.2+      | Whether or not the instigating process is a platform binary. |
 
 ### EventDetailURL
@@ -77,7 +77,10 @@ This is an example configuration conforming to the specification outlined above:
 		<dict>
 			<key>Paths</key>
 			<array>
+				<!-- restrict access to foo in all user directories -->
 				<string>/Users/*/foo</string>
+
+				<!-- restrict access to ~/tmp/foo, ~/tmp/foo2, ~/tmp/foo/bar, for all user directories -->
 				<dict>
 					<key>Path</key>
 					<string>/Users/*/tmp/foo</string>
@@ -96,7 +99,27 @@ This is an example configuration conforming to the specification outlined above:
 			</dict>
 			<key>Processes</key>
 			<array>
+		                <dict>
+					<!-- Platform binaries use a separate key that, rather than the `platform:com.apple.ls` format used in binary authorization rules -->
+					<key>PlatformBinary</key>
+					<true/>
+					<key>SigningID</key>
+					<string>com.apple.ls</string>
+		                </dict>
+		                <dict>
+					<!-- Signing IDs are specified differently than in binary authorization rules, note the separate TeamID key -->
+					<key>TeamID</key>
+					<string>EQHXZ8M8AV</string>
+					<key>SigningID</key>
+					<string>com.google.Chrome</string>
+		                </dict>
+		                <dict>
+					<!-- Allow the Slack Team ID -->
+					<key>TeamID</key>
+					<string>BQR82RBBHL</string>
+				</dict>
 				<dict>
+					<!-- Allow the binary at the path, AND require the TeamID specified -->
 					<key>BinaryPath</key>
 					<string>/usr/local/bin/my_foo_writer</string>
 					<key>TeamID</key>
@@ -138,7 +161,9 @@ The following table demonstrates which rule will be applied for operations on a 
 
 Configured path globs represent a point in time. That is, path globs are expanded when a configuration is applied to generate the set of monitored paths. This is not a "live" representation of the filesystem. For instance, if a new file or directory is added that would match a glob after the configuration is applied, it is not immediately monitored.
 
-Within the main Santa configuration, the `FileAccessPolicyUpdateIntervalSec` key controls how often any changes to the configuration are applied as well as re-evaluating configured path globs to match the current state of the filesystem.
+Within the main Santa configuration, the `FileAccessPolicyUpdateIntervalSec` key controls how often any changes to the configuration are applied as well as re-evaluating configured path globs to match the current state of the filesystem. This has a minimum value of 15 seconds.
+
+`**` syntax is not supported, only `*` is supported for wildcards.
 
 ### Prefix and Glob Path Evaluation
 
