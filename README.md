@@ -1,5 +1,12 @@
 # Santa
 
+> [!NOTE]
+> **As of 2025, Santa is no longer maintained by Google.**  We encourage
+> existing users to migrate to an actively maintained fork of Santa, such as
+> https://github.com/northpolesec/santa.
+
+---
+
 [![license](https://img.shields.io/github/license/google/santa)](https://github.com/google/santa/blob/main/LICENSE)
 [![CI](https://github.com/google/santa/actions/workflows/ci.yml/badge.svg)](https://github.com/google/santa/actions/workflows/ci.yml)
 [![latest release](https://img.shields.io/github/v/release/google/santa.svg)](https://github.com/google/santa/releases/latest)
