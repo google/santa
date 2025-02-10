@@ -308,9 +308,17 @@ Tokens
 ProcessToken::ProcessToken(std::shared_ptr<ProcessTree> tree,
                            std::vector<struct Pid> pids)
     : tree_(std::move(tree)), pids_(std::move(pids)) {
+  if (tree_ == nullptr) {
+    return;
+  }
   tree_->RetainProcess(pids);
 }
 
-ProcessToken::~ProcessToken() { tree_->ReleaseProcess(pids_); }
+ProcessToken::~ProcessToken() {
+  if (tree_ == nullptr) {
+    return;
+  }
+  tree_->ReleaseProcess(pids_);
+}
 
 }  // namespace santa::santad::process_tree
