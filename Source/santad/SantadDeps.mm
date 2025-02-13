@@ -24,6 +24,7 @@
 #import "Source/santad/DataLayer/SNTRuleTable.h"
 #include "Source/santad/DataLayer/WatchItems.h"
 #include "Source/santad/EventProviders/EndpointSecurity/EndpointSecurityAPI.h"
+#include "Source/santad/ProcessTree/annotations/ancestry.h"
 #include "Source/santad/ProcessTree/annotations/originator.h"
 #include "Source/santad/ProcessTree/process_tree.h"
 #import "Source/santad/SNTDatabaseController.h"
@@ -162,6 +163,8 @@ std::unique_ptr<SantadDeps> SantadDeps::Create(SNTConfigurator *configurator,
   for (NSString *annotation in [configurator enabledProcessAnnotations]) {
     if ([[annotation lowercaseString] isEqualToString:@"originator"]) {
       annotators.emplace_back(std::make_unique<santa::santad::process_tree::OriginatorAnnotator>());
+    } else if ([[annotation lowercaseString] isEqualToString:@"ancestry"]) {
+      annotators.emplace_back(std::make_unique<santa::santad::process_tree::AncestryAnnotator>());
     } else {
       LOGW(@"Unrecognized process annotation %@", annotation);
     }

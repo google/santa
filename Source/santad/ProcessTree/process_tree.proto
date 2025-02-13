@@ -2,6 +2,12 @@ syntax = "proto3";
 
 package santa.pb.v1.process_tree;
 
+
+message AncestryProcessID {
+  optional int32 pid = 1;
+  optional uint64 secondary_id = 2;
+}
+
 message Annotations {
   enum Originator {
     UNSPECIFIED = 0;
@@ -9,5 +15,10 @@ message Annotations {
     CRON = 2;
   }
 
+  message Ancestry {
+    repeated AncestryProcessID ancestor = 1;
+  }
+
   Originator originator = 1;
+  Ancestry ancestry = 2;
 }

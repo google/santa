@@ -34,7 +34,8 @@ std::shared_ptr<const Process> ProcessTreeTestPeer::InsertInit() {
   };
   auto proc = std::make_shared<Process>(
     initpid, (Cred){.uid = 0, .gid = 0},
-    std::make_shared<Program>((Program){.executable = "/init", .arguments = {"/init"}}), nullptr);
+    std::make_shared<Program>((Program){.executable = "/init", .arguments = {"/init"}}), nullptr,
+    0);
   map_.emplace(initpid, proc);
   return proc;
 }
